@@ -103,12 +103,12 @@
 /*
  * ADC Vector
  *
- * 0  (1):	IN0		SENS1
- * 1  (2):	IN1		SENS2
- * 2  (3):	IN2		SENS3
- * 3  (1):	IN10	CURR1
- * 4  (2):	IN11	CURR2
- * 5  (3):	IN12	CURR3
+ * 0  (1):	IN10	CURR1
+ * 1  (2):	IN11	CURR2
+ * 2  (3):	IN12	CURR3
+ * 3  (1):	IN0		SENS1
+ * 4  (2):	IN1		SENS2
+ * 5  (3):	IN2		SENS3
  * 6  (1):	IN5		ADC_EXT1
  * 7  (2):	IN6		ADC_EXT2
  * 8  (3):	IN3		TEMP_MOS
@@ -116,31 +116,31 @@
  * 10 (2):	IN15	Shutdown
  * 11 (3):	IN13	AN_IN
  * 12 (1):	Vrefint
- * 13 (2):	IN0		SENS1
- * 14 (3):	IN1		SENS2
- * 15 (1):  IN8		TEMP_MOS_2
- * 16 (2):  IN9		TEMP_MOS_3
- * 17 (3):  IN3		SENS3
+ * 13 (2):	IN7		ADC_EXT3
+ * 14 (3):  IN8		(not_in_use, padding)
+ *
+ * Unused ADC Inputs: IN4, IN8, IN9
  */
 
-#define HW_ADC_CHANNELS			18
+#define HW_ADC_CHANNELS			15
 #define HW_ADC_INJ_CHANNELS		3
-#define HW_ADC_NBR_CONV			6
+#define HW_ADC_NBR_CONV			5 	// Three ADCs doing 5 Conversions each => 15 Channels sampled
 
 // ADC Indexes
-#define ADC_IND_SENS1			3
-#define ADC_IND_SENS2			4
-#define ADC_IND_SENS3			5
 #define ADC_IND_CURR1			0
 #define ADC_IND_CURR2			1
 #define ADC_IND_CURR3			2
-#define ADC_IND_VIN_SENS		11
+#define ADC_IND_SENS1			3
+#define ADC_IND_SENS2			4
+#define ADC_IND_SENS3			5
 #define ADC_IND_EXT				6
 #define ADC_IND_EXT2			7
-#define ADC_IND_SHUTDOWN		10
 #define ADC_IND_TEMP_MOS		8
 #define ADC_IND_TEMP_MOTOR		9
+#define ADC_IND_SHUTDOWN		10
+#define ADC_IND_VIN_SENS		11
 #define ADC_IND_VREFINT			12
+#define ADC_IND_EXT3			13
 
 // ADC macros and settings
 
