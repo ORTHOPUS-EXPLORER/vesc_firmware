@@ -58,9 +58,11 @@ static void terminal_encoder_clear_multiturn(int argc, const char **argv);
 static void timer_start(routine_rate_t rate);
 
 // Function pointers
+static bool (*m_enc_custom_init)(void) = NULL;
+static void (*m_enc_custom_deinit)(void) = NULL;
 static float (*m_enc_custom_read_deg)(void) = NULL;
 static bool (*m_enc_custom_fault)(void) = NULL;
-static char* (*m_enc_custom_print_info)(void) = NULL;
+static const char* (*m_enc_custom_print_info)(void) = NULL;
 
 bool encoder_init(volatile mc_configuration *conf) {
 	bool res = false;
@@ -153,7 +155,7 @@ bool encoder_init(volatile mc_configuration *conf) {
 				HW_SPI_PORT_MOSI, HW_SPI_PIN_MOSI, // miso (shared dat line)
 				{{NULL, NULL}, NULL, NULL} // Mutex
 		};
-		encoder_cfg_tle5012.sw_spi = sw_ssc;	
+		encoder_cfg_tle5012.sw_spi = sw_ssc;
 
 		if (!enc_tle5012_init_sw_ssc(&encoder_cfg_tle5012)) {
 			m_encoder_type_now = ENCODER_TYPE_NONE;
@@ -257,6 +259,11 @@ bool encoder_init(volatile mc_configuration *conf) {
 	} break;
 
 	case SENSOR_PORT_MODE_CUSTOM_ENCODER:
+		if(m_enc_custom_init && !m_enc_custom_init())
+		{
+			m_encoder_type_now = ENCODER_TYPE_NONE;
+			return false;
+		}
 		m_encoder_type_now = ENCODER_TYPE_CUSTOM;
 		res = true;
 		break;
@@ -298,7 +305,7 @@ bool encoder_init(volatile mc_configuration *conf) {
 
 	terminal_register_command_callback(
 			"encoder",
-			"Prints the status of the AS5047, AS5x47U, AD2S1205, TLE5012, MT6816, or TS5700N8501 encoder.",
+			"Prints the status of the AS5047, AS5x47U, AD2S1205, TLE5012, MT6816, TS5700N8501 or CUSTOM encoder.",
 			0,
 			terminal_encoder);
 
@@ -367,15 +374,22 @@ void encoder_deinit(void) {
 	} else if (m_encoder_type_now == ENCODER_TYPE_PWM_ABI) {
 		enc_pwm_deinit();
 		enc_abi_deinit(&encoder_cfg_ABI);
+	} else if (m_encoder_type_now == ENCODER_TYPE_CUSTOM && m_enc_custom_deinit) {
+		m_enc_custom_deinit();
 	}
 
 	m_encoder_type_now = ENCODER_TYPE_NONE;
 }
 
 void encoder_set_custom_callbacks (
+		bool (*init)(void),
+		void(*deinit)(void),
 		float (*read_deg)(void),
 		bool (*has_fault)(void),
-		char* (*print_info)(void)) {
+		const char* (*print_info)(void)) {
+
+	m_enc_custom_init = utils_is_func_valid(init) ? init : NULL;
+	m_enc_custom_deinit = utils_is_func_valid(deinit) ? deinit : NULL;
 
 	if (utils_is_func_valid(read_deg)) {
 		m_enc_custom_read_deg = read_deg;
@@ -589,7 +603,7 @@ void encoder_check_faults(volatile mc_configuration *m_conf, bool is_second_moto
 				mc_interface_fault_stop(FAULT_CODE_ENCODER_NO_MAGNET, is_second_motor, false);
 			}
 			break;
-		
+
 		case SENSOR_PORT_MODE_TLE5012_SSC_HW:
 		case SENSOR_PORT_MODE_TLE5012_SSC_SW:
 			if (encoder_cfg_tle5012.state.spi_error_rate > 0.10) {
@@ -682,7 +696,7 @@ static void terminal_encoder(int argc, const char **argv) {
 	switch (mcconf->m_sensor_port_mode) {
 	case SENSOR_PORT_MODE_AS5047_SPI:
 		commands_printf("SPI encoder value: %d, errors: %d, error rate: %.3f %%",
-				encoder_cfg_as504x.state.spi_val, 
+				encoder_cfg_as504x.state.spi_val,
 				encoder_cfg_as504x.state.spi_communication_error_count,
 				(double)(encoder_cfg_as504x.state.spi_error_rate * 100.0));
 
@@ -839,7 +853,7 @@ static void terminal_encoder(int argc, const char **argv) {
 
 	case SENSOR_PORT_MODE_CUSTOM_ENCODER:
 		if (m_enc_custom_print_info) {
-			commands_printf("%s", m_enc_custom_print_info);
+			commands_printf("%s", m_enc_custom_print_info());
 		}
 		break;
 
