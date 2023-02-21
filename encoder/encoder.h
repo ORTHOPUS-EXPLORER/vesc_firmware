@@ -40,9 +40,11 @@ void encoder_update_config(volatile mc_configuration *conf);
 void encoder_deinit(void);
 
 void encoder_set_custom_callbacks (
+		bool (*init)(void),
+		void(*deinit)(void),
 		float (*read_deg)(void),
 		bool (*has_fault)(void),
-		char* (*print_info)(void));
+		const char* (*print_info)(void));
 
 float encoder_read_deg(void);
 float encoder_read_deg_multiturn(void);

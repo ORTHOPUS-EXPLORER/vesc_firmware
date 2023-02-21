@@ -589,9 +589,11 @@ typedef struct {
 
 	// Set custom encoder callbacks
 	void (*encoder_set_custom_callbacks)(
+			bool (*init)(void),
+			void(*deinit)(void),
 			float (*read_deg)(void),
 			bool (*has_fault)(void),
-			char* (*print_info)(void));
+			const char* (*print_info)(void));
 
 	// Store backup data
 	bool (*store_backup_data)(void);
