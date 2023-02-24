@@ -25,6 +25,9 @@
 #include "mc_interface.h"
 #include "utils_math.h"
 #include "encoder/encoder.h"
+#include "encoder/enc_as504x.h"
+#include "encoder/enc_sincos.h"
+#include "encoder/encoder_cfg.h" // For encoder_cfg_***
 #include "terminal.h"
 #include "comm_can.h"
 #include "hw.h"
@@ -41,49 +44,86 @@ static THD_WORKING_AREA(my_thread_wa, 1024);
 
 // Private functions
 static void pwm_callback(void);
-static void terminal_test(int argc, const char **argv);
-static void orthopus_init_sincos_cmd(int argc, const char **argv);
 
 // Private variables
 static volatile bool stop_now = true;
 static volatile bool is_running = false;
 
-static float enc_v=0;
+static size_t init_delay = 10;
+static float init_v = 0;
 
 static float orthopus_enc_read_deg(void)
 {
-  return enc_v;
+  return enc_sincos_read_deg(&encoder_cfg_sincos);
+        // AS504x_LAST_ANGLE(&encoder_cfg_as504x)
 }
+
 static bool orthopus_enc_fault(void)
 {
   return false;
 }
 
-static const char *enc_info = "Helloooo";
-static char* orthopus_enc_print_info(void)
+static const char* orthopus_enc_print_info(void)
 {
-  return enc_info;
+  static char b[512];
+  sprintf(b , "AMS: % 7.3f SINCOS: % 7.3f Offset: %7.3f"
+            , (double)AS504x_LAST_ANGLE(&encoder_cfg_as504x)
+            , (double)enc_sincos_read_deg(&encoder_cfg_sincos)
+            , (double)init_v
+         );
+  return b;
 }
 
 static bool orthopus_enc_init(void)
 {
   commands_printf("EncInit()");
-  enc_v = 17.9;
-  return true;
+  SENSOR_PORT_3V3();
+    // const cast
+  volatile mc_configuration* conf = (volatile mc_configuration*)mc_interface_get_configuration();
+  encoder_cfg_sincos.s_gain = 1.0 / conf->m_encoder_sin_amp;
+  encoder_cfg_sincos.s_offset = conf->m_encoder_sin_offset;
+  encoder_cfg_sincos.c_gain = 1.0 /conf->m_encoder_cos_amp;
+  encoder_cfg_sincos.c_offset =  conf->m_encoder_cos_offset;
+  encoder_cfg_sincos.filter_constant = conf->m_encoder_sincos_filter_constant;
+  sincosf(DEG2RAD_f(conf->m_encoder_sincos_phase_correction), &encoder_cfg_sincos.sph, &encoder_cfg_sincos.cph);
+
+  return enc_sincos_init(&encoder_cfg_sincos) && enc_as504x_init(&encoder_cfg_as504x);
 }
 
-static bool orthopus_enc_deinit(void)
+static void orthopus_enc_deinit(void)
 {
   commands_printf("EncDeinit()");
-
+  enc_as504x_deinit(&encoder_cfg_as504x);
+  enc_sincos_deinit(&encoder_cfg_sincos);
 }
 
-static void orthopus_init_sincos(const float v)
+static void orthopus_init_offset(const float v);
+
+static void orthopus_enc_routine(void)
 {
-  commands_printf("EncInitSinCos()");
-
+  enc_as504x_routine(&encoder_cfg_as504x);
+  if(init_delay && !(--init_delay))
+  {
+    orthopus_init_offset(AS504x_LAST_ANGLE(&encoder_cfg_as504x));
+  }
 }
 
+static void orthopus_init_offset(const float v)
+{
+  init_delay = 0;
+  init_v = v;
+  mc_interface_update_pid_pos_offset(v, false);
+}
+
+static void orthopus_init_offset_cmd(int argc, const char **argv)
+{
+  float v = AS504x_LAST_ANGLE(&encoder_cfg_as504x);
+	if (argc == 2) {
+		sscanf(argv[1], "%f", &v);
+  }
+	commands_printf("Init Pos PID Offset with joint offset: %f", (double)v);
+  orthopus_init_offset(v);
+}
 
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
@@ -99,44 +139,33 @@ void app_custom_start(void) {
   encoder_set_custom_callbacks(
     &orthopus_enc_init,
     &orthopus_enc_deinit,
+    &orthopus_enc_routine,
     &orthopus_enc_read_deg,
     &orthopus_enc_fault,
     &orthopus_enc_print_info
   );
+  // const cast
+  mc_configuration* conf = (mc_configuration*)mc_interface_get_configuration();
+  // Force re-init custom encoder
+  if(conf->m_sensor_port_mode == SENSOR_PORT_MODE_CUSTOM_ENCODER)
+  {
+    encoder_init(conf);
+  }
 
   terminal_register_command_callback(
-    "o_init_sincos",
-    "[Orthopus] Initialize SINCOS sensor with AS504x (or force value)",
+    "o_init_offset",
+    "[Orthopus] Initialize Pos PID offset with current AMS (or forced) value",
     "[d]",
-    orthopus_init_sincos_cmd
+    orthopus_init_offset_cmd
   );
-
-	// Terminal commands for the VESC Tool terminal can be registered.
-	terminal_register_command_callback(
-			"custom_cmd",
-			"Print the number d",
-			"[d]",
-			terminal_test);
-
-  enc_v = 12.34;
 }
 
-static void orthopus_init_sincos_cmd(int argc, const char **argv) {
-
-	if (argc == 2) {
-		float v = -1;
-		sscanf(argv[1], "%f", &v);
-    enc_v = v;
-
-		commands_printf("You have entered %f", v);
-  }
-}
 
 // Called when the custom application is stopped. Stop our threads
 // and release callbacks.
 void app_custom_stop(void) {
 	mc_interface_set_pwm_callback(0);
-	terminal_unregister_callback(terminal_test);
+	terminal_unregister_callback(orthopus_init_offset_cmd);
 
 	stop_now = true;
 	while (is_running) {
@@ -188,20 +217,4 @@ static THD_FUNCTION(my_thread, arg) {
 
 static void pwm_callback(void) {
 	// Called for every control iteration in interrupt context.
-}
-
-// Callback function for the terminal command with arguments.
-static void terminal_test(int argc, const char **argv) {
-	if (argc == 2) {
-		int d = -1;
-		sscanf(argv[1], "%d", &d);
-
-		commands_printf("You have entered %d", d);
-
-		// For example, read the ADC inputs on the COMM header.
-		commands_printf("ADC1: %.2f V ADC2: %.2f V ADC3: %.2f",
-				(double)ADC_VOLTS(ADC_IND_EXT), (double)ADC_VOLTS(ADC_IND_EXT2), (double)ADC_VOLTS(ADC_IND_EXT3));
-	} else {
-		commands_printf("This command requires one argument.\n");
-	}
 }
