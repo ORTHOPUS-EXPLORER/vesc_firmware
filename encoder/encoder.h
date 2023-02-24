@@ -42,6 +42,7 @@ void encoder_deinit(void);
 void encoder_set_custom_callbacks (
 		bool (*init)(void),
 		void(*deinit)(void),
+		void (*routine)(void),
 		float (*read_deg)(void),
 		bool (*has_fault)(void),
 		const char* (*print_info)(void));

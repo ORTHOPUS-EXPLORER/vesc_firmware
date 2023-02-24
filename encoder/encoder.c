@@ -60,6 +60,7 @@ static void (*m_enc_custom_deinit)(void) = NULL;
 static float (*m_enc_custom_read_deg)(void) = NULL;
 static bool (*m_enc_custom_fault)(void) = NULL;
 static const char* (*m_enc_custom_print_info)(void) = NULL;
+static void (*m_enc_custom_routine)(void) = NULL;
 
 bool encoder_init(volatile mc_configuration *conf) {
 	bool res = false;
@@ -262,6 +263,7 @@ bool encoder_init(volatile mc_configuration *conf) {
 			return false;
 		}
 		m_encoder_type_now = ENCODER_TYPE_CUSTOM;
+		timer_start(routine_rate_10k);
 		res = true;
 		break;
 
@@ -346,12 +348,14 @@ void encoder_deinit(void) {
 void encoder_set_custom_callbacks (
 		bool (*init)(void),
 		void(*deinit)(void),
+		void (*routine)(void),
 		float (*read_deg)(void),
 		bool (*has_fault)(void),
 		const char* (*print_info)(void)) {
 
 	m_enc_custom_init = utils_is_func_valid(init) ? init : NULL;
 	m_enc_custom_deinit = utils_is_func_valid(deinit) ? deinit : NULL;
+	m_enc_custom_routine = utils_is_func_valid(routine) ? routine : NULL;
 
 	if (utils_is_func_valid(read_deg)) {
 		m_enc_custom_read_deg = read_deg;
@@ -835,6 +839,11 @@ static THD_FUNCTION(routine_thread, arg) {
 
 		case ENCODER_TYPE_BISSC:
 			enc_bissc_routine(&encoder_cfg_bissc);
+			break;
+
+		case ENCODER_TYPE_CUSTOM:
+			if(m_enc_custom_routine)
+				m_enc_custom_routine();
 			break;
 
 		default:
