@@ -48,14 +48,20 @@ static volatile bool is_running = false;
 static void my_pwm_callback(void);
 
 // Private variables
-static size_t init_delay = 10;
-static float init_v = 0;
 
 static void orthopus_init_offset_cmd(int argc, const char **argv)
 {
-  float v = enc_as504x_read_angle(&encoder_cfg_as504x);
-	if (argc == 2) {
+  float v = 0;
+	if (argc == 2)
+  {
 		sscanf(argv[1], "%f", &v);
+  }
+  else
+  {
+    size_t i = 0;
+    enc_as504x_read_angle(&encoder_cfg_as504x); // Bypass first null value
+    for(i=0;i<3;i++)
+      v += enc_as504x_read_angle(&encoder_cfg_as504x)/3;
   }
 	commands_printf("Init Pos PID Offset with joint offset: %f", (double)v);
   mc_interface_update_pid_pos_offset(v, false);
@@ -82,6 +88,8 @@ void app_custom_start(void) {
     "[d]",
     orthopus_init_offset_cmd
   );
+
+  orthopus_init_offset_cmd(0, NULL);
 }
 
 // Called when the custom application is stopped. Stop our threads
