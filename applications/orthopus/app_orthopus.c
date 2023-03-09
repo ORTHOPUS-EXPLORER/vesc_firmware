@@ -61,7 +61,10 @@ static void orthopus_init_offset_cmd(int argc, const char **argv)
     size_t i = 0;
     enc_as504x_read_angle(&encoder_cfg_as504x); // Bypass first null value
     for(i=0;i<3;i++)
+    {
+      chThdSleepMilliseconds(1);
       v += enc_as504x_read_angle(&encoder_cfg_as504x)/3;
+    }
   }
 	commands_printf("Init Pos PID Offset with joint offset: %f", (double)v);
   mc_interface_update_pid_pos_offset(v, false);
