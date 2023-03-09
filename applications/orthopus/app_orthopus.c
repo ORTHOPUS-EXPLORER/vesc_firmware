@@ -75,6 +75,13 @@ void app_custom_start(void) {
   if(!enc_as504x_init(&encoder_cfg_as504x))
     commands_printf("AMS init failed");
 
+  // Re-init ADC_Ext3 since enc_as504x_init() may have overwritten it...
+	// Use SCL/MOSI/TX as ADC_EXT3.
+	//   Header pin is tied to PA7 (AIN7) and PB10.
+	//   Set PA7 as Analog input and PB10 in Hi-Z.
+	palSetPadMode(GPIOA,  7, PAL_MODE_INPUT_ANALOG);
+	palSetPadMode(GPIOB, 10, PAL_MODE_INPUT);
+
   // Hard-RT context
 	mc_interface_set_pwm_callback(my_pwm_callback);
 
@@ -88,8 +95,6 @@ void app_custom_start(void) {
     "[d]",
     orthopus_init_offset_cmd
   );
-
-  orthopus_init_offset_cmd(0, NULL);
 }
 
 // Called when the custom application is stopped. Stop our threads
@@ -114,6 +119,9 @@ static THD_FUNCTION(my_thread, arg) {
 	chRegSetThreadName("AppCustomTh");
 
 	is_running = true;
+
+	chThdSleepMilliseconds(1);
+  orthopus_init_offset_cmd(0, NULL);
 
 	// Example of using the experiment plot
 //	chThdSleepMilliseconds(8000);
@@ -142,10 +150,17 @@ static THD_FUNCTION(my_thread, arg) {
 
 		// Run your logic here. A lot of functionality is available in mc_interface.h.
 
+    // You can call  functions such as:
+    // - mc_interface_set_duty()
+    // - mc_interface_set_pid_speed()
+    // - mc_interface_set_pid_pos()
+
 		chThdSleepMilliseconds(10);
 	}
 }
 
+// Called in mc_interface.c:1913, in mc_interface_mc_timer_isr()
 static void my_pwm_callback(void) {
 	// Called for every control iteration in interrupt context.
+
 }
