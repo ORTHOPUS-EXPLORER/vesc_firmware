@@ -75,6 +75,7 @@ static void orthopus_init_offset_cmd(int argc, const char **argv)
 void app_custom_start(void) {
   commands_printf("AppStart()");
 
+  SENSOR_PORT_3V3();
   if(!enc_as504x_init(&encoder_cfg_as504x))
     commands_printf("AMS init failed");
 
