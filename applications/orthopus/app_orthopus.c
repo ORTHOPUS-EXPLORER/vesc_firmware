@@ -124,7 +124,14 @@ static THD_FUNCTION(my_thread, arg) {
 
 	is_running = true;
 
-	chThdSleepMilliseconds(1);
+  size_t encoder_wait=10;
+  do  {
+    enc_as504x_read_angle(&encoder_cfg_as504x);
+    chThdSleepMilliseconds(100);
+    if(encoder_wait && !(--encoder_wait))
+      break;
+  } while(!encoder_cfg_as504x.state.sensor_diag.is_connected);
+
   orthopus_init_offset_cmd(0, NULL);
 
 	// Example of using the experiment plot
