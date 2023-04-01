@@ -22,6 +22,8 @@
 #include "hal.h"
 
 // Some useful includes
+#include "lispif.h"
+#include "lispbm.h"
 #include "mc_interface.h"
 #include "utils_math.h"
 #include "encoder/encoder.h"
@@ -49,25 +51,74 @@ static void my_pwm_callback(void);
 
 // Private variables
 
-static void orthopus_init_offset_cmd(int argc, const char **argv)
+float orthopus_init_offset(float v, bool use_v)
 {
-  float v = 0;
-	if (argc == 2)
+  if(!use_v)
   {
-		sscanf(argv[1], "%f", &v);
-  }
-  else
-  {
+    v = 0.0; // Reset
     size_t i = 0;
-    enc_as504x_read_angle(&encoder_cfg_as504x); // Bypass first null value
     for(i=0;i<3;i++)
     {
       chThdSleepMilliseconds(1);
       v += enc_as504x_read_angle(&encoder_cfg_as504x)/3;
     }
   }
-	commands_printf("Init Pos PID Offset with joint offset: %f", (double)v);
+
   mc_interface_update_pid_pos_offset(v, false);
+  return v;
+}
+
+static void orthopus_init_offset_cmd(int argc, const char **argv)
+{
+  if(argc > 2)
+  {
+    commands_printf("Invalid arguments. Usage: o_init_offset [v]");
+    return;
+  }
+  float v = 0;
+	if (argc == 2)
+		sscanf(argv[1], "%f", &v);
+  v = orthopus_init_offset(v, argc == 2);
+  commands_printf("Init Pos PID Offset with joint offset: % 3.3f", (double)v);
+}
+
+static lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn)
+{
+	(void)args; (void)argn;
+  enc_as504x_read_angle(&encoder_cfg_as504x);
+	return lbm_enc_float(enc_as504x_read_angle(&encoder_cfg_as504x));
+}
+
+static lbm_value orthopus_lisp_init_offset(lbm_value *args, lbm_uint argn)
+{
+  //LBM_CHECK_ARGN_NUMBER(1);
+  if(argn > 1)
+  {
+    lbm_set_error_reason("Invalid arguments. Usage: ortho-init-offset [v]");
+    return ENC_SYM_EERROR;
+  }
+
+  float v = 0;
+  if(argn == 1)
+    v = lbm_dec_as_float(args[0]);
+  v = orthopus_init_offset(v, argn == 1);
+  commands_printf_lisp("Init Pos PID Offset with joint offset: % 3.3f", (double)v);
+
+  return ENC_SYM_TRUE;
+}
+
+static lbm_uint lisp_v;
+
+void orthopus_init_lisp(void)
+{
+  // Still not clear how this one works...
+  lbm_add_symbol_const("orthopus-val", &lisp_v);
+
+  // in REPL, test with: (print (orthopus-read-encoder))
+  lbm_add_extension("orthopus-read-encoder", orthopus_lisp_read_encoder);
+
+  // in REPL, test with: (orthopus-init-offset) or (orthopus-init-offset 45)
+  lbm_add_extension("orthopus-init-offset", orthopus_lisp_init_offset);
 }
 
 // Called when the custom application is started. Start our
@@ -93,12 +144,16 @@ void app_custom_start(void) {
 	chThdCreateStatic(my_thread_wa, sizeof(my_thread_wa),
 			NORMALPRIO, my_thread, NULL);
 
+  // Add shell commands
   terminal_register_command_callback(
     "o_init_offset",
     "[Orthopus] Initialize Pos PID offset with current AMS (or forced) value",
     "[d]",
     orthopus_init_offset_cmd
   );
+
+  // Add LISP commands/symbols
+  lispif_set_ext_load_callback(&orthopus_init_lisp);
 }
 
 // Called when the custom application is stopped. Stop our threads
