@@ -59,11 +59,11 @@ float orthopus_set_joint_offset(float v, bool use_v)
     for(i=0;i<3;i++)
     {
       chThdSleepMilliseconds(1);
-      v += enc_as504x_read_angle(&encoder_cfg_as504x)/3;
+      v += orthopus_read_encoder()/3;
     }
   }
 
-  mc_interface_update_pid_pos_offset(v-orthopus_config.encoder_offset, false);
+  mc_interface_update_pid_pos_offset(v, false);
   return v;
 }
 
@@ -72,5 +72,6 @@ float orthopus_set_encoder_offset(float v, bool use_v)
   if(!use_v)
     v = enc_as504x_read_angle(&encoder_cfg_as504x);
   orthopus_config.encoder_offset = v;
+  orthopus_set_joint_offset(0,false);
   return v;
 }
