@@ -250,6 +250,12 @@ typedef struct {
 	lbm_uint adc_v1_min;
 	lbm_uint adc_v1_max;
 	lbm_uint pas_current_scaling;
+	//sincos
+	lbm_uint sin_amp;
+	lbm_uint cos_amp;
+	lbm_uint sin_offset;
+	lbm_uint cos_offset;
+	lbm_uint sincos_phase_correction;
 
 	// Sysinfo
 	lbm_uint hw_name;
@@ -717,6 +723,18 @@ static bool compare_symbol(lbm_uint sym, lbm_uint *comp) {
 
 		else if (comp == &syms_vesc.half_duplex) {
 			lbm_add_symbol_const("half-duplex", comp);
+		}
+
+		else if (comp == &syms_vesc.sin_amp) {
+			get_add_symbol("sin-amp", comp);
+		} else if (comp == &syms_vesc.cos_amp) {
+			get_add_symbol("cos-amp", comp);
+		} else if (comp == &syms_vesc.sin_offset) {
+			get_add_symbol("cos-offset", comp);
+		} else if (comp == &syms_vesc.cos_offset) {
+			get_add_symbol("sin-offset", comp);
+		} else if (comp == &syms_vesc.sincos_phase_correction) {
+			get_add_symbol("sincos-phase-correction", comp);
 		}
 	}
 
@@ -3951,6 +3969,21 @@ static lbm_value ext_conf_set(lbm_value *args, lbm_uint argn) {
 		} else if (compare_symbol(name, &syms_vesc.pas_current_scaling)) {
 			appconf->app_pas_conf.current_scaling = lbm_dec_as_float(args[1]);
 			changed_app = 2;
+		} else if (compare_symbol(name, &syms_vesc.sin_amp)) {
+			mcconf->m_encoder_sin_amp = lbm_dec_as_float(args[1]);
+			changed_mc = 2;
+		} else if (compare_symbol(name, &syms_vesc.cos_amp)) {
+			mcconf->m_encoder_cos_amp = lbm_dec_as_float(args[1]);
+			changed_mc = 2;
+		} else if (compare_symbol(name, &syms_vesc.sin_offset)) {
+			mcconf->m_encoder_sin_offset = lbm_dec_as_float(args[1]);
+			changed_mc = 2;
+		} else if (compare_symbol(name, &syms_vesc.cos_offset)) {
+			mcconf->m_encoder_cos_offset = lbm_dec_as_float(args[1]);
+			changed_mc = 2;
+		} else if (compare_symbol(name, &syms_vesc.sincos_phase_correction)) {
+			mcconf->m_encoder_sincos_phase_correction = lbm_dec_as_float(args[1]);
+			changed_mc = 2;
 		}
 	}
 
@@ -4299,6 +4332,15 @@ static lbm_value ext_conf_get(lbm_value *args, lbm_uint argn) {
 		res = lbm_enc_float(appconf->app_adc_conf.voltage_max);
 	} else if (compare_symbol(name, &syms_vesc.pas_current_scaling)) {
 		res = lbm_enc_float(appconf->app_pas_conf.current_scaling);
+	} else if (compare_symbol(name, &syms_vesc.sin_amp)) {
+		res = lbm_enc_float(mcconf->m_encoder_sin_amp);
+		res = lbm_enc_float(mcconf->m_encoder_cos_amp);
+	} else if (compare_symbol(name, &syms_vesc.sin_offset)) {
+		res = lbm_enc_float(mcconf->m_encoder_sin_offset);
+	} else if (compare_symbol(name, &syms_vesc.cos_offset)) {
+		res = lbm_enc_float(mcconf->m_encoder_cos_offset);
+	} else if (compare_symbol(name, &syms_vesc.sincos_phase_correction)) {
+		res = lbm_enc_float(mcconf->m_encoder_sincos_phase_correction);
 	}
 
 	if (defaultcfg) {

@@ -3963,6 +3963,11 @@ The following selection of app and motor parameters can be read and set from Lis
 'ble-pin                ; BLE pin code
 'ble-service-capacity   ; BLE Service Capacity
 'ble-chr-descr-capacity ; BLE Characteristics and Descriptor Capacity
+'sin-amp                ; Sincos encoder Amplitude of the sine-input in volts.
+'cos-amp                ; Sincos encoder Amplitude of the cosine-input in volts.
+'sin-offset             ; Sincos encoder Sine offset in volts.
+'cos-offset             ; Sincos encoder Cosine offset in volts.
+'sincos-phase-correction; Sincos encoder Sin/Cos Phase error compensation in deg.
 ```
 
 ---
