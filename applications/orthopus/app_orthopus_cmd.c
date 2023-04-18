@@ -1,6 +1,7 @@
 #include "app_orthopus.h"
 #include "commands.h"
 
+static void orthopus_pos_cmd(int argc, const char **argv);
 static void orthopus_offset_cmd(int argc, const char **argv);
 static void orthopus_config_cmd(int argc, const char **argv);
 
@@ -19,11 +20,36 @@ static void orthopus_cmd_init(void)
     "[load/save]",
     orthopus_config_cmd
   );
+
+  terminal_register_command_callback(
+    "o_pos",
+    "[Orthopus] Get current positions",
+    "",
+    orthopus_pos_cmd
+  );
 }
+
 static void orthopus_cmd_deinit(void)
 {
   terminal_unregister_callback(orthopus_offset_cmd);
   terminal_unregister_callback(orthopus_config_cmd);
+}
+
+static void orthopus_pos_cmd(int argc, const char **argv)
+{
+  (void)argc;(void)argv;
+  double ams_v     = enc_as504x_read_angle(&encoder_cfg_as504x);
+  double sincos_v  = enc_sincos_read_deg(&encoder_cfg_sincos);
+  double orthop_v  = orthopus_read_encoder();
+  double pid_v     = mc_interface_get_pid_pos_now();
+  double pid_o     = mc_interface_get_configuration()->p_pid_offset;
+
+  commands_printf("orthopus_config.encoder_offset : % 7.3f", (double)orthopus_config.encoder_offset);
+  commands_printf("PID_pos offset                 : % 7.3f", pid_o                                 );
+  commands_printf("AMS_pos                        : % 7.3f", ams_v                                 );
+  commands_printf("SINCOS_pos                     : % 7.3f", sincos_v                              );
+  commands_printf("orthopus_read_encoder()        : % 7.3f", orthop_v                              );
+  commands_printf("PID_pos_now                    : % 7.3f", pid_v                                 );
 }
 
 static void orthopus_offset_cmd(int argc, const char **argv)
