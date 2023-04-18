@@ -45,6 +45,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
 		chThdSleepMilliseconds(10);
 
     // Use commands_get_fw_version_sent_cnt() to guess if we're (re?)connected to a GUI
+    /*
     bool plot_started=true;
 		if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
 			get_fw_version_cnt = commands_get_fw_version_sent_cnt();
@@ -60,6 +61,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
     commands_plot_set_graph(0);
     commands_send_plot_points(enc_as504x_read_angle(&encoder_cfg_as504x), orthopus_read_encoder());
+    */
 
     // Couldn't figure out how this works
     //float samples[10]={12.34,56.78};
