@@ -45,6 +45,11 @@ float orthopus_read_encoder(void)
   return enc_as504x_read_angle(&encoder_cfg_as504x)-orthopus_config.encoder_offset;
 }
 
+float orthopus_read_encoder_raw(void)
+{
+  return enc_as504x_read_angle(&encoder_cfg_as504x);
+}
+
 float orthopus_set_joint_offset(float v, bool use_v)
 {
   if(!use_v)
