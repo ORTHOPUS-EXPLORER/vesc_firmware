@@ -3552,6 +3552,11 @@ The following selection of app and motor parameters can be read and set from Lis
                         ; 3: Enabled with scripting
 'ble-name               ; Device name (also the name that shows up in VESC Tool)
 'ble-pin                ; BLE pin code
+'sin-amp                ; Sincos encoder Amplitude of the sine-input in volts.
+'cos-amp                ; Sincos encoder Amplitude of the cosine-input in volts.
+'sin-offset             ; Sincos encoder Sine offset in volts.
+'cos-offset             ; Sincos encoder Cosine offset in volts.
+'sincos-phase-correction; Sincos encoder Sin/Cos Phase error compensation in deg.
 ```
 
 ---
