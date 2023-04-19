@@ -2,6 +2,7 @@
 
 static lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn);
 static lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn);
+static lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn);
 static lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn);
 static lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn);
 
@@ -54,6 +55,7 @@ void orthopus_init_lisp(void)
     // in REPL, test with: (print (orthopus-read-encoder))
   lbm_add_extension("orthopus-read-encoder", orthopus_lisp_read_encoder);
   lbm_add_extension("orthopus-read-encoder-raw", orthopus_lisp_read_encoder_raw);
+  lbm_add_extension("orthopus-read-encoder-filt", orthopus_lisp_read_encoder_filtered);
   // in REPL, test with: (orthopus-offset "encoder") or (orthopus-init-offset "encoder" 45)
   lbm_add_extension("orthopus-offset", orthopus_lisp_offset);
   // in REPL, test with: (orthopus-config) or (orthopus-config "print/load/save")
@@ -71,6 +73,12 @@ static lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
 	return lbm_enc_float(orthopus_read_encoder_raw());
+}
+
+static lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn)
+{
+	(void)args; (void)argn;
+	return lbm_enc_float(orthopus_read_encoder_filtered());
 }
 
 static lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn)

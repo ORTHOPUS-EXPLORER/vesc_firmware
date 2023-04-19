@@ -6,6 +6,17 @@
 static volatile bool orthopus_thread_stop = true;
 static volatile bool orthopus_thread_running = false;
 
+//AMS filter variables
+static volatile float enc_pos_raw = 0.0;
+static volatile float enc_pos_filter = 0.0;
+static volatile float enc_last_pos_filter = 0.0;
+static volatile int nb_enc_filter_error = 0;
+static volatile unsigned long int nsample = 0;
+
+float app_orthopus_get_enc_pos_filtered(void) {
+	return enc_pos_filter;
+}
+
 static THD_FUNCTION(orthopus_thread, arg) {
 	(void)arg;
 
@@ -17,7 +28,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
   do
   {
     enc_as504x_read_angle(&encoder_cfg_as504x);
-    chThdSleepMilliseconds(100);
+    chThdSleepMilliseconds(1);
     if(encoder_wait && !(--encoder_wait))
       break;
   } while(!encoder_cfg_as504x.state.sensor_diag.is_connected);
@@ -42,7 +53,45 @@ static THD_FUNCTION(orthopus_thread, arg) {
     // - mc_interface_set_pid_speed()
     // - mc_interface_set_pid_pos()
 
-		chThdSleepMilliseconds(10);
+    enc_pos_raw = orthopus_read_encoder();
+    commands_printf("Enc pos: % 7.3f", (double)enc_pos_raw);
+    if ( (abs(enc_pos_raw - enc_last_pos_filter) > (0.5 + nb_enc_filter_error * 2)) && (abs(enc_pos_raw - enc_last_pos_filter) < 350) && (nb_enc_filter_error < 5))
+    {
+      nb_enc_filter_error += 1;
+      enc_pos_filter = enc_last_pos_filter;
+    } else {
+      enc_pos_filter = enc_pos_raw;
+      nb_enc_filter_error = 0;
+    }
+    if (abs(enc_pos_raw - enc_last_pos_filter) > 350)
+      nb_enc_filter_error = 0;
+    enc_last_pos_filter = enc_pos_filter;
+    nsample += 1;
+
+    //debug encoder filter
+    bool plot_started=true;
+    if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
+			get_fw_version_cnt = commands_get_fw_version_sent_cnt();
+			plot_started = false;
+		}
+    if (!plot_started) {
+      plot_started = true;
+      commands_init_plot("time", "angle");
+      commands_plot_add_graph("enc_pos_filter");
+      commands_plot_add_graph("enc_pos_raw");
+      commands_plot_add_graph("nb_enc_filter_error");
+      commands_plot_add_graph("enc_last_pos_filter");
+    }
+    commands_plot_set_graph(0);
+    commands_send_plot_points(nsample, enc_pos_filter);
+    commands_plot_set_graph(1);
+    commands_send_plot_points(nsample, enc_pos_raw);
+    commands_plot_set_graph(2);
+    commands_send_plot_points(nsample, nb_enc_filter_error);
+    commands_plot_set_graph(3);
+    commands_send_plot_points(nsample, enc_last_pos_filter);
+
+		chThdSleepMilliseconds(1);
 
     // Use commands_get_fw_version_sent_cnt() to guess if we're (re?)connected to a GUI
     /*

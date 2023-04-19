@@ -22,6 +22,8 @@ static bool orthopus_config_save(const orthopus_config_t* cfg);
 
 static float orthopus_read_encoder(void);
 static float orthopus_read_encoder_raw(void);
+static float orthopus_read_encoder_filtered(void);
+static float app_orthopus_get_enc_pos_filtered(void);
 static float orthopus_set_joint_offset(float v, bool use_v);
 static float orthopus_set_encoder_offset(float v, bool use_v);
 
