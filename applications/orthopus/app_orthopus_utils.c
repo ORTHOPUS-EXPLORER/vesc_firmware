@@ -50,6 +50,12 @@ float orthopus_read_encoder_raw(void)
   return enc_as504x_read_angle(&encoder_cfg_as504x);
 }
 
+float orthopus_read_encoder_filtered(void)
+{
+  //return enc_as504x_read_angle(&encoder_cfg_as504x);
+  return app_orthopus_get_enc_pos_filtered();
+}
+
 float orthopus_set_joint_offset(float v, bool use_v)
 {
   if(!use_v)
