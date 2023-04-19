@@ -6,11 +6,15 @@
 static volatile bool orthopus_thread_stop = true;
 static volatile bool orthopus_thread_running = false;
 
+const int loop_rate = 2000; //loop rate in Hz
+
 //AMS filter variables
 static volatile float enc_pos_raw = 0.0;
 static volatile float enc_pos_filter = 0.0;
 static volatile float enc_last_pos_filter = 0.0;
+static volatile float enc_last_last_pos_filter = 0.0;
 static volatile int nb_enc_filter_error = 0;
+static volatile int last_nb_enc_filter_error = 0;
 static volatile unsigned long int nsample = 0;
 
 float app_orthopus_get_enc_pos_filtered(void) {
@@ -54,18 +58,22 @@ static THD_FUNCTION(orthopus_thread, arg) {
     // - mc_interface_set_pid_pos()
 
     enc_pos_raw = orthopus_read_encoder();
-    commands_printf("Enc pos: % 7.3f", (double)enc_pos_raw);
-    if ( (abs(enc_pos_raw - enc_last_pos_filter) > (0.5 + nb_enc_filter_error * 2)) && (abs(enc_pos_raw - enc_last_pos_filter) < 350) && (nb_enc_filter_error < 5))
+    //commands_printf("Enc pos: % 7.3f", (double)enc_pos_raw);
+    last_nb_enc_filter_error = nb_enc_filter_error;
+    if ( (fabs(enc_pos_raw - enc_last_pos_filter) > (0.25 * (1 + nb_enc_filter_error))) && (fabs(enc_pos_raw - enc_last_pos_filter) < 350) && (nb_enc_filter_error < 5))
     {
       nb_enc_filter_error += 1;
+      //enc_pos_filter = enc_last_pos_filter;
       enc_pos_filter = enc_last_pos_filter;
     } else {
       enc_pos_filter = enc_pos_raw;
       nb_enc_filter_error = 0;
     }
-    if (abs(enc_pos_raw - enc_last_pos_filter) > 350)
+
+    if (fabs(enc_pos_raw - enc_last_pos_filter) > 350)
+    {
       nb_enc_filter_error = 0;
-    enc_last_pos_filter = enc_pos_filter;
+    }
     nsample += 1;
 
     //debug encoder filter
@@ -79,7 +87,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
       commands_init_plot("time", "angle");
       commands_plot_add_graph("enc_pos_filter");
       commands_plot_add_graph("enc_pos_raw");
-      commands_plot_add_graph("nb_enc_filter_error");
+      commands_plot_add_graph("last_nb_enc_filter_error");
       commands_plot_add_graph("enc_last_pos_filter");
     }
     commands_plot_set_graph(0);
@@ -87,11 +95,14 @@ static THD_FUNCTION(orthopus_thread, arg) {
     commands_plot_set_graph(1);
     commands_send_plot_points(nsample, enc_pos_raw);
     commands_plot_set_graph(2);
-    commands_send_plot_points(nsample, nb_enc_filter_error);
+    commands_send_plot_points(nsample, last_nb_enc_filter_error);
     commands_plot_set_graph(3);
     commands_send_plot_points(nsample, enc_last_pos_filter);
 
-		chThdSleepMilliseconds(1);
+    enc_last_last_pos_filter = enc_last_pos_filter;
+    enc_last_pos_filter = enc_pos_filter;
+		//chThdSleepMilliseconds(1);
+    chThdSleepMicroseconds(1000000*1/loop_rate);
 
     // Use commands_get_fw_version_sent_cnt() to guess if we're (re?)connected to a GUI
     /*
