@@ -2,6 +2,7 @@
 #include "commands.h"
 
 static void orthopus_pos_cmd(int argc, const char **argv);
+static void orthopus_filter_cmd(int argc, const char **argv);
 static void orthopus_offset_cmd(int argc, const char **argv);
 static void orthopus_config_cmd(int argc, const char **argv);
 
@@ -9,8 +10,8 @@ static void orthopus_cmd_init(void)
 {
    terminal_register_command_callback(
     "o_offset",
-    "[Orthopus] Initialize Pos PID offset with current AMS (or forced) value",
-    "[d]",
+    "[Orthopus] Initialize Pos PID offset with current AMS (or forced) value. joint: based on AMS zero / encoder: based on actual position  ",
+    "[joint/encoder]",
     orthopus_offset_cmd
   );
 
@@ -26,6 +27,13 @@ static void orthopus_cmd_init(void)
     "[Orthopus] Get current positions",
     "",
     orthopus_pos_cmd
+  );
+
+  terminal_register_command_callback(
+    "o_filter",
+    "[Orthopus] AMS filter parameters",
+    "[anglestep/enable/disable/enableplot/disableplot]",
+    orthopus_filter_cmd
   );
 }
 
@@ -72,6 +80,8 @@ static void orthopus_offset_cmd(int argc, const char **argv)
   {
     v = orthopus_set_encoder_offset(v,argc == 3);
     commands_printf("Init encoder offset: % 7.3f", (double)orthopus_config.encoder_offset);
+  } else {
+    commands_printf("Invalid arguments.");
   }
 }
 
@@ -80,6 +90,9 @@ static void orthopus_config_cmd(int argc, const char **argv)
   if(argc == 0 || !strcmp(argv[1],"print"))
   {
     commands_printf("Encoder offset: % 7.3f",(double)orthopus_config.encoder_offset);
+    commands_printf("Encoder filter anglestep: % 7.3f",(double)orthopus_config.encoder_filter_anglestep);
+    commands_printf("Encoder Filter enabled: %s", orthopus_config.encoder_filter_enable ? "true" : "false");
+    commands_printf("Encoder Filter plot enabled: %s", orthopus_config.encoder_filter_plot_enable ? "true" : "false");
   }
   else if(!strcmp(argv[1],"load"))
   {
@@ -94,5 +107,47 @@ static void orthopus_config_cmd(int argc, const char **argv)
       commands_printf("Orthopus config saved to EEPROM");
     else
       commands_printf("Orthopus config save failed =/");
+  } else {
+    commands_printf("Invalid arguments.");
+  }
+}
+
+static void orthopus_filter_cmd(int argc, const char **argv)
+{
+  if(argc == 1)
+  {
+    commands_printf("Invalid arguments.");
+    return;
+  }
+  float v = 0; //store 
+  if (argc == 3)
+      sscanf(argv[2], "%f", &v);
+
+  if(!strcmp(argv[1],"anglestep"))
+  {
+    orthopus_config.encoder_filter_anglestep = v;
+    commands_printf("Update filter angle step: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"enable"))
+  {
+    orthopus_config.encoder_filter_enable = true;
+    commands_printf("Encoder filter Enabled");
+  }
+  else if(!strcmp(argv[1],"disable"))
+  {
+    orthopus_config.encoder_filter_enable = false;
+    commands_printf("Encoder filter Disabled");
+  }
+  else if(!strcmp(argv[1],"enableplot"))
+  {
+    orthopus_config.encoder_filter_plot_enable = true;
+    commands_printf("Encoder filter plot Enabled");
+  }
+  else if(!strcmp(argv[1],"disableplot"))
+  {
+    orthopus_config.encoder_filter_plot_enable = false;
+    commands_printf("Encoder filter plot Disabled");
+  } else {
+    commands_printf("Invalid arguments.");
   }
 }

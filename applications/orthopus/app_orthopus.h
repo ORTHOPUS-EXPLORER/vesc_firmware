@@ -12,6 +12,10 @@ static volatile bool orthopus_thread_stop,
 typedef struct
 {
   float encoder_offset;
+  float encoder_filter_anglestep;
+  bool encoder_filter_enable;
+  bool encoder_filter_plot_enable;
+  uint8_t pad[2];
 } orthopus_config_t;
 
 static orthopus_config_t orthopus_config;
