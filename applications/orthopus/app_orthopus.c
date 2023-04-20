@@ -109,6 +109,18 @@ void app_custom_configure(app_configuration *conf) {
 
   if(!orthopus_config_load(&orthopus_config))
      commands_printf("Orthopus_config_load failed");
+  // if orthopus config not set, set default values
+  if (!orthopus_config.orthopus_config_set)
+  {
+    orthopus_config.encoder_offset                  = 49.7; //for OR14B005 todo set to zero
+    orthopus_config.encoder_filter_anglestep        = 0.25;
+    orthopus_config.encoder_filter_enable           = true;
+    orthopus_config.encoder_filter_plot_enable      = false;
+    orthopus_config.limits_enable                   = false;
+    orthopus_config.orthopus_config_set             = false;
+    orthopus_config.limits_pos_max                  = 90.0;
+    orthopus_config.limits_pos_min                  = -90.0;
+  }
 }
 
 static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len)

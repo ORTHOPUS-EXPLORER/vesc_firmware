@@ -15,8 +15,11 @@ typedef struct
   float encoder_filter_anglestep;
   bool encoder_filter_enable;
   bool encoder_filter_plot_enable;
-  uint8_t pad[2];
-} orthopus_config_t;
+  bool limits_enable;
+  bool orthopus_config_set;
+  float limits_pos_max;
+  float limits_pos_min;
+} orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;
 
@@ -27,7 +30,9 @@ static bool orthopus_config_save(const orthopus_config_t* cfg);
 static float orthopus_read_encoder(void);
 static float orthopus_read_encoder_raw(void);
 static float orthopus_read_encoder_filtered(void);
+static float orthopus_read_pos_multiturn(void);
 static float app_orthopus_get_enc_pos_filtered(void);
+static float app_orthopus_get_pos_multiturn(void);
 static float orthopus_set_joint_offset(float v, bool use_v);
 static float orthopus_set_encoder_offset(float v, bool use_v);
 
