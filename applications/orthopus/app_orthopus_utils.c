@@ -56,6 +56,11 @@ float orthopus_read_encoder_filtered(void)
   return app_orthopus_get_enc_pos_filtered();
 }
 
+float orthopus_read_pos_multiturn(void)
+{
+  return app_orthopus_get_pos_multiturn();
+}
+
 float orthopus_set_joint_offset(float v, bool use_v)
 {
   if(!use_v)

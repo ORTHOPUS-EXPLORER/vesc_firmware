@@ -15,9 +15,17 @@ static volatile float enc_last_pos_filter = 0.0;
 static volatile int nb_enc_filter_error = 0;
 static volatile int last_nb_enc_filter_error = 0;
 static volatile unsigned long int nsample = 0;
+static volatile float actual_pid_pos = 0;
+static volatile float last_pid_pos = 0;
+static volatile float actual_pos_multiturn = 0;
+static volatile int actual_turn = 0;
 
 float app_orthopus_get_enc_pos_filtered(void) {
 	return enc_pos_filter;
+}
+
+float app_orthopus_get_pos_multiturn(void) {
+	return actual_pos_multiturn;
 }
 
 /*void app_orthopus_set_filter_anglestep(float v) {
@@ -44,6 +52,13 @@ static THD_FUNCTION(orthopus_thread, arg) {
   float v = 0;
   orthopus_set_joint_offset(v, false);
 
+  actual_pid_pos = mc_interface_get_pid_pos_now();
+  last_pid_pos = actual_pid_pos;
+  if ( actual_pid_pos > 180)
+  {
+    actual_turn = -1;
+  }
+
   int get_fw_version_cnt = 0;
 	for(;;) {
 		// Check if it is time to stop.
@@ -61,11 +76,12 @@ static THD_FUNCTION(orthopus_thread, arg) {
     // - mc_interface_set_pid_speed()
     // - mc_interface_set_pid_pos()
 
+    
+    // ENCODER EMI NOISE FILTERING
     enc_pos_raw = orthopus_read_encoder();
     //TODO: take into account current speed to copare raw value with next expected value instead of previous value
     if (orthopus_config.encoder_filter_enable)
     {
-
       last_nb_enc_filter_error = nb_enc_filter_error;
       if ( ((float)fabs(enc_pos_raw - enc_last_pos_filter) > (orthopus_config.encoder_filter_anglestep * (1 + nb_enc_filter_error))) && (fabs(enc_pos_raw - enc_last_pos_filter) < 350) && (nb_enc_filter_error < 5))
       {
@@ -112,7 +128,29 @@ static THD_FUNCTION(orthopus_thread, arg) {
       enc_last_pos_filter = enc_pos_filter;
       nb_enc_filter_error = 0;
     }
-    
+    // Compute encoder position multiturn
+    actual_pid_pos = mc_interface_get_pid_pos_now();
+    if (actual_pid_pos - last_pid_pos < -350)
+    {
+      actual_turn += 1;
+    } else if (actual_pid_pos - last_pid_pos > 350)
+    {
+      actual_turn -= 1;
+    }
+    actual_pos_multiturn = actual_pid_pos + 360*actual_turn;
+    last_pid_pos = actual_pid_pos;
+    // Check coherence between rotor position (sin/cos) and encoder position
+    //TODO
+    // Watch axis software limits
+    if (orthopus_config.limits_enable)
+    {
+      if ((actual_pos_multiturn > orthopus_config.limits_pos_max) || (actual_pos_multiturn < orthopus_config.limits_pos_min))
+      {
+        //commands_printf("Warning actuator outside position limits.");
+        //mc_interface_fault_stop(FAULT_CODE_NONE, false, false); //NOT WORKING (getting stuck with last setpoint). //TODO: manage proper error handling
+      }
+    }
+
     chThdSleepMicroseconds(1000000*1/loop_rate);
 
     // Use commands_get_fw_version_sent_cnt() to guess if we're (re?)connected to a GUI

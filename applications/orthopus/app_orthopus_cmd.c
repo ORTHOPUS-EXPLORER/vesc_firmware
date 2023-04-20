@@ -5,6 +5,7 @@ static void orthopus_pos_cmd(int argc, const char **argv);
 static void orthopus_filter_cmd(int argc, const char **argv);
 static void orthopus_offset_cmd(int argc, const char **argv);
 static void orthopus_config_cmd(int argc, const char **argv);
+static void orthopus_limits_cmd(int argc, const char **argv);
 
 static void orthopus_cmd_init(void)
 {
@@ -34,6 +35,13 @@ static void orthopus_cmd_init(void)
     "[Orthopus] AMS filter parameters",
     "[anglestep/enable/disable/enableplot/disableplot]",
     orthopus_filter_cmd
+  );
+
+  terminal_register_command_callback(
+    "o_limits",
+    "[Orthopus] Actuator limits setting",
+    "[posmax/posmin/enable/disable]",
+    orthopus_limits_cmd
   );
 }
 
@@ -93,6 +101,10 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Encoder filter anglestep: % 7.3f",(double)orthopus_config.encoder_filter_anglestep);
     commands_printf("Encoder Filter enabled: %s", orthopus_config.encoder_filter_enable ? "true" : "false");
     commands_printf("Encoder Filter plot enabled: %s", orthopus_config.encoder_filter_plot_enable ? "true" : "false");
+    commands_printf("Limits enabled: %s", orthopus_config.limits_enable ? "true" : "false");
+    commands_printf("Config set: %s", orthopus_config.orthopus_config_set ? "true" : "false");
+    commands_printf("Limits pos max: % 7.3f",(double)orthopus_config.limits_pos_max);
+    commands_printf("Limits pos min: % 7.3f",(double)orthopus_config.limits_pos_min);
   }
   else if(!strcmp(argv[1],"load"))
   {
@@ -103,6 +115,7 @@ static void orthopus_config_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"save"))
   {
+    orthopus_config.orthopus_config_set = true;
     if(orthopus_config_save(&orthopus_config))
       commands_printf("Orthopus config saved to EEPROM");
     else
@@ -147,6 +160,41 @@ static void orthopus_filter_cmd(int argc, const char **argv)
   {
     orthopus_config.encoder_filter_plot_enable = false;
     commands_printf("Encoder filter plot Disabled");
+  } else {
+    commands_printf("Invalid arguments.");
+  }
+}
+
+static void orthopus_limits_cmd(int argc, const char **argv)
+{
+  if(argc == 1)
+  {
+    commands_printf("Invalid arguments.");
+    return;
+  }
+  float v = 0; //store 
+  if (argc == 3)
+      sscanf(argv[2], "%f", &v);
+
+  if(!strcmp(argv[1],"posmax"))
+  {
+    orthopus_config.limits_pos_max = v;
+    commands_printf("Update max pos: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"posmin"))
+  {
+    orthopus_config.limits_pos_min = v;
+    commands_printf("Update min pos: % 7.3f", (double)v);
+  } 
+  else if(!strcmp(argv[1],"enable"))
+  {
+    orthopus_config.limits_enable = true;
+    commands_printf("limits Enabled");
+  }
+  else if(!strcmp(argv[1],"disable"))
+  {
+    orthopus_config.limits_enable = false;
+    commands_printf("limits Disabled");
   } else {
     commands_printf("Invalid arguments.");
   }
