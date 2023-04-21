@@ -52,7 +52,7 @@ static THD_WORKING_AREA(orthopus_thread_wa, 1024);
 static orthopus_config_t orthopus_config =
 {
   .encoder_offset = 0.0,
-};
+}; //init values to zero in case flash can't be read
 
 
 static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
@@ -120,6 +120,9 @@ void app_custom_configure(app_configuration *conf) {
     orthopus_config.orthopus_config_set             = false;
     orthopus_config.limits_pos_max                  = 90.0;
     orthopus_config.limits_pos_min                  = -90.0;
+    orthopus_config.angle_division                  = 700;
+    orthopus_config.limits_reach_angle              = 15;
+    orthopus_config.limits_reach_speed              = 2;
   }
 }
 
