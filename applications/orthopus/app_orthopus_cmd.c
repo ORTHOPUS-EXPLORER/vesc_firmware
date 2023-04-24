@@ -33,7 +33,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_filter",
     "[Orthopus] AMS filter parameters",
-    "[anglestep/enable/disable/enableplot/disableplot]",
+    "[anglestep/enable/disable/enableplot/disableplot/encerrorgain]",
     orthopus_filter_cmd
   );
 
@@ -98,14 +98,17 @@ static void orthopus_config_cmd(int argc, const char **argv)
 {
   if(argc == 0 || !strcmp(argv[1],"print"))
   {
-    commands_printf("Encoder offset: % 7.3f",(double)orthopus_config.encoder_offset);
-    commands_printf("Encoder filter anglestep: % 7.3f",(double)orthopus_config.encoder_filter_anglestep);
-    commands_printf("Encoder Filter enabled: %s", orthopus_config.encoder_filter_enable ? "true" : "false");
+    commands_printf("Encoder offset:              % 7.3f",(double)orthopus_config.encoder_offset                    );
+    commands_printf("Encoder filter anglestep:    % 7.3f",(double)orthopus_config.encoder_filter_anglestep          );
+    commands_printf("Encoder Filter enabled:      %s", orthopus_config.encoder_filter_enable ? "true" : "false"     );
     commands_printf("Encoder Filter plot enabled: %s", orthopus_config.encoder_filter_plot_enable ? "true" : "false");
-    commands_printf("Limits enabled: %s", orthopus_config.limits_enable ? "true" : "false");
-    commands_printf("Config set: %s", orthopus_config.orthopus_config_set ? "true" : "false");
-    commands_printf("Limits pos max: % 7.3f",(double)orthopus_config.limits_pos_max);
-    commands_printf("Limits pos min: % 7.3f",(double)orthopus_config.limits_pos_min);
+    commands_printf("Limits enabled:              %s", orthopus_config.limits_enable ? "true" : "false"             );
+    commands_printf("Config set:                  %s", orthopus_config.orthopus_config_set ? "true" : "false"       );
+    commands_printf("Limits pos max:              % 7.3f",(double)orthopus_config.limits_pos_max                    );
+    commands_printf("Limits pos min:              % 7.3f",(double)orthopus_config.limits_pos_min                    );
+    commands_printf("Limits reach angle:          % 7.3f",(double)orthopus_config.limits_reach_angle                );
+    commands_printf("Limits reach speed:          % 7.3f",(double)orthopus_config.limits_reach_speed                );
+    commands_printf("Encoder filter error gain:   % 7.3f",(double)orthopus_config.encoder_filter_error_gain         );
   }
   else if(!strcmp(argv[1],"load"))
   {
@@ -161,6 +164,11 @@ static void orthopus_filter_cmd(int argc, const char **argv)
   {
     orthopus_config.encoder_filter_plot_enable = false;
     commands_printf("Encoder filter plot Disabled");
+  }
+  else if(!strcmp(argv[1],"encerrorgain"))
+  {
+    orthopus_config.encoder_filter_error_gain = v;
+    commands_printf("Encoder error gain: % 7.3f", (double)v);
   } else {
     commands_printf("Invalid arguments.");
   }

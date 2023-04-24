@@ -81,6 +81,7 @@ void app_custom_start(void)
     orthopus_config.angle_division                  = 700;
     orthopus_config.limits_reach_angle              = 15;
     orthopus_config.limits_reach_speed              = 2;
+    orthopus_config.encoder_filter_error_gain       = 1;
   }
 
   // Init AMS sensor

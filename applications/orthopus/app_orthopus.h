@@ -22,6 +22,7 @@ typedef struct
   float angle_division;
   float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
   float limits_reach_speed; //speed limit in the reach angle (rpm)
+  float encoder_filter_error_gain;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;

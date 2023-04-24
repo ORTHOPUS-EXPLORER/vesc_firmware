@@ -91,7 +91,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
     if (orthopus_config.encoder_filter_enable)
     {
       last_nb_enc_filter_error = nb_enc_filter_error;
-      if ( ((float)fabs(enc_pos - enc_pos_filter_last) > (orthopus_config.encoder_filter_anglestep * (1 + nb_enc_filter_error))) && (fabs(enc_pos - enc_pos_filter_last) < 350) && (nb_enc_filter_error < 5))
+      if ( ((float)fabs(enc_pos - enc_pos_filter_last) > (orthopus_config.encoder_filter_anglestep * (1 + orthopus_config.encoder_filter_error_gain*nb_enc_filter_error))) && (fabs(enc_pos - enc_pos_filter_last) < 350) && (nb_enc_filter_error < 5))
       {
         nb_enc_filter_error += 1;
         orthopus_state.enc_pos_filter = enc_pos_filter_last;
