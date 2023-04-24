@@ -27,6 +27,17 @@ typedef struct
 
 static orthopus_config_t orthopus_config;
 
+//global variables (interfaces with lispBM and terminal)
+typedef struct
+{
+  float pos_multiturn_now;
+  float enc_pos_filter;
+  float speed_now;
+  float enc_pos;
+} orthopus_state_t;
+
+static volatile orthopus_state_t orthopus_state;
+
 // Utils
 static bool orthopus_config_load(orthopus_config_t* cfg);
 static bool orthopus_config_save(const orthopus_config_t* cfg);
@@ -40,17 +51,13 @@ static float orthopus_read_encoder_raw(void);
 static float orthopus_set_joint_offset(float v, bool use_v);
 static float orthopus_set_encoder_offset(float v, bool use_v);
 
-
+// cmd
 static void orthopus_cmd_init(void);
 static void orthopus_cmd_deinit(void);
+// lisp
 static void orthopus_init_lisp(void);
 
-//global variables (interfaces with lispBM and terminal)
-typedef struct
-{
-  float pos_multiturn_now;
-  float enc_pos_filter;
-  float speed_now;
-} orthopus_state_t;
-
-static volatile orthopus_state_t orthopus_state;
+//algo
+static void orthopus_estop(void);
+static void orthopus_limits(void);
+static void orthopus_plot_encoder_filtering(int ns);
