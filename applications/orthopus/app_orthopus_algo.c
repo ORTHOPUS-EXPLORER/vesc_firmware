@@ -8,24 +8,29 @@ static volatile bool orthopus_thread_running = false;
 
 const int loop_rate = 2000; //loop rate in Hz
 
+static volatile orthopus_state_t orthopus_state =
+{
+  .actual_pos_multiturn = 0.0,
+  .enc_pos_filter = 0.0,
+  .speed_now = 0.0
+};
+
 //AMS filter variables
 static volatile float enc_pos_raw = 0.0;
-//static volatile float enc_pos_filter = 0.0; //moved in app_orthopus.h
 static volatile float enc_last_pos_filter = 0.0;
 static volatile int nb_enc_filter_error = 0;
 static volatile int last_nb_enc_filter_error = 0;
 static volatile unsigned long int nsample = 0;
 static volatile float actual_pid_pos = 0;
 static volatile float last_pid_pos = 0;
-//static volatile float actual_pos_multiturn = 0; //moved in app_orthopus.h
 static volatile int actual_turn = 0;
 
 /*float app_orthopus_get_enc_pos_filtered(void) {
-	return enc_pos_filter;
+	return orthopus_state.enc_pos_filter;
 }*/
 
 /*float app_orthopus_get_pos_multiturn(void) {
-	return actual_pos_multiturn;
+	return orthopus_state.actual_pos_multiturn;
 }*/
 
 /*void app_orthopus_set_filter_anglestep(float v) {
@@ -89,9 +94,9 @@ static THD_FUNCTION(orthopus_thread, arg) {
       if ( ((float)fabs(enc_pos_raw - enc_last_pos_filter) > (orthopus_config.encoder_filter_anglestep * (1 + nb_enc_filter_error))) && (fabs(enc_pos_raw - enc_last_pos_filter) < 350) && (nb_enc_filter_error < 5))
       {
         nb_enc_filter_error += 1;
-        enc_pos_filter = enc_last_pos_filter;
+        orthopus_state.enc_pos_filter = enc_last_pos_filter;
       } else {
-        enc_pos_filter = enc_pos_raw;
+        orthopus_state.enc_pos_filter = enc_pos_raw;
         nb_enc_filter_error = 0;
       }
 
@@ -117,7 +122,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
           commands_plot_add_graph("enc_last_pos_filter");
         }
         commands_plot_set_graph(0);
-        commands_send_plot_points(nsample, enc_pos_filter);
+        commands_send_plot_points(nsample, orthopus_state.enc_pos_filter);
         commands_plot_set_graph(1);
         commands_send_plot_points(nsample, enc_pos_raw);
         commands_plot_set_graph(2);
@@ -125,10 +130,10 @@ static THD_FUNCTION(orthopus_thread, arg) {
         commands_plot_set_graph(3);
         commands_send_plot_points(nsample, enc_last_pos_filter);
       }
-      enc_last_pos_filter = enc_pos_filter;
+      enc_last_pos_filter = orthopus_state.enc_pos_filter;
     } else {
-      enc_pos_filter = enc_pos_raw;
-      enc_last_pos_filter = enc_pos_filter;
+      orthopus_state.enc_pos_filter = enc_pos_raw;
+      enc_last_pos_filter = orthopus_state.enc_pos_filter;
       nb_enc_filter_error = 0;
     }
     // Compute encoder position multiturn
@@ -140,26 +145,26 @@ static THD_FUNCTION(orthopus_thread, arg) {
     {
       actual_turn -= 1;
     }
-    actual_pos_multiturn = actual_pid_pos + 360*actual_turn;
+    orthopus_state.actual_pos_multiturn = actual_pid_pos + 360*actual_turn;
     last_pid_pos = actual_pid_pos;
-    speed_now = mc_interface_get_rpm()/orthopus_config.angle_division; // TODO compute actual speed
+    orthopus_state.speed_now = mc_interface_get_rpm()/orthopus_config.angle_division; // TODO compute actual speed
     // Check coherence between rotor position (sin/cos) and encoder position
     //TODO
     // Watch axis software limits
     if (orthopus_config.limits_enable)
     {
       //check position limits
-      if ((actual_pos_multiturn > orthopus_config.limits_pos_max) || (actual_pos_multiturn < orthopus_config.limits_pos_min))
+      if ((orthopus_state.actual_pos_multiturn > orthopus_config.limits_pos_max) || (orthopus_state.actual_pos_multiturn < orthopus_config.limits_pos_min))
       {
         mc_interface_release_motor();   //disable motor
         mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
         //chThdSleepMilliseconds(10);     //sleep 10ms
       //TODO all in the same if or create estop fuction
-      } else if ((speed_now > orthopus_config.limits_reach_speed
-                  && (actual_pos_multiturn > orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle))
+      } else if ((orthopus_state.speed_now > orthopus_config.limits_reach_speed
+                  && (orthopus_state.actual_pos_multiturn > orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle))
                   ||
-                  ( speed_now < -orthopus_config.limits_reach_speed
-                  && (actual_pos_multiturn < orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)))
+                  ( orthopus_state.speed_now < -orthopus_config.limits_reach_speed
+                  && (orthopus_state.actual_pos_multiturn < orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)))
       {
         mc_interface_release_motor();   //disable motor
         mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
