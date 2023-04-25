@@ -6,7 +6,7 @@
 static volatile bool orthopus_thread_stop = true;
 static volatile bool orthopus_thread_running = false;
 
-const int loop_rate = 2000; //loop rate in Hz
+//const int loop_rate = 2000; //loop rate in Hz
 
 static volatile orthopus_state_t orthopus_state =
 {
@@ -25,6 +25,7 @@ unsigned long int nsample = 0;
 float pid_pos_now = 0;
 float pid_pos_last = 0;
 int turn_now = 0;
+static systime_t time_now, time_last;
 
 
 static THD_FUNCTION(orthopus_thread, arg) {
@@ -53,6 +54,8 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
   get_fw_version_cnt = 0;
   orthopus_thread_running = true;
+  time_now = chVTGetSystemTimeX();
+  time_last = time_now;
 	for(;;)
   {
 		// Check if it is time to stop.
@@ -125,8 +128,17 @@ static THD_FUNCTION(orthopus_thread, arg) {
     //TODO
     if (orthopus_config.limits_enable)
       orthopus_limits();
-
-    chThdSleepMicroseconds(1000000*1/loop_rate);
+    
+    //compute and control loop time TODO: clean
+    time_now = chVTGetSystemTimeX();
+    if (ST2US(time_last - time_now) != 0)
+    {
+      orthopus_state.time_diff = ST2US(time_now - time_last)/1000000.0;
+    }
+    if (ST2US(time_now - time_last) < 1000000.0*1.0/orthopus_config.rate_hz){
+      chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-ST2US(time_now - time_last)); //control loop rate
+    }
+    time_last = time_now;
 	}
 }
 
