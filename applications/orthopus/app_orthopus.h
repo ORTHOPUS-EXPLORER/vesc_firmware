@@ -47,7 +47,7 @@ static void orthopus_init_lisp(void);
 //global variables (interfaces with lispBM and terminal)
 typedef struct
 {
-  float actual_pos_multiturn;
+  float pos_multiturn_now;
   float enc_pos_filter;
   float speed_now;
 } orthopus_state_t;

@@ -60,12 +60,13 @@ static void orthopus_pos_cmd(int argc, const char **argv)
   double pid_v     = mc_interface_get_pid_pos_now();
   double pid_o     = mc_interface_get_configuration()->p_pid_offset;
 
-  commands_printf("orthopus_config.encoder_offset : % 7.3f", (double)orthopus_config.encoder_offset);
-  commands_printf("PID_pos offset                 : % 7.3f", pid_o                                 );
-  commands_printf("AMS_pos                        : % 7.3f", ams_v                                 );
-  commands_printf("SINCOS_pos                     : % 7.3f", sincos_v                              );
-  commands_printf("orthopus_read_encoder()        : % 7.3f", orthop_v                              );
-  commands_printf("PID_pos_now                    : % 7.3f", pid_v                                 );
+  commands_printf("orthopus_config.encoder_offset : % 7.3f", (double)orthopus_config.encoder_offset   );
+  commands_printf("PID_pos offset                 : % 7.3f", pid_o                                    );
+  commands_printf("AMS_pos                        : % 7.3f", ams_v                                    );
+  commands_printf("SINCOS_pos                     : % 7.3f", sincos_v                                 );
+  commands_printf("orthopus_read_encoder()        : % 7.3f", orthop_v                                 );
+  commands_printf("PID_pos_now                    : % 7.3f", pid_v                                    );
+  commands_printf("pos_multiturn_now              : % 7.3f", (double)orthopus_state.pos_multiturn_now );
 }
 
 static void orthopus_offset_cmd(int argc, const char **argv)
@@ -132,7 +133,7 @@ static void orthopus_filter_cmd(int argc, const char **argv)
     commands_printf("Invalid arguments.");
     return;
   }
-  float v = 0; //store 
+  float v = 0; //store
   if (argc == 3)
       sscanf(argv[2], "%f", &v);
 
@@ -172,7 +173,7 @@ static void orthopus_limits_cmd(int argc, const char **argv)
     commands_printf("Invalid arguments.");
     return;
   }
-  float v = 0; //store 
+  float v = 0; //store
   if (argc == 3)
       sscanf(argv[2], "%f", &v);
 
@@ -185,7 +186,7 @@ static void orthopus_limits_cmd(int argc, const char **argv)
   {
     orthopus_config.limits_pos_min = v;
     commands_printf("Update min pos: % 7.3f", (double)v);
-  } 
+  }
   else if(!strcmp(argv[1],"enable"))
   {
     orthopus_config.limits_enable = true;

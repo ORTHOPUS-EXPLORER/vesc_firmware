@@ -89,7 +89,7 @@ static lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn
 {
 	(void)args; (void)argn;
 	//return lbm_enc_float(orthopus_read_pos_multiturn());
-  return lbm_enc_float(orthopus_state.actual_pos_multiturn);
+  return lbm_enc_float(orthopus_state.pos_multiturn_now);
 }
 
 static lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn)
