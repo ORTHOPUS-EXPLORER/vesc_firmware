@@ -44,7 +44,12 @@ static void orthopus_cmd_init(void);
 static void orthopus_cmd_deinit(void);
 static void orthopus_init_lisp(void);
 
-//global variables (intefaces with lispBM and terminal)
-static volatile float actual_pos_multiturn = 0;
-static volatile float enc_pos_filter = 0.0;
-static volatile float speed_now = 0.0;
+//global variables (interfaces with lispBM and terminal)
+typedef struct
+{
+  float actual_pos_multiturn;
+  float enc_pos_filter;
+  float speed_now;
+} orthopus_state_t;
+
+static volatile orthopus_state_t orthopus_state;

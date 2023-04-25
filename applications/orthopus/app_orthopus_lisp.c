@@ -82,21 +82,21 @@ static lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn)
 static lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-	return lbm_enc_float(enc_pos_filter);
+	return lbm_enc_float(orthopus_state.enc_pos_filter);
 }
 
 static lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
 	//return lbm_enc_float(orthopus_read_pos_multiturn());
-  return lbm_enc_float(actual_pos_multiturn);
+  return lbm_enc_float(orthopus_state.actual_pos_multiturn);
 }
 
 static lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
 	//return lbm_enc_float(orthopus_read_pos_multiturn());
-  return lbm_enc_float(speed_now);
+  return lbm_enc_float(orthopus_state.speed_now);
 }
 
 static lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn)
