@@ -42,24 +42,15 @@ static bool orthopus_config_save(const orthopus_config_t* cfg)
 
 float orthopus_read_encoder(void)
 {
-  return enc_as504x_read_angle(&encoder_cfg_as504x)-orthopus_config.encoder_offset;
+  return orthopus_read_encoder_raw()-orthopus_config.encoder_offset;
 }
 
 float orthopus_read_encoder_raw(void)
 {
-  return enc_as504x_read_angle(&encoder_cfg_as504x);
+  if(!orthopus_thread_running)
+    enc_as504x_routine(&encoder_cfg_as504x);
+  return encoder_cfg_as504x.state.last_enc_angle;
 }
-
-/*float orthopus_read_encoder_filtered(void)
-{
-  //return enc_as504x_read_angle(&encoder_cfg_as504x);
-  return app_orthopus_get_enc_pos_filtered();
-}*/
-
-/*float orthopus_read_pos_multiturn(void)
-{
-  return app_orthopus_get_pos_multiturn();
-}*/
 
 float orthopus_set_joint_offset(float v, bool use_v)
 {
@@ -81,7 +72,7 @@ float orthopus_set_joint_offset(float v, bool use_v)
 float orthopus_set_encoder_offset(float v, bool use_v)
 {
   if(!use_v)
-    v = enc_as504x_read_angle(&encoder_cfg_as504x);
+    v = orthopus_read_encoder_raw();
   orthopus_config.encoder_offset = v;
   orthopus_set_joint_offset(0,false);
   return v;
