@@ -131,13 +131,11 @@ static THD_FUNCTION(orthopus_thread, arg) {
     
     //compute and control loop time TODO: clean
     orthopus_plot_cycletime(nsample);
+    int sleeptimeus = 1000000.0*1.0/orthopus_config.rate_hz;
     time_now = chVTGetSystemTimeX();
-    if (ST2US(time_last - time_now) != 0)
-    {
-      orthopus_state.time_diff = ST2US(time_now - time_last)/1000000.0;
-    }
-    if (ST2US(time_now - time_last) < 1000000.0*1.0/orthopus_config.rate_hz){
-      chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-ST2US(time_now - time_last)); //control loop rate
+    orthopus_state.time_diff = ST2US(time_now - time_last);
+    if (orthopus_state.time_diff < sleeptimeus){
+      chThdSleepMicroseconds(sleeptimeus-orthopus_state.time_diff); //control loop rate
     }
     //chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz);
     time_last = time_now;
