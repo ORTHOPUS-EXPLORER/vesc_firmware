@@ -19,7 +19,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[load/save]",
+    "[load/save/setrate]",
     orthopus_config_cmd
   );
 
@@ -67,6 +67,7 @@ static void orthopus_pos_cmd(int argc, const char **argv)
   commands_printf("orthopus_read_encoder()        : % 7.3f", orthop_v                                 );
   commands_printf("PID_pos_now                    : % 7.3f", pid_v                                    );
   commands_printf("pos_multiturn_now              : % 7.3f", (double)orthopus_state.pos_multiturn_now );
+  commands_printf("actual loop rate               : % 7.9f", (double)orthopus_state.time_diff         );
 }
 
 static void orthopus_offset_cmd(int argc, const char **argv)
@@ -96,6 +97,15 @@ static void orthopus_offset_cmd(int argc, const char **argv)
 
 static void orthopus_config_cmd(int argc, const char **argv)
 {
+  if(argc == 1)
+  {
+    commands_printf("Invalid arguments.");
+    return;
+  }
+  float v = 0; //store
+  if (argc == 3)
+      sscanf(argv[2], "%f", &v);
+
   if(argc == 0 || !strcmp(argv[1],"print"))
   {
     commands_printf("Encoder offset:              % 7.3f",(double)orthopus_config.encoder_offset                    );
@@ -109,6 +119,7 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Limits reach angle:          % 7.3f",(double)orthopus_config.limits_reach_angle                );
     commands_printf("Limits reach speed:          % 7.3f",(double)orthopus_config.limits_reach_speed                );
     commands_printf("Encoder filter error gain:   % 7.3f",(double)orthopus_config.encoder_filter_error_gain         );
+    commands_printf("Loop rate:                   % 7.3f",(double)orthopus_config.rate_hz                           );
   }
   else if(!strcmp(argv[1],"load"))
   {
@@ -124,6 +135,13 @@ static void orthopus_config_cmd(int argc, const char **argv)
       commands_printf("Orthopus config saved to EEPROM");
     else
       commands_printf("Orthopus config save failed =/");
+  } else if(!strcmp(argv[1],"setrate"))
+  {
+    if (v > 10) {
+      orthopus_config.rate_hz = (int)v;
+      commands_printf("rate: % 7.3f", (double)(int)v);
+    }
+
   } else {
     commands_printf("Invalid arguments.");
   }
