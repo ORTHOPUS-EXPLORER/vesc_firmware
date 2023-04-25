@@ -25,7 +25,7 @@ unsigned long int nsample = 0;
 float pid_pos_now = 0;
 float pid_pos_last = 0;
 int turn_now = 0;
-static systime_t time_now, time_last;
+static systime_t time_now, time_last, time_start, time_end, exectime;
 
 
 static THD_FUNCTION(orthopus_thread, arg) {
@@ -58,6 +58,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
   time_last = time_now;
 	for(;;)
   {
+    time_start = chVTGetSystemTimeX();
 		// Check if it is time to stop.
 		if (orthopus_thread_stop) {
 			orthopus_thread_running = false;
@@ -131,13 +132,16 @@ static THD_FUNCTION(orthopus_thread, arg) {
     
     //compute and control loop time TODO: clean
     orthopus_plot_cycletime(nsample);
-    int sleeptimeus = 1000000.0*1.0/orthopus_config.rate_hz;
+    //int sleeptimeus = 1000000.0*1.0/orthopus_config.rate_hz;
     time_now = chVTGetSystemTimeX();
     orthopus_state.time_diff = ST2US(time_now - time_last);
-    if (orthopus_state.time_diff < sleeptimeus){
-      chThdSleepMicroseconds(sleeptimeus-orthopus_state.time_diff); //control loop rate
-    }
-    //chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz);
+    orthopus_state.time_diff_filt = 0.99*orthopus_state.time_diff_filt + 0.01*orthopus_state.time_diff; //simple filter
+    orthopus_state.time_lag_filt = orthopus_state.time_diff_filt - 1000000.0*1.0/orthopus_config.rate_hz;
+    time_end = chVTGetSystemTimeX();
+    exectime = time_end - time_start;
+    //sleep 1*/rate - measured execution time (reactive) - measured mean lag rounded to nearest 100th (predictive)
+    chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-exectime-(int)ceil(orthopus_state.time_lag_filt/100.0)*100);
+    //chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-exectime-100); //TODO: auto tune lag compensation or add parameter
     time_last = time_now;
 	}
 }
@@ -248,7 +252,10 @@ static void orthopus_plot_cycletime(int ns)
     plot_started = true;
     commands_init_plot("sample", "cycletime");
     commands_plot_add_graph("cycletime");
+    commands_plot_add_graph("time_lag_filt");
   }
   commands_plot_set_graph(0);
   commands_send_plot_points(ns, orthopus_state.time_diff);
+  commands_plot_set_graph(1);
+  commands_send_plot_points(ns, (int)ceil(orthopus_state.time_lag_filt/100.0)*100);
 }

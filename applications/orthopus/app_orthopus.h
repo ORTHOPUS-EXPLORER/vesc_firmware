@@ -35,7 +35,9 @@ typedef struct
   float enc_pos_filter;
   float speed_now;
   float enc_pos;
-  double time_diff;
+  int time_diff;
+  float time_diff_filt;
+  int time_lag_filt;
 } orthopus_state_t;
 
 static volatile orthopus_state_t orthopus_state;
