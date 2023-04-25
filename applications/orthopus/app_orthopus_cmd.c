@@ -40,7 +40,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_limits",
     "[Orthopus] Actuator limits setting",
-    "[posmax/posmin/enable/disable]",
+    "[posmax/posmin/enable/disable/reachangle/reachspeed]",
     orthopus_limits_cmd
   );
 }
@@ -54,7 +54,7 @@ static void orthopus_cmd_deinit(void)
 static void orthopus_pos_cmd(int argc, const char **argv)
 {
   (void)argc;(void)argv;
-  double ams_v     = enc_as504x_read_angle(&encoder_cfg_as504x);
+  double ams_v     = encoder_cfg_as504x.state.last_enc_angle;//enc_as504x_read_angle(&encoder_cfg_as504x);
   double sincos_v  = enc_sincos_read_deg(&encoder_cfg_sincos);
   double orthop_v  = orthopus_read_encoder();
   double pid_v     = mc_interface_get_pid_pos_now();
@@ -204,6 +204,16 @@ static void orthopus_limits_cmd(int argc, const char **argv)
   {
     orthopus_config.limits_enable = false;
     commands_printf("limits Disabled");
+  }
+  else if(!strcmp(argv[1],"reachangle"))
+  {
+    orthopus_config.limits_reach_angle = v;
+    commands_printf("Limits reach angle: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"reachspeed"))
+  {
+    orthopus_config.limits_reach_speed = v;
+    commands_printf("Limits reach speed: % 7.3f", (double)v);
   } else {
     commands_printf("Invalid arguments.");
   }
