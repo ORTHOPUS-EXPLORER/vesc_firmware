@@ -63,3 +63,4 @@ static void orthopus_init_lisp(void);
 static void orthopus_estop(void);
 static void orthopus_limits(void);
 static void orthopus_plot_encoder_filtering(int ns);
+static void orthopus_plot_cycletime(int ns);

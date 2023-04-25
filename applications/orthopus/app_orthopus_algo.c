@@ -130,6 +130,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
       orthopus_limits();
     
     //compute and control loop time TODO: clean
+    orthopus_plot_cycletime(nsample);
     time_now = chVTGetSystemTimeX();
     if (ST2US(time_last - time_now) != 0)
     {
@@ -138,6 +139,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
     if (ST2US(time_now - time_last) < 1000000.0*1.0/orthopus_config.rate_hz){
       chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-ST2US(time_now - time_last)); //control loop rate
     }
+    //chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz);
     time_last = time_now;
 	}
 }
@@ -226,4 +228,29 @@ static void orthopus_plot_encoder_filtering(int ns)
   commands_send_plot_points(ns, last_nb_enc_filter_error);
   commands_plot_set_graph(3);
   commands_send_plot_points(ns, enc_pos_filter_last);
+}
+
+/**
+ * For debug - plot loop cycle time
+ *
+ * @param ns
+ * Sample number
+ *
+ * @return
+ * void
+ */
+static void orthopus_plot_cycletime(int ns)
+{
+  bool plot_started=true;
+  if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
+    get_fw_version_cnt = commands_get_fw_version_sent_cnt();
+    plot_started = false;
+  }
+  if (!plot_started) {
+    plot_started = true;
+    commands_init_plot("sample", "cycletime");
+    commands_plot_add_graph("cycletime");
+  }
+  commands_plot_set_graph(0);
+  commands_send_plot_points(ns, orthopus_state.time_diff);
 }
