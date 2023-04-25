@@ -38,12 +38,10 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
 	chRegSetThreadName("OrthopusTh");
 
-	orthopus_thread_running = true;
-
   size_t encoder_wait=10;
   do
   {
-    enc_as504x_read_angle(&encoder_cfg_as504x);
+    enc_as504x_routine(&encoder_cfg_as504x);
     chThdSleepMilliseconds(1);
     if(encoder_wait && !(--encoder_wait))
       break;
@@ -60,7 +58,9 @@ static THD_FUNCTION(orthopus_thread, arg) {
   }
 
   int get_fw_version_cnt = 0;
-	for(;;) {
+  orthopus_thread_running = true;
+	for(;;)
+  {
 		// Check if it is time to stop.
 		if (orthopus_thread_stop) {
 			orthopus_thread_running = false;
@@ -69,6 +69,9 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
 		timeout_reset(); // Reset timeout if everything is OK.
 
+    // Read AMS
+    enc_as504x_routine(&encoder_cfg_as504x);
+
 		// Run your logic here. A lot of functionality is available in mc_interface.h.
 
     // You can call  functions such as:
@@ -76,10 +79,10 @@ static THD_FUNCTION(orthopus_thread, arg) {
     // - mc_interface_set_pid_speed()
     // - mc_interface_set_pid_pos()
 
-    
+
     // ENCODER EMI NOISE FILTERING
     enc_pos_raw = orthopus_read_encoder();
-    //TODO: take into account current speed to copare raw value with next expected value instead of previous value
+    //TODO: take into account current speed to compare raw value with next expected value instead of previous value
     if (orthopus_config.encoder_filter_enable)
     {
       last_nb_enc_filter_error = nb_enc_filter_error;
@@ -162,29 +165,10 @@ static THD_FUNCTION(orthopus_thread, arg) {
         mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
         //chThdSleepMilliseconds(10);     //sleep 10ms
       }
-      
+
     }
 
     chThdSleepMicroseconds(1000000*1/loop_rate);
-
-    // Use commands_get_fw_version_sent_cnt() to guess if we're (re?)connected to a GUI
-    /*
-    bool plot_started=true;
-		if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
-			get_fw_version_cnt = commands_get_fw_version_sent_cnt();
-			plot_started = false;
-		}
-
-    // Init the plot in the APP from here.
-    if (!plot_started) {
-      plot_started = true;
-      commands_init_plot("X", "Y");
-      commands_plot_add_graph("myPlot");
-    }
-
-    commands_plot_set_graph(0);
-    commands_send_plot_points(enc_as504x_read_angle(&encoder_cfg_as504x), orthopus_read_encoder());
-    */
 
     // Couldn't figure out how this works
     //float samples[10]={12.34,56.78};
