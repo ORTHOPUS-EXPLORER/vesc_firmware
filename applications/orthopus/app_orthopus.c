@@ -112,7 +112,7 @@ void app_custom_start(void)
   // Custom thread
 	orthopus_thread_stop = false;
 	chThdCreateStatic(orthopus_thread_wa, sizeof(orthopus_thread_wa),
-			NORMALPRIO+40, orthopus_thread, NULL);
+			NORMALPRIO+20, orthopus_thread, NULL);
 }
 
 // Called when the custom application is stopped. Stop our threads
