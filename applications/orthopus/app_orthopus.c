@@ -58,6 +58,9 @@ static orthopus_config_t or_conf =
 static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
 static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len);
 
+static bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len);
+static bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len);
+
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
 void app_custom_start(void)
@@ -91,8 +94,13 @@ void app_custom_start(void)
   // Add LISP commands/symbols
   lispif_add_ext_load_callback(&orthopus_init_lisp);
 
+  // Custom Packets Handlers
   commands_set_app_data_handler(orthopus_process_custom_app_data);
   commands_set_hw_data_handler(orthopus_process_custom_hw_data);
+
+  // Custom CAN handlers
+  comm_can_set_sid_rx_callback(orthopus_process_can_sid);
+  comm_can_set_eid_rx_callback(orthopus_process_can_eid);
 
  // Hard-RT context
 	mc_interface_set_pwm_callback(orthopus_pwm_callback);
@@ -113,9 +121,14 @@ void app_custom_stop(void)
 	orthopus_thread_stop = true;
 	while (orthopus_thread_running)
 		chThdSleepMilliseconds(1);
-  // Packet handlers
+
+  // CustomPacket handlers
   commands_set_app_data_handler(0);
   commands_set_hw_data_handler(0);
+  // Custom CAN handlers
+  comm_can_set_sid_rx_callback(0);
+  comm_can_set_eid_rx_callback(0);
+
   // Commands
 	orthopus_cmd_deinit();
 }
@@ -130,17 +143,40 @@ static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int l
 
   unsigned int olen=0;
   unsigned char tx_d[256];
+  tx_d[0] = 0x12;
+  tx_d[1] = 0x45;
+  for(olen=2;olen<2+6*4+1;olen++)
+    tx_d[olen] = olen - 2;
   if(olen)
     commands_send_app_data(tx_d, olen);
 }
 
-// FIXME: Figure out how to send these packets from the APP or from CAN
 static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len)
 {
   (void)rx_d; (void)len;
 
   unsigned int olen=0;
   unsigned char tx_d[256];
+  tx_d[0] = 0x98;
+  tx_d[1] = 0x42;
+  olen = 2;
   if(olen)
     commands_send_hw_data(tx_d, olen);
+}
+
+
+static bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
+{
+  (void)id; (void)data; (void)len;
+  //int32_t send_index = 0;
+	//uint8_t buffer[8];
+	//buffer_append_uint32(buffer, 0x1234567890, &send_index);
+	//comm_can_send_buffer(id, buffer, send_index, 0);
+  return false;
+}
+
+static bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
+{
+  (void)id; (void)data; (void)len;
+  return false;
 }
