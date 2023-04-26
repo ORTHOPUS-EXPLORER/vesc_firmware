@@ -275,13 +275,10 @@ static void orthopus_plot_cycletime(int ns)
     plot_started = true;
     commands_init_plot("sample", "cycletime");
     commands_plot_add_graph("cycletime");
-    commands_plot_add_graph("time_lag_filt");
-    commands_plot_add_graph("time_lag_compensation");
+    commands_plot_add_graph("time_diff_filt");
   }
   commands_plot_set_graph(0);
   commands_send_plot_points(ns, orthopus_state.time_diff*1.0);
   commands_plot_set_graph(1);
-  commands_send_plot_points(ns, orthopus_state.time_lag_filt*1.0);
-  commands_plot_set_graph(2);
-  commands_send_plot_points(ns, orthopus_state.time_lag_compensation*1.0);
+  commands_send_plot_points(ns, orthopus_state.time_diff_filt*1.0);
 }
