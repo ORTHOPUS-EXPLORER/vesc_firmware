@@ -83,6 +83,7 @@ void app_custom_start(void)
     orthopus_config.limits_reach_speed              = 2;
     orthopus_config.encoder_filter_error_gain       = 1;
     orthopus_config.rate_hz                         = 2000;
+    orthopus_config.perf_compensatelag              = false;
   }
 
   // Init AMS sensor
@@ -112,7 +113,7 @@ void app_custom_start(void)
   // Custom thread
 	orthopus_thread_stop = false;
 	chThdCreateStatic(orthopus_thread_wa, sizeof(orthopus_thread_wa),
-			NORMALPRIO+20, orthopus_thread, NULL);
+			NORMALPRIO+40, orthopus_thread, NULL);
 }
 
 // Called when the custom application is stopped. Stop our threads
