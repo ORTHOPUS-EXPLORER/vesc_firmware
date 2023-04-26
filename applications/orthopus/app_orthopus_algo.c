@@ -139,7 +139,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
     orthopus_state.pos_multiturn_now = pid_pos_now + 360*turn_now;
     pid_pos_last = pid_pos_now;
-    orthopus_state.speed_now = mc_interface_get_rpm()/orthopus_config.angle_division; // TODO compute actual speed
+    orthopus_state.speed_now = mc_interface_get_rpm()/orthopus_config.angle_division;
     // Check coherence between rotor position (sin/cos) and encoder position
     //TODO
     if (orthopus_config.limits_enable)
@@ -149,8 +149,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
     if (orthopus_state.perfplot)
       orthopus_plot_cycletime(nsample);
     time_now = chVTGetSystemTimeX();
-    //orthopus_state.time_diff = ST2US2(time_now - time_last);
-    orthopus_state.time_diff = 100.999*(time_now - time_last); //TODO 
+    orthopus_state.time_diff = ST2US2(time_now - time_last);
     orthopus_state.time_diff_filt = 0.99*orthopus_state.time_diff_filt
                                   + 0.01*(orthopus_state.time_diff
                                   + orthopus_state.time_lag_compensation); //simple filter
@@ -162,7 +161,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
     time_end = chVTGetSystemTimeX();
     orthopus_state.exectime = time_end - time_start;
     if (orthopus_config.perf_compensateexectime)
-      chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-100.999*orthopus_state.exectime);
+      chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-ST2US2(orthopus_state.exectime));
     else 
       chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz);
     time_last = time_now;
