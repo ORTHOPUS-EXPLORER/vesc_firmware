@@ -6,6 +6,19 @@
 static volatile bool orthopus_thread_stop = true;
 static volatile bool orthopus_thread_running = false;
 
+/**
+ * @brief   System ticks to microseconds.
+ * @details Converts from system ticks number to microseconds.
+ * @note    The result is rounded up to the next microsecond boundary.
+ *
+ * @param[in] n         number of system ticks
+ * @return              The number of microseconds.
+ *
+ * @api
+ */
+#define ST2US2(n) (((n) * 1000000UL + 10000UL - 1UL) /           \
+                  10000UL)
+
 //const int loop_rate = 2000; //loop rate in Hz
 
 static volatile orthopus_state_t orthopus_state =
@@ -25,8 +38,8 @@ unsigned long int nsample = 0;
 float pid_pos_now = 0;
 float pid_pos_last = 0;
 int turn_now = 0;
-static systime_t time_now, time_last, time_start, time_end, exectime;
-
+static systime_t time_now, time_last, time_start, time_end;
+//static int time_now, time_last, time_start, time_end;
 
 static THD_FUNCTION(orthopus_thread, arg) {
 	(void)arg;
@@ -53,6 +66,8 @@ static THD_FUNCTION(orthopus_thread, arg) {
   }
 
   get_fw_version_cnt = 0;
+  orthopus_state.maxperiod = -1; //init max period
+  orthopus_state.minperiod = -1; //init min period
   orthopus_thread_running = true;
   time_now = chVTGetSystemTimeX();
   time_last = time_now;
@@ -131,17 +146,28 @@ static THD_FUNCTION(orthopus_thread, arg) {
       orthopus_limits();
     
     //compute and control loop time TODO: clean
-    orthopus_plot_cycletime(nsample);
-    //int sleeptimeus = 1000000.0*1.0/orthopus_config.rate_hz;
+    if (orthopus_state.perfplot)
+      orthopus_plot_cycletime(nsample);
     time_now = chVTGetSystemTimeX();
-    orthopus_state.time_diff = ST2US(time_now - time_last);
-    orthopus_state.time_diff_filt = 0.99*orthopus_state.time_diff_filt + 0.01*orthopus_state.time_diff; //simple filter
+    //orthopus_state.time_diff = ST2US2(time_now - time_last);
+    orthopus_state.time_diff = 100.999*(time_now - time_last); //TODO 
+    orthopus_state.time_diff_filt = 0.9*orthopus_state.time_diff_filt
+                                  + 0.1*(orthopus_state.time_diff
+                                  + orthopus_state.time_lag_compensation); //simple filter
     orthopus_state.time_lag_filt = orthopus_state.time_diff_filt - 1000000.0*1.0/orthopus_config.rate_hz;
+    if (orthopus_config.perf_compensatelag)
+    {
+      orthopus_state.time_lag_compensation = orthopus_state.time_lag_filt;
+    } else {
+      orthopus_state.time_lag_compensation = 0;
+    }
+    if (orthopus_state.time_diff > orthopus_state.maxperiod)
+      orthopus_state.maxperiod = orthopus_state.time_diff;
+    if (orthopus_state.time_diff < orthopus_state.minperiod)
+      orthopus_state.minperiod = orthopus_state.time_diff;
     time_end = chVTGetSystemTimeX();
-    exectime = time_end - time_start;
-    //sleep 1*/rate - measured execution time (reactive) - measured mean lag rounded to nearest 100th (predictive)
-    chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-exectime-(int)ceil(orthopus_state.time_lag_filt/100.0)*100);
-    //chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-exectime-100); //TODO: auto tune lag compensation or add parameter
+    orthopus_state.exectime = time_end - time_start;
+    chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-100.999*orthopus_state.exectime);
     time_last = time_now;
 	}
 }
@@ -253,9 +279,12 @@ static void orthopus_plot_cycletime(int ns)
     commands_init_plot("sample", "cycletime");
     commands_plot_add_graph("cycletime");
     commands_plot_add_graph("time_lag_filt");
+    commands_plot_add_graph("time_lag_compensation");
   }
   commands_plot_set_graph(0);
-  commands_send_plot_points(ns, orthopus_state.time_diff);
+  commands_send_plot_points(ns, orthopus_state.time_diff*1.0);
   commands_plot_set_graph(1);
-  commands_send_plot_points(ns, (int)ceil(orthopus_state.time_lag_filt/100.0)*100);
+  commands_send_plot_points(ns, orthopus_state.time_lag_filt*1.0);
+  commands_plot_set_graph(2);
+  commands_send_plot_points(ns, orthopus_state.time_lag_compensation*1.0);
 }

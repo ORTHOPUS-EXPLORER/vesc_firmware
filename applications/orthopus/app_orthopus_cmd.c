@@ -6,6 +6,7 @@ static void orthopus_filter_cmd(int argc, const char **argv);
 static void orthopus_offset_cmd(int argc, const char **argv);
 static void orthopus_config_cmd(int argc, const char **argv);
 static void orthopus_limits_cmd(int argc, const char **argv);
+static void orthopus_perf_cmd(int argc, const char **argv);
 
 static void orthopus_cmd_init(void)
 {
@@ -19,7 +20,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[load/save/setrate]",
+    "[load/save/setrate/enablelaccomp/disablelagcomp]",
     orthopus_config_cmd
   );
 
@@ -43,6 +44,14 @@ static void orthopus_cmd_init(void)
     "[posmax/posmin/enable/disable/reachangle/reachspeed]",
     orthopus_limits_cmd
   );
+
+  terminal_register_command_callback(
+    "o_perf",
+    "[Orthopus] Performance stats",
+    "[void/enableplot]",
+    orthopus_perf_cmd
+  );
+  //TODO: o_perf : print performance stats (actual rate, mean rate, jitter, etc.)
 }
 
 static void orthopus_cmd_deinit(void)
@@ -142,10 +151,19 @@ static void orthopus_config_cmd(int argc, const char **argv)
       commands_printf("rate: % 7.3f", (double)(int)v);
     }
 
+  } else if(!strcmp(argv[1],"enablelagcomp"))
+  {
+    orthopus_config.perf_compensatelag = true;
+    commands_printf("Lag compensation Enabled");
+  }
+  else if(!strcmp(argv[1],"disablelagcomp"))
+  {
+    orthopus_config.perf_compensatelag = false;
+    commands_printf("Lag compensation Disabled");
   } else {
     commands_printf("Invalid arguments.");
   }
-}
+} //orthopus_config.perf_compensatelag
 
 static void orthopus_filter_cmd(int argc, const char **argv)
 {
@@ -234,5 +252,38 @@ static void orthopus_limits_cmd(int argc, const char **argv)
     commands_printf("Limits reach speed: % 7.3f", (double)v);
   } else {
     commands_printf("Invalid arguments.");
+  }
+}
+
+static void orthopus_perf_cmd(int argc, const char **argv)
+{
+  if(argc == 1)
+  {
+    (void)argc;(void)argv;
+    commands_printf("measured period (us) : % f", (double)orthopus_state.time_diff);
+    commands_printf("loop execution time (ticks) : % d", orthopus_state.exectime);
+    commands_printf("requested rade (Hz) : % 7.3f", (double)orthopus_config.rate_hz);
+    if (orthopus_state.time_diff != 0)
+      commands_printf("measured rate (Hz) : % 7.3f", (double)(1.0/(orthopus_state.time_diff/1000000.0)));
+    commands_printf("measured lag (filtered) (us) : % 7.3f", (double)orthopus_state.time_lag_filt);
+    commands_printf("compensated lag (us) : % d", orthopus_state.time_lag_compensation);
+    commands_printf("max period since last call of o_perf (us) : % d", orthopus_state.maxperiod);
+    commands_printf("min period since last call of o_perf (us) : % d", orthopus_state.minperiod);
+    commands_printf("time_now (us) : % d", chVTGetSystemTimeX());
+    orthopus_state.maxperiod = 0; //reset max period
+    orthopus_state.minperiod = 10000; //reset min period
+  } else if (argc == 2){
+    if(!strcmp(argv[1],"enableplot"))
+    {
+      orthopus_state.perfplot= true;
+      commands_printf("Perf plot Enabled");
+    }
+    else if(!strcmp(argv[1],"disableplot"))
+    {
+      orthopus_state.perfplot = false;
+      commands_printf("Perf plot Disabled");
+    } else {
+      commands_printf("Invalid arguments.");
+    }
   }
 }
