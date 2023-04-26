@@ -43,6 +43,10 @@ typedef struct
   uint maxperiod;
   uint minperiod;
   uint exectime;
+  float ADC3val;
+  float ADC3zero;
+  float Torque;
+  float ADC3init;
 } orthopus_state_t;
 
 static volatile orthopus_state_t orthopus_state;
@@ -71,3 +75,4 @@ static void orthopus_estop(void);
 static void orthopus_limits(void);
 static void orthopus_plot_encoder_filtering(int ns);
 static void orthopus_plot_cycletime(int ns);
+static void orthopus_plot_impedance(int ns);

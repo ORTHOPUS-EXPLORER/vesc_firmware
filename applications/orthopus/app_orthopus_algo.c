@@ -18,6 +18,7 @@ static volatile bool orthopus_thread_running = false;
  */
 #define ST2US2(n) (((n) * 1000000UL + 10000UL - 1UL) /           \
                   10000UL)
+//TODO: replace By ST2US after testing
 
 //const int loop_rate = 2000; //loop rate in Hz
 
@@ -26,7 +27,8 @@ static volatile orthopus_state_t orthopus_state =
   .pos_multiturn_now = 0.0,
   .enc_pos_filter = 0.0,
   .speed_now = 0.0,
-  .enc_pos   = 0.0
+  .enc_pos   = 0.0,
+  .ADC3zero = 0.0
 };
 
 
@@ -40,6 +42,7 @@ float pid_pos_last = 0;
 int turn_now = 0;
 static systime_t time_now, time_last, time_start, time_end;
 //static int time_now, time_last, time_start, time_end;
+int ninitadc = 0;
 
 static THD_FUNCTION(orthopus_thread, arg) {
 	(void)arg;
@@ -144,6 +147,23 @@ static THD_FUNCTION(orthopus_thread, arg) {
     //TODO
     if (orthopus_config.limits_enable)
       orthopus_limits();
+
+    //Impedance control
+    orthopus_state.ADC3val = ADC_VOLTS(ADC_IND_EXT3);
+    if (!orthopus_state.ADC3init) //init ADC Zero
+    {
+      ++ninitadc;
+      orthopus_state.ADC3zero += orthopus_state.ADC3val/500.0;
+      if (ninitadc == 500)
+      {
+        orthopus_state.ADC3init = true;
+      }
+    } else {
+      orthopus_state.Torque = 0.96*orthopus_state.Torque + 0.04*(orthopus_state.ADC3val-orthopus_state.ADC3zero);
+      orthopus_plot_impedance(nsample);
+      //TODO: control loop
+    }
+    
     
     //compute and control loop time TODO: clean
     if (orthopus_state.perfplot)
@@ -280,4 +300,35 @@ static void orthopus_plot_cycletime(int ns)
   commands_send_plot_points(ns, orthopus_state.time_diff*1.0);
   commands_plot_set_graph(1);
   commands_send_plot_points(ns, orthopus_state.time_diff_filt*1.0);
+}
+
+/**
+ * For debug - plot loop cycle time
+ *
+ * @param ns
+ * Sample number
+ *
+ * @return
+ * void
+ */
+static void orthopus_plot_impedance(int ns)
+{
+  bool plot_started=true;
+  if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
+    get_fw_version_cnt = commands_get_fw_version_sent_cnt();
+    plot_started = false;
+  }
+  if (!plot_started) {
+    plot_started = true;
+    commands_init_plot("sample", "V");
+    commands_plot_add_graph("ADC3cal");
+    commands_plot_add_graph("Torque");
+    //commands_plot_add_graph("ADC3zero");
+  }
+  commands_plot_set_graph(0);
+  commands_send_plot_points(ns, orthopus_state.ADC3val*1.0);
+  commands_plot_set_graph(1);
+  commands_send_plot_points(ns, orthopus_state.Torque*1.0);
+  //commands_plot_set_graph(2);
+  //commands_send_plot_points(ns, orthopus_state.ADC3zero*1.0);
 }
