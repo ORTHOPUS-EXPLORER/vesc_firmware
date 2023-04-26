@@ -264,7 +264,9 @@ static void orthopus_perf_cmd(int argc, const char **argv)
     commands_printf("requested rade (Hz) : % 7.3f", (double)orthopus_config.rate_hz);
     if (orthopus_state.time_diff != 0)
       commands_printf("measured rate (Hz) : % 7.3f", (double)(1.0/(orthopus_state.time_diff/1000000.0)));
-    commands_printf("measured mean lag  (us) : % 7.3f", (double)orthopus_state.time_lag_filt);
+    commands_printf("measured mean period  (us) : % 7.3f", (double)orthopus_state.time_diff_filt);
+    if (orthopus_state.time_diff_filt != 0)
+      commands_printf("measured mean rate (Hz) : % 7.3f", (double)(1.0/(orthopus_state.time_diff_filt/1000000.0)));
     commands_printf("max period since last call of o_perf (us) : % d", orthopus_state.maxperiod);
     commands_printf("min period since last call of o_perf (us) : % d", orthopus_state.minperiod);
     orthopus_state.maxperiod = 0; //reset max period
