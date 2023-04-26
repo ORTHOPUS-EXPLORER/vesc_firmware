@@ -20,7 +20,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[load/save/setrate/enablelaccomp/disablelagcomp]",
+    "[load/save/setrate/enabletimecomp/disabletimecomp]",
     orthopus_config_cmd
   );
 
@@ -76,7 +76,6 @@ static void orthopus_pos_cmd(int argc, const char **argv)
   commands_printf("orthopus_read_encoder()        : % 7.3f", orthop_v                                 );
   commands_printf("PID_pos_now                    : % 7.3f", pid_v                                    );
   commands_printf("pos_multiturn_now              : % 7.3f", (double)orthopus_state.pos_multiturn_now );
-  commands_printf("actual loop rate               : % 7.9f", (double)orthopus_state.time_diff         );
 }
 
 static void orthopus_offset_cmd(int argc, const char **argv)
@@ -151,15 +150,15 @@ static void orthopus_config_cmd(int argc, const char **argv)
       commands_printf("rate: % 7.3f", (double)(int)v);
     }
 
-  } else if(!strcmp(argv[1],"enablelagcomp"))
+  } else if(!strcmp(argv[1],"enabletimecomp"))
   {
-    orthopus_config.perf_compensatelag = true;
-    commands_printf("Lag compensation Enabled");
+    orthopus_config.perf_compensateexectime = true;
+    commands_printf("Execution time compensation Enabled");
   }
-  else if(!strcmp(argv[1],"disablelagcomp"))
+  else if(!strcmp(argv[1],"disabletimecomp"))
   {
-    orthopus_config.perf_compensatelag = false;
-    commands_printf("Lag compensation Disabled");
+    orthopus_config.perf_compensateexectime = false;
+    commands_printf("Execution time compensation Disabled");
   } else {
     commands_printf("Invalid arguments.");
   }
@@ -265,11 +264,9 @@ static void orthopus_perf_cmd(int argc, const char **argv)
     commands_printf("requested rade (Hz) : % 7.3f", (double)orthopus_config.rate_hz);
     if (orthopus_state.time_diff != 0)
       commands_printf("measured rate (Hz) : % 7.3f", (double)(1.0/(orthopus_state.time_diff/1000000.0)));
-    commands_printf("measured lag (filtered) (us) : % 7.3f", (double)orthopus_state.time_lag_filt);
-    commands_printf("compensated lag (us) : % d", orthopus_state.time_lag_compensation);
+    commands_printf("measured mean lag  (us) : % 7.3f", (double)orthopus_state.time_lag_filt);
     commands_printf("max period since last call of o_perf (us) : % d", orthopus_state.maxperiod);
     commands_printf("min period since last call of o_perf (us) : % d", orthopus_state.minperiod);
-    commands_printf("time_now (us) : % d", chVTGetSystemTimeX());
     orthopus_state.maxperiod = 0; //reset max period
     orthopus_state.minperiod = 10000; //reset min period
   } else if (argc == 2){

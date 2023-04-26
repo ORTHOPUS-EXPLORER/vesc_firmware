@@ -151,23 +151,20 @@ static THD_FUNCTION(orthopus_thread, arg) {
     time_now = chVTGetSystemTimeX();
     //orthopus_state.time_diff = ST2US2(time_now - time_last);
     orthopus_state.time_diff = 100.999*(time_now - time_last); //TODO 
-    orthopus_state.time_diff_filt = 0.9*orthopus_state.time_diff_filt
-                                  + 0.1*(orthopus_state.time_diff
+    orthopus_state.time_diff_filt = 0.99*orthopus_state.time_diff_filt
+                                  + 0.01*(orthopus_state.time_diff
                                   + orthopus_state.time_lag_compensation); //simple filter
     orthopus_state.time_lag_filt = orthopus_state.time_diff_filt - 1000000.0*1.0/orthopus_config.rate_hz;
-    if (orthopus_config.perf_compensatelag)
-    {
-      orthopus_state.time_lag_compensation = orthopus_state.time_lag_filt;
-    } else {
-      orthopus_state.time_lag_compensation = 0;
-    }
     if (orthopus_state.time_diff > orthopus_state.maxperiod)
       orthopus_state.maxperiod = orthopus_state.time_diff;
     if (orthopus_state.time_diff < orthopus_state.minperiod)
       orthopus_state.minperiod = orthopus_state.time_diff;
     time_end = chVTGetSystemTimeX();
     orthopus_state.exectime = time_end - time_start;
-    chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-100.999*orthopus_state.exectime);
+    if (orthopus_config.perf_compensateexectime)
+      chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz-100.999*orthopus_state.exectime);
+    else 
+      chThdSleepMicroseconds(1000000.0*1.0/orthopus_config.rate_hz);
     time_last = time_now;
 	}
 }
