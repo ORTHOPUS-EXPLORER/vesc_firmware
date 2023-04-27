@@ -82,7 +82,7 @@ void app_custom_start(void)
     orthopus_config.limits_reach_angle              = 15;
     orthopus_config.limits_reach_speed              = 2;
     orthopus_config.encoder_filter_error_gain       = 1;
-    orthopus_config.rate_hz                         = 2000;
+    orthopus_config.rate_hz                         = 1000;
     orthopus_config.perf_compensateexectime         = TRUE;
   }
 

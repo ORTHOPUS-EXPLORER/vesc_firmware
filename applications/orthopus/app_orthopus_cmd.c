@@ -7,6 +7,7 @@ static void orthopus_offset_cmd(int argc, const char **argv);
 static void orthopus_config_cmd(int argc, const char **argv);
 static void orthopus_limits_cmd(int argc, const char **argv);
 static void orthopus_perf_cmd(int argc, const char **argv);
+static void orthopus_control_cmd(int argc, const char **argv);
 
 static void orthopus_cmd_init(void)
 {
@@ -50,6 +51,13 @@ static void orthopus_cmd_init(void)
     "[Orthopus] Performance stats",
     "[void/enableplot]",
     orthopus_perf_cmd
+  );
+
+  terminal_register_command_callback(
+    "o_control",
+    "[Orthopus] AMS filter parameters",
+    "[enable/disable/enableplot/disableplot/kp/zerotorque/torquefilterconst]",
+    orthopus_control_cmd
   );
   //TODO: o_perf : print performance stats (actual rate, mean rate, jitter, etc.)
 }
@@ -284,5 +292,56 @@ static void orthopus_perf_cmd(int argc, const char **argv)
     } else {
       commands_printf("Invalid arguments.");
     }
+  }
+}
+
+static void orthopus_control_cmd(int argc, const char **argv)
+{
+  if(argc == 1)
+  {
+    commands_printf("Invalid arguments.");
+    return;
+  }
+  float v = 0; //store
+  if (argc == 3)
+      sscanf(argv[2], "%f", &v);
+
+  if(!strcmp(argv[1],"enable"))
+  {
+    orthopus_state.ctrl_enable = true;
+    commands_printf("Control Enabled");
+  }
+  else if(!strcmp(argv[1],"disable"))
+  {
+    orthopus_state.ctrl_enable = false;
+    commands_printf("Control Disabled");
+  }
+  else if(!strcmp(argv[1],"enableplot"))
+  {
+    orthopus_state.ctrl_plot = true;
+    commands_printf("Control plot Enabled");
+  }
+  else if(!strcmp(argv[1],"disableplot"))
+  {
+    orthopus_state.ctrl_plot = false;
+    commands_printf("Control plot Disabled");
+  }
+  else if(!strcmp(argv[1],"kp"))
+  {
+    orthopus_state.ctrl_kp = v;
+    commands_printf("Control kp: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"zerotorque"))
+  {
+    orthopus_state.ADC3init = false;
+    orthopus_state.ADC3zero = 0;
+    commands_printf("reinitializing torque zero: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"torquefilterconst"))
+  {
+    orthopus_state.torque_filter_const = v;
+    commands_printf("Torque filter const: % 7.3f", (double)v);
+  } else {
+    commands_printf("Invalid arguments.");
   }
 }
