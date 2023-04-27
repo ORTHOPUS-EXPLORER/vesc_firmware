@@ -47,6 +47,11 @@ typedef struct
   float ADC3zero;
   float Torque;
   float ADC3init;
+  float torque_filter_const;
+  bool ctrl_enable;
+  bool ctrl_plot;
+  float ctrl_kp;
+  float ctrl_command;
 } orthopus_state_t;
 
 static volatile orthopus_state_t orthopus_state;

@@ -157,11 +157,20 @@ static THD_FUNCTION(orthopus_thread, arg) {
       if (ninitadc == 500)
       {
         orthopus_state.ADC3init = true;
+        ninitadc = 0; ///TODO: debug
       }
     } else {
-      orthopus_state.Torque = 0.96*orthopus_state.Torque + 0.04*(orthopus_state.ADC3val-orthopus_state.ADC3zero);
-      orthopus_plot_impedance(nsample);
+      orthopus_state.Torque = (1-orthopus_state.torque_filter_const)*orthopus_state.Torque
+                              + orthopus_state.torque_filter_const*(orthopus_state.ADC3val-orthopus_state.ADC3zero);
+      if (orthopus_state.ctrl_plot)
+        orthopus_plot_impedance(nsample);
       //TODO: control loop
+      if (orthopus_state.ctrl_enable)
+      {
+        orthopus_state.ctrl_command = orthopus_state.ctrl_kp * orthopus_state.Torque;
+        mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0
+        mc_interface_set_current_rel(orthopus_state.ctrl_command);
+      }
     }
     
     
@@ -323,12 +332,12 @@ static void orthopus_plot_impedance(int ns)
     commands_init_plot("sample", "V");
     commands_plot_add_graph("ADC3cal");
     commands_plot_add_graph("Torque");
-    //commands_plot_add_graph("ADC3zero");
+    commands_plot_add_graph("Controlout");
   }
   commands_plot_set_graph(0);
   commands_send_plot_points(ns, orthopus_state.ADC3val*1.0);
   commands_plot_set_graph(1);
   commands_send_plot_points(ns, orthopus_state.Torque*1.0);
-  //commands_plot_set_graph(2);
-  //commands_send_plot_points(ns, orthopus_state.ADC3zero*1.0);
+  commands_plot_set_graph(2);
+  commands_send_plot_points(ns, orthopus_state.ctrl_command*1.0);
 }
