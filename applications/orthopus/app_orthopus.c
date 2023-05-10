@@ -70,6 +70,7 @@ void app_custom_start(void)
   // if orthopus config not set, set default values
   if (!orthopus_config.orthopus_config_set)
   {
+<<<<<<< HEAD
     orthopus_config.encoder_offset                  = 49.7; //for OR14B005 todo set to zero
     orthopus_config.encoder_filter_anglestep        = 0.25;
     orthopus_config.encoder_filter_enable           = true;
@@ -84,6 +85,9 @@ void app_custom_start(void)
     orthopus_config.encoder_filter_error_gain       = 1;
     orthopus_config.rate_hz                         = 1000;
     orthopus_config.perf_compensateexectime         = TRUE;
+=======
+    orthopus_config_reset(&orthopus_config);
+>>>>>>> 8a7a545b... [Cfg] Fix incorrect addresses in config load/save
   }
 
   // Init AMS sensor
