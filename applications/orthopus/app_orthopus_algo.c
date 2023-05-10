@@ -162,6 +162,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
     } else {
       orthopus_state.Torque = (1-orthopus_state.torque_filter_const)*orthopus_state.Torque
                               + orthopus_state.torque_filter_const*(orthopus_state.ADC3val-orthopus_state.ADC3zero);
+                              //TODO: low lag low pass filter 
       if (orthopus_state.ctrl_plot)
         orthopus_plot_impedance(nsample);
       //TODO: control loop

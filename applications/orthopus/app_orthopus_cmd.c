@@ -297,7 +297,7 @@ static void orthopus_perf_cmd(int argc, const char **argv)
 
 static void orthopus_control_cmd(int argc, const char **argv)
 {
-  if(argc == 1)
+  if(argc == 1)//TODO: print all parameter values
   {
     commands_printf("Invalid arguments.");
     return;
@@ -314,7 +314,7 @@ static void orthopus_control_cmd(int argc, const char **argv)
   else if(!strcmp(argv[1],"disable"))
   {
     orthopus_state.ctrl_enable = false;
-    commands_printf("Control Disabled");
+    commands_printf("Control Disabled"); //todo set zero torque and/or estop
   }
   else if(!strcmp(argv[1],"enableplot"))
   {
