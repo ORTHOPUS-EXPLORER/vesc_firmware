@@ -21,7 +21,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[load/save/setrate/enabletimecomp/disabletimecomp]",
+    "[print/dprint/load/save/reset/setrate/enabletimecomp/disabletimecomp]",
     orthopus_config_cmd
   );
 
@@ -135,7 +135,25 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Limits reach angle:          % 7.3f",(double)orthopus_config.limits_reach_angle                );
     commands_printf("Limits reach speed:          % 7.3f",(double)orthopus_config.limits_reach_speed                );
     commands_printf("Encoder filter error gain:   % 7.3f",(double)orthopus_config.encoder_filter_error_gain         );
-    commands_printf("Loop rate:                   % 7.3f",(double)orthopus_config.rate_hz                           );
+    commands_printf("Loop rate:                   % 5d",(int)orthopus_config.rate_hz                                );
+  }
+  else if(!strcmp(argv[1],"dprint"))
+  {
+    const uint32_t sz = sizeof(orthopus_config_t)/4;
+    commands_printf("Bool: %d uint8_t: %d int: %d Uint32: %d Float: %d ", sizeof(bool), sizeof(uint8_t), sizeof(int), sizeof(uint32_t), sizeof(float));
+    commands_printf("Cfg: Print %d dwords",sz); 
+    uint32_t addr=0;
+    for(addr=0;addr<sz;addr++)
+    {
+      uint32_t* raddr = (uint32_t*)((uint8_t*)(&orthopus_config)+addr*4);
+      eeprom_var v; v.as_u32 = *raddr;
+      commands_printf("  [0x%02X][0x%08p] '0x%04X/% 5d/% 5.3f'",addr,raddr,v.as_u32,v.as_i32,(double)v.as_float);
+    }
+  }
+  else if(!strcmp(argv[1],"reset"))
+  {
+    orthopus_config_reset(&orthopus_config);
+    commands_printf("Orthopus config reset to default. Don't forget to save to EEPROM !");
   }
   else if(!strcmp(argv[1],"load"))
   {

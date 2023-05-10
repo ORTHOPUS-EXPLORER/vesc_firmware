@@ -5,7 +5,7 @@
 static bool orthopus_config_load(orthopus_config_t* cfg)
 {
   const uint8_t sz = sizeof(orthopus_config_t)/4;
-  //commands_printf("Cfg: Loading %d dwords from HW EEPROM",sz);
+  commands_printf("Cfg: Loading %d dwords from HW EEPROM",sz);
   if(sz > MAX_CONFIG_U32_SIZE)
     return false;
   uint8_t addr=0;
@@ -14,8 +14,9 @@ static bool orthopus_config_load(orthopus_config_t* cfg)
     eeprom_var v;
     if(conf_general_read_eeprom_var_hw(&v,addr))
     {
-      //commands_printf("Cfg: Loading data '0x%04X/% 5d/% 5.3f' from addr 0x%02X",v.as_u32,v.as_i32,(double)v.as_float,addr);
-      *(uint32_t*)(cfg+addr) = v.as_u32;
+      uint32_t* raddr = (uint32_t*)((uint8_t*)(cfg)+addr*4);
+      commands_printf("Cfg: Loading data from EEPROM 0x%02X to RAM 0x%08p: '0x%04X/% 5d/% 5.3f'",addr,raddr,v.as_u32,v.as_i32,(double)v.as_float);
+      *raddr = v.as_u32;
     }
   }
   return true;
@@ -24,20 +25,39 @@ static bool orthopus_config_load(orthopus_config_t* cfg)
 static bool orthopus_config_save(const orthopus_config_t* cfg)
 {
   const uint8_t sz = sizeof(orthopus_config_t)/4;
-  //commands_printf("Cfg: Saving %d dwords to HW EEPROM",sz);
+  commands_printf("Cfg: Saving %d dwords to HW EEPROM",sz);
   if(sz > MAX_CONFIG_U32_SIZE)
     return false;
   uint8_t addr=0;
   for(addr=0;addr<sz;addr++)
   {
-    eeprom_var v; v.as_u32 = *(uint32_t*)(cfg+addr);
+    uint32_t* raddr = (uint32_t*)((uint8_t*)(cfg)+addr*4);
+    eeprom_var v; v.as_u32 = *raddr;
     if(!conf_general_store_eeprom_var_hw(&v,addr))
     {
-      //commands_printf("Cfg: Failed to save data '0x%04X/% 5d/% 5.3f' at addr 0x%02X",v.as_u32,v.as_i32,(double)v.as_float,addr);
+      commands_printf("Cfg: Failed to save data from RAM 0x%08p to EEPROM 0x%02X: '0x%04X/% 5d/% 5.3f'",raddr,addr,v.as_u32,v.as_i32,(double)v.as_float);
       return false;
     }
   }
   return true;
+}
+
+void orthopus_config_reset(orthopus_config_t* cfg)
+{
+  orthopus_config.encoder_offset                  = 49.7; //for OR14B005 todo set to zero
+  orthopus_config.encoder_filter_anglestep        = 0.25;
+  orthopus_config.encoder_filter_enable           = true;
+  orthopus_config.encoder_filter_plot_enable      = false;
+  orthopus_config.limits_enable                   = false;
+  orthopus_config.orthopus_config_set             = false;
+  orthopus_config.limits_pos_max                  = 90.0;
+  orthopus_config.limits_pos_min                  = -90.0;
+  orthopus_config.angle_division                  = 700;
+  orthopus_config.limits_reach_angle              = 15;
+  orthopus_config.limits_reach_speed              = 2;
+  orthopus_config.encoder_filter_error_gain       = 1;
+  orthopus_config.rate_hz                         = 2000;
+  orthopus_config.perf_compensateexectime         = true;
 }
 
 float orthopus_read_encoder(void)

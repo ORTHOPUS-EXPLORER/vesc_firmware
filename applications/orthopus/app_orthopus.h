@@ -9,21 +9,27 @@ static THD_FUNCTION(orthopus_thread, arg);
 static volatile bool orthopus_thread_stop,
                      orthopus_thread_running;
 // Config
+// 1: uint8_t, int8_t, bool
+// 2: uint16_t, int16_t
+// 4: uint32_t, int32_t, int, float
 typedef struct
 {
-  float encoder_offset;
-  float encoder_filter_anglestep;
-  bool encoder_filter_enable;
-  bool encoder_filter_plot_enable;
-  bool limits_enable;
-  bool orthopus_config_set;
-  float limits_pos_max;
-  float limits_pos_min;
-  float angle_division;
-  float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
-  float limits_reach_speed; //speed limit in the reach angle (rpm)
-  float encoder_filter_error_gain;
-  int rate_hz; bool perf_compensateexectime; uint8_t pad[1];
+  /* EEPROM Addr - Size */
+  /* 00 - 4 */float encoder_offset;
+  /* 01 - 4 */float encoder_filter_anglestep;
+  /* 02 - 1 */bool encoder_filter_enable;
+  /*    - 1 */bool encoder_filter_plot_enable;
+  /*    - 1 */bool limits_enable;
+  /*    - 1 */bool orthopus_config_set;
+  /* 03 - 4 */float limits_pos_max;
+  /* 04 - 4 */float limits_pos_min;
+  /* 05 - 4 */float angle_division;
+  /* 06 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
+  /* 07 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
+  /* 08 - 4 */float encoder_filter_error_gain;
+  /* 09 - 4 */int rate_hz; 
+  /* 10 - 1 */bool perf_compensateexectime; 
+  /*    - 3 */uint8_t pad[3];
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;
@@ -59,6 +65,7 @@ static volatile orthopus_state_t orthopus_state;
 // Utils
 static bool orthopus_config_load(orthopus_config_t* cfg);
 static bool orthopus_config_save(const orthopus_config_t* cfg);
+static void orthopus_config_reset(orthopus_config_t* cfg);
 
 static float orthopus_read_encoder(void);
 static float orthopus_read_encoder_raw(void);
