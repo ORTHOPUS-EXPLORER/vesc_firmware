@@ -44,20 +44,20 @@ static bool orthopus_config_save(const orthopus_config_t* cfg)
 
 void orthopus_config_reset(orthopus_config_t* cfg)
 {
-  orthopus_config.encoder_offset                  = 49.7; //for OR14B005 todo set to zero
-  orthopus_config.encoder_filter_anglestep        = 0.25;
-  orthopus_config.encoder_filter_enable           = true;
-  orthopus_config.encoder_filter_plot_enable      = false;
-  orthopus_config.limits_enable                   = false;
-  orthopus_config.orthopus_config_set             = false;
-  orthopus_config.limits_pos_max                  = 90.0;
-  orthopus_config.limits_pos_min                  = -90.0;
-  orthopus_config.angle_division                  = 700;
-  orthopus_config.limits_reach_angle              = 15;
-  orthopus_config.limits_reach_speed              = 2;
-  orthopus_config.encoder_filter_error_gain       = 1;
-  orthopus_config.rate_hz                         = 2000;
-  orthopus_config.perf_compensateexectime         = true;
+  cfg->encoder_offset                  = 49.7; //for OR14B005 todo set to zero
+  cfg->encoder_filter_anglestep        = 0.25;
+  cfg->encoder_filter_enable           = true;
+  cfg->encoder_filter_plot_enable      = false;
+  cfg->limits_enable                   = false;
+  cfg->orthopus_config_set             = false;
+  cfg->limits_pos_max                  = 90.0;
+  cfg->limits_pos_min                  = -90.0;
+  cfg->angle_division                  = 700;
+  cfg->limits_reach_angle              = 15;
+  cfg->limits_reach_speed              = 2;
+  cfg->encoder_filter_error_gain       = 1;
+  cfg->rate_hz                         = 2000;
+  cfg->perf_compensateexectime         = true;
 }
 
 float orthopus_read_encoder(void)

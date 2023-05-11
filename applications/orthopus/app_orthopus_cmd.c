@@ -118,9 +118,9 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Invalid arguments.");
     return;
   }
-  float v = 0; //store
+  float val = 0; //store
   if (argc == 3)
-      sscanf(argv[2], "%f", &v);
+      sscanf(argv[2], "%f", &val);
 
   if(argc == 0 || !strcmp(argv[1],"print"))
   {
@@ -171,9 +171,9 @@ static void orthopus_config_cmd(int argc, const char **argv)
       commands_printf("Orthopus config save failed =/");
   } else if(!strcmp(argv[1],"setrate"))
   {
-    if (v > 10) {
-      orthopus_config.rate_hz = (int)v;
-      commands_printf("rate: % 7.3f", (double)(int)v);
+    if (val > 10) {
+      orthopus_config.rate_hz = (int)val;
+      commands_printf("rate: % 7.3f", (double)(int)val);
     }
 
   } else if(!strcmp(argv[1],"enabletimecomp"))
