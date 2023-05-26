@@ -346,6 +346,26 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.ctrl_plot = false;
     commands_printf("Control plot Disabled");
   }
+  else if(!strcmp(argv[1],"enabledeadzone"))
+  {
+    orthopus_state.deadzone = true;
+    commands_printf("Deadzone Enabled");
+  }
+  else if(!strcmp(argv[1],"disabledeadzone"))
+  {
+    orthopus_state.deadzone = false;
+    commands_printf("Deadzone Disabled");
+  }
+  else if(!strcmp(argv[1],"a"))
+  {
+    if (v != 0)
+    {
+      orthopus_state.a = v;
+      commands_printf("deadzone a factor: % 7.3f", (double)v);
+    } else {
+      commands_printf("error: deadzone a factor can't be null");
+    }
+  }
   else if(!strcmp(argv[1],"kp"))
   {
     orthopus_state.ctrl_kp = v;

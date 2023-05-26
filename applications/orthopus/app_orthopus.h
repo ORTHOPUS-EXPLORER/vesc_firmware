@@ -58,6 +58,8 @@ typedef struct
   bool ctrl_plot;
   float ctrl_kp;
   float ctrl_command;
+  bool deadzone;
+  float a;
 } orthopus_state_t;
 
 static volatile orthopus_state_t orthopus_state;
