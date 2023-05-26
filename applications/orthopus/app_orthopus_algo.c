@@ -2,6 +2,7 @@
 #include "encoder/enc_as504x.h"
 #include "encoder/enc_sincos.h"
 #include "encoder/encoder_cfg.h" // For encoder_cfg_***
+//#include <math.h> //for atanf function
 
 static volatile bool orthopus_thread_stop = true;
 static volatile bool orthopus_thread_running = false;
@@ -28,7 +29,9 @@ static volatile orthopus_state_t orthopus_state =
   .enc_pos_filter = 0.0,
   .speed_now = 0.0,
   .enc_pos   = 0.0,
-  .ADC3zero = 0.0
+  .ADC3zero = 0.0,
+  .deadzone = false,
+  .a = 1
 };
 
 
@@ -168,7 +171,13 @@ static THD_FUNCTION(orthopus_thread, arg) {
       //TODO: control loop
       if (orthopus_state.ctrl_enable)
       {
-        orthopus_state.ctrl_command = orthopus_state.ctrl_kp * orthopus_state.Torque;
+        if (orthopus_state.deadzone)
+        {
+          orthopus_state.ctrl_command = orthopus_state.ctrl_kp * orthopus_state.Torque;
+          orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_state.a)/orthopus_state.a;
+        } else {
+          orthopus_state.ctrl_command = orthopus_state.ctrl_kp * orthopus_state.Torque;
+        }
         mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0
         mc_interface_set_current_rel(orthopus_state.ctrl_command);
       }
