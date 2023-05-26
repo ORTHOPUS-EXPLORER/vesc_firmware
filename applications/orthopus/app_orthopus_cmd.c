@@ -332,6 +332,8 @@ static void orthopus_control_cmd(int argc, const char **argv)
   else if(!strcmp(argv[1],"disable"))
   {
     orthopus_state.ctrl_enable = false;
+    mc_interface_release_motor();   //disable motor
+    mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //todo set zero torque and/or estop
   }
   else if(!strcmp(argv[1],"enableplot"))
@@ -351,6 +353,8 @@ static void orthopus_control_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"zerotorque"))
   {
+    mc_interface_release_motor();   //disable motor
+    mc_interface_ignore_input(1000);
     orthopus_state.ADC3init = false;
     orthopus_state.ADC3zero = 0;
     commands_printf("reinitializing torque zero: % 7.3f", (double)v);
