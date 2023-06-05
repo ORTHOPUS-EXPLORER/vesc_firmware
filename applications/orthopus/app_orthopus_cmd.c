@@ -56,7 +56,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_control",
     "[Orthopus] AMS filter parameters",
-    "[enable/disable/enableplot/disableplot/kp/zerotorque/torquefilterconst]",
+    "[enable/disable/enableplot/disableplot/kp/zerotorque/torquefilterconst/enabledeadzone/disabledeadzone/a/demo1]",
     orthopus_control_cmd
   );
   //TODO: o_perf : print performance stats (actual rate, mean rate, jitter, etc.)
@@ -365,6 +365,21 @@ static void orthopus_control_cmd(int argc, const char **argv)
     } else {
       commands_printf("error: deadzone a factor can't be null");
     }
+  }
+  else if(!strcmp(argv[1],"demo1"))
+  {
+    //zero torque
+    mc_interface_release_motor();   //disable motor
+    mc_interface_ignore_input(1000);
+    orthopus_state.ADC3init = false;
+    orthopus_state.ADC3zero = 0;
+    //setup
+    orthopus_state.ctrl_kp = 50;
+    orthopus_state.a = 1;
+    orthopus_state.deadzone = true;
+    orthopus_state.torque_filter_const = 0.1;
+    orthopus_state.ctrl_enable = true;
+    commands_printf("Configured demo 1: kp50 a1 filterconst0.1 deadzone zerotorque enable");
   }
   else if(!strcmp(argv[1],"kp"))
   {
