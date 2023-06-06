@@ -381,6 +381,11 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.ctrl_enable = true;
     commands_printf("Configured demo 1: kp50 a1 filterconst0.1 deadzone zerotorque enable");
   }
+  else if(!strcmp(argv[1],"stiffness"))
+  {
+    orthopus_state.stiffness = v;
+    commands_printf("Control stiffness: % 7.3f", (double)v);
+  }
   else if(!strcmp(argv[1],"kp"))
   {
     orthopus_state.ctrl_kp = v;
