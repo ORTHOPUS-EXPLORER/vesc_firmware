@@ -374,12 +374,29 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.ADC3init = false;
     orthopus_state.ADC3zero = 0;
     //setup
-    orthopus_state.ctrl_kp = 50;
+    orthopus_state.ctrl_kp = 150;
     orthopus_state.a = 1;
     orthopus_state.deadzone = true;
     orthopus_state.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
-    commands_printf("Configured demo 1: kp50 a1 filterconst0.1 deadzone zerotorque enable");
+    orthopus_state.stiffness = 0.005;
+    commands_printf("Configured demo 1: kp150 a1 filterconst0.1 deadzone zerotorque enable");
+  }
+  else if(!strcmp(argv[1],"demo2"))
+  {
+    //zero torque
+    mc_interface_release_motor();   //disable motor
+    mc_interface_ignore_input(1000);
+    orthopus_state.ADC3init = false;
+    orthopus_state.ADC3zero = 0;
+    //setup
+    orthopus_state.ctrl_kp = 150;
+    orthopus_state.a = 3;
+    orthopus_state.deadzone = true;
+    orthopus_state.torque_filter_const = 0.1;
+    orthopus_state.ctrl_enable = true;
+    orthopus_state.stiffness = 0.02;
+    commands_printf("Configured demo 2: kp150 a 3 filterconst0.1 deadzone zerotorque enable stiffness 0.02");
   }
   else if(!strcmp(argv[1],"stiffness"))
   {
@@ -403,6 +420,16 @@ static void orthopus_control_cmd(int argc, const char **argv)
   {
     orthopus_state.torque_filter_const = v;
     commands_printf("Torque filter const: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"print"))
+  {
+    commands_printf("Control enabled:     %s", orthopus_state.ctrl_enable   ? "true" : "false" );
+    commands_printf("Plot enabled:        %s", orthopus_state.ctrl_plot     ? "true" : "false" );
+    commands_printf("Deadzone enabled:    %s", orthopus_state.deadzone      ? "true" : "false" );
+    commands_printf("Torque filter const: % 7.3f", (double)orthopus_state.torque_filter_const  );
+    commands_printf("Kp:                  % 7.3f", (double)orthopus_state.ctrl_kp              );
+    commands_printf("a:                   % 7.3f", (double)orthopus_state.a                    );
+    commands_printf("Stiffness:           % 7.3f", (double)orthopus_state.stiffness            );
   } else {
     commands_printf("Invalid arguments.");
   }
