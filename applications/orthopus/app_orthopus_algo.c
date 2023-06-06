@@ -178,6 +178,8 @@ static THD_FUNCTION(orthopus_thread, arg) {
         } else {
           orthopus_state.ctrl_command = orthopus_state.ctrl_kp * orthopus_state.Torque;
         }
+        //add stiffness action
+        orthopus_state.ctrl_command -= orthopus_state.stiffness*orthopus_state.pos_multiturn_now;
         mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0
         mc_interface_set_current_rel(orthopus_state.ctrl_command);
       }

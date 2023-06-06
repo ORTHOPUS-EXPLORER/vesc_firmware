@@ -60,6 +60,7 @@ typedef struct
   float ctrl_command;
   bool deadzone;
   float a;
+  float stiffness;
 } orthopus_state_t;
 
 static volatile orthopus_state_t orthopus_state;
