@@ -380,7 +380,7 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
     orthopus_state.stiffness = 0.005;
-    commands_printf("Configured demo 1: kp150 a1 filterconst0.1 deadzone zerotorque enable");
+    commands_printf("Configured demo 1: kp150 a1 filterconst0.1 deadzone zerotorque enable stiffness 0.005");
   }
   else if(!strcmp(argv[1],"demo2"))
   {
@@ -395,8 +395,8 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.deadzone = true;
     orthopus_state.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
-    orthopus_state.stiffness = 0.02;
-    commands_printf("Configured demo 2: kp150 a 3 filterconst0.1 deadzone zerotorque enable stiffness 0.02");
+    orthopus_state.stiffness = 0.005;
+    commands_printf("Configured demo 2: kp150 a 3 filterconst0.1 deadzone zerotorque enable stiffness 0.005");
   }
   else if(!strcmp(argv[1],"stiffness"))
   {
