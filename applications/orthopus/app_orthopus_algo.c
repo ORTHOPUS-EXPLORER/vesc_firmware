@@ -31,7 +31,8 @@ static volatile orthopus_state_t orthopus_state =
   .enc_pos   = 0.0,
   .ADC3zero = 0.0,
   .deadzone = false,
-  .a = 1
+  .a = 1,
+  .turn_now = 0
 };
 
 
@@ -42,7 +43,6 @@ int last_nb_enc_filter_error = 0;
 unsigned long int nsample = 0;
 float pid_pos_now = 0;
 float pid_pos_last = 0;
-int turn_now = 0;
 static systime_t time_now, time_last, time_start, time_end;
 //static int time_now, time_last, time_start, time_end;
 int ninitadc = 0;
@@ -68,7 +68,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
   pid_pos_last = pid_pos_now;
   if ( pid_pos_now > 180)
   {
-    turn_now = -1;
+    orthopus_state.turn_now = -1;
   }
 
   get_fw_version_cnt = 0;
@@ -139,11 +139,11 @@ static THD_FUNCTION(orthopus_thread, arg) {
     // Compute encoder position multiturn
     pid_pos_now = mc_interface_get_pid_pos_now();
     if (pid_pos_now - pid_pos_last < -350)
-      ++turn_now;
+      ++orthopus_state.turn_now;
     else if (pid_pos_now - pid_pos_last > 350)
-      --turn_now;
+      --orthopus_state.turn_now;
 
-    orthopus_state.pos_multiturn_now = pid_pos_now + 360*turn_now;
+    orthopus_state.pos_multiturn_now = pid_pos_now + 360*orthopus_state.turn_now;
     pid_pos_last = pid_pos_now;
     orthopus_state.speed_now = mc_interface_get_rpm()/orthopus_config.angle_division;
     // Check coherence between rotor position (sin/cos) and encoder position

@@ -93,7 +93,12 @@ float orthopus_set_encoder_offset(float v, bool use_v)
 {
   if(!use_v)
     v = orthopus_read_encoder_raw();
+  orthopus_state.turn_now = 0;
   orthopus_config.encoder_offset = v;
   orthopus_set_joint_offset(0,false);
+  if ( mc_interface_get_pid_pos_now() > 180)
+  {
+    orthopus_state.turn_now = -1;
+  }
   return v;
 }
