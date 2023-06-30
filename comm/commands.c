@@ -20,6 +20,7 @@
 #pragma GCC push_options
 #pragma GCC optimize ("Os")
 
+#include "orthopus/app_orthopus.h" //TEMPORARY: LINK WITH CUSTOM APP
 #include "commands.h"
 #include "ch.h"
 #include "hal.h"
@@ -490,7 +491,18 @@ void commands_process_packet(unsigned char *data, unsigned int len,
 
 	case COMM_SET_CURRENT: {
 		int32_t ind = 0;
-		mc_interface_set_current((float)buffer_get_int32(data, &ind) / 1000.0);
+		float currentsetpoint = 0;
+		currentsetpoint = buffer_get_int32(data, &ind) / 1000.0;
+		//commands_printf("received current setpoint1: % 7.3f", currentsetpoint);
+		if (orthopus_state.ctrl_enable) 
+		{
+			orthopus_state.ext_current_setoint = currentsetpoint;
+		} else {
+			mc_interface_set_current(currentsetpoint); //TODO: switch to torque control?
+			//orthopus_state.stiffness = 1.25;//currentsetpoint;
+			//commands_printf("stiffness: % 7.3f", orthopus_state.stiffness);
+		}
+
 		timeout_reset();
 	} break;
 

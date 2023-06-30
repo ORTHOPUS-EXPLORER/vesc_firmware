@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "ch.h"
+#include "datatypes.h"
 
 // Algo
 static void orthopus_pwm_callback(void);
@@ -46,9 +47,9 @@ typedef struct
   int time_lag_filt;
   int time_lag_compensation;
   bool perfplot;
-  uint maxperiod;
-  uint minperiod;
-  uint exectime;
+  int maxperiod;
+  int minperiod;
+  int exectime;
   float ADC3val;
   float ADC3zero;
   float Torque;
@@ -62,9 +63,10 @@ typedef struct
   float a;
   float stiffness;
   int turn_now;
+  float ext_current_setoint;
 } orthopus_state_t;
 
-static volatile orthopus_state_t orthopus_state;
+extern volatile orthopus_state_t orthopus_state;
 
 // Utils
 static bool orthopus_config_load(orthopus_config_t* cfg);
