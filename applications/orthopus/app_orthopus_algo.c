@@ -23,7 +23,7 @@ static volatile bool orthopus_thread_running = false;
 
 //const int loop_rate = 2000; //loop rate in Hz
 
-static volatile orthopus_state_t orthopus_state =
+extern volatile orthopus_state_t orthopus_state =
 {
   .pos_multiturn_now = 0.0,
   .enc_pos_filter = 0.0,
@@ -32,7 +32,8 @@ static volatile orthopus_state_t orthopus_state =
   .ADC3zero = 0.0,
   .deadzone = false,
   .a = 1,
-  .turn_now = 0
+  .turn_now = 0,
+  .ext_current_setoint =0
 };
 
 
@@ -173,10 +174,10 @@ static THD_FUNCTION(orthopus_thread, arg) {
       {
         if (orthopus_state.deadzone)
         {
-          orthopus_state.ctrl_command = orthopus_state.ctrl_kp * orthopus_state.Torque;
+          orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_current_setoint-orthopus_state.Torque);
           orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_state.a)/orthopus_state.a;
         } else {
-          orthopus_state.ctrl_command = orthopus_state.ctrl_kp * orthopus_state.Torque;
+          orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_current_setoint-orthopus_state.Torque);
         }
         //add stiffness action
         orthopus_state.ctrl_command -= orthopus_state.stiffness*orthopus_state.pos_multiturn_now;
