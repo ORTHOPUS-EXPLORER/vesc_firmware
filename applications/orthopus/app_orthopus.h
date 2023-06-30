@@ -64,6 +64,7 @@ typedef struct
   float stiffness;
   int turn_now;
   float ext_current_setoint;
+  float ext_pos_setpoint;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t orthopus_state;
