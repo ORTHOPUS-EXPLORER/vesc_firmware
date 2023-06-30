@@ -33,7 +33,8 @@ extern volatile orthopus_state_t orthopus_state =
   .deadzone = false,
   .a = 1,
   .turn_now = 0,
-  .ext_current_setoint =0
+  .ext_current_setoint = 0,
+  .ext_pos_setpoint = 0
 };
 
 
@@ -180,7 +181,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
           orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_current_setoint-orthopus_state.Torque);
         }
         //add stiffness action
-        orthopus_state.ctrl_command -= orthopus_state.stiffness*orthopus_state.pos_multiturn_now;
+        orthopus_state.ctrl_command += orthopus_state.stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
         mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0
         mc_interface_set_current_rel(orthopus_state.ctrl_command);
       }

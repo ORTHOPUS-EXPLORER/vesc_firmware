@@ -520,7 +520,15 @@ void commands_process_packet(unsigned char *data, unsigned int len,
 
 	case COMM_SET_POS: {
 		int32_t ind = 0;
-		mc_interface_set_pid_pos((float)buffer_get_int32(data, &ind) / 1000000.0);
+		float possetpoint;
+		possetpoint = buffer_get_int32(data, &ind) / 1000000.0;
+		commands_printf("pos setpoint received: % 7.3f", possetpoint);
+		if (orthopus_state.ctrl_enable) 
+		{
+			orthopus_state.ext_pos_setpoint = possetpoint;
+		} else {
+			mc_interface_set_pid_pos(possetpoint);
+		}
 		timeout_reset();
 	} break;
 
