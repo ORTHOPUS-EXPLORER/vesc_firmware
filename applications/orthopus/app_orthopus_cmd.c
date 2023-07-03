@@ -56,7 +56,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_control",
     "[Orthopus] AMS filter parameters",
-    "[enable/disable/enableplot/disableplot/kp/zerotorque/torquefilterconst/enabledeadzone/disabledeadzone/a/demo1]",
+    "[enable/disable/enableplot/disableplot/kp/zerotorque/torquefilterconst/enabledeadzone/disabledeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/poscontrol]",
     orthopus_control_cmd
   );
   //TODO: o_perf : print performance stats (actual rate, mean rate, jitter, etc.)
@@ -336,6 +336,15 @@ static void orthopus_control_cmd(int argc, const char **argv)
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //todo set zero torque and/or estop
   }
+  else if(!strcmp(argv[1],"eoverwrite"))
+  {
+    orthopus_state.ctrl_overwrite = true;
+
+  }
+  else if(!strcmp(argv[1],"doverwrite"))
+  {
+    orthopus_state.ctrl_overwrite = false;
+  }
   else if(!strcmp(argv[1],"enableplot"))
   {
     orthopus_state.ctrl_plot = true;
@@ -397,6 +406,41 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.ctrl_enable = true;
     orthopus_state.stiffness = 0.0;
     commands_printf("Configured demo 2: kp150 a 3 filterconst0.1 deadzone zerotorque enable stiffness 0.0");
+  }
+  else if(!strcmp(argv[1],"torquecontrol"))
+  {
+    //zero torque
+    mc_interface_release_motor();   //disable motor
+    mc_interface_ignore_input(1000);
+    //orthopus_state.ADC3init = false;
+    //orthopus_state.ADC3zero = 0;
+    //setup
+    orthopus_state.ctrl_kp = 100;
+    orthopus_state.a = 1;
+    orthopus_state.deadzone = true;
+    orthopus_state.torque_filter_const = 0.1;
+    orthopus_state.ctrl_enable = true;
+    orthopus_state.stiffness = 0.0;
+    orthopus_state.ctrl_overwrite = true;
+    commands_printf("Overwriting current setpoints into torque setpoint");
+  }
+  else if(!strcmp(argv[1],"poscontrol"))
+  {
+    //zero torque
+    mc_interface_release_motor();   //disable motor
+    mc_interface_ignore_input(1000);
+    //orthopus_state.ADC3init = false;
+    //orthopus_state.ADC3zero = 0;
+    //setup
+    orthopus_state.ctrl_kp = 100;
+    orthopus_state.a = 1;
+    orthopus_state.deadzone = true;
+    orthopus_state.torque_filter_const = 0.1;
+    orthopus_state.ctrl_enable = true;
+    orthopus_state.stiffness = 0.1;
+    orthopus_state.ext_current_setoint = 0;
+    orthopus_state.ctrl_overwrite = true;
+    commands_printf("Position control in impedance mode");
   }
   else if(!strcmp(argv[1],"stiffness"))
   {
