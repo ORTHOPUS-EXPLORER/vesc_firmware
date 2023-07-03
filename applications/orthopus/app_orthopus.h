@@ -31,6 +31,8 @@ typedef struct
   /* 09 - 4 */int rate_hz; 
   /* 10 - 1 */bool perf_compensateexectime; 
   /*    - 3 */uint8_t pad[3];
+  /* 11 - 4 */float Torquezero;
+  /* 12 - 4 */float Torquegain;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;
@@ -63,7 +65,7 @@ typedef struct
   float a;
   float stiffness;
   int turn_now;
-  float ext_current_setoint;
+  float ext_torque_setpoint;
   float ext_pos_setpoint;
   bool ctrl_overwrite;
 } orthopus_state_t;

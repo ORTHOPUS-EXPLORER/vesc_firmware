@@ -496,7 +496,7 @@ void commands_process_packet(unsigned char *data, unsigned int len,
 		//commands_printf("received current setpoint1: % 7.3f", currentsetpoint);
 		if (orthopus_state.ctrl_overwrite) 
 		{
-			orthopus_state.ext_current_setoint = currentsetpoint;
+			orthopus_state.ext_torque_setpoint = currentsetpoint;
 		} else {
 			mc_interface_set_current(currentsetpoint); //TODO: switch to torque control?
 			//orthopus_state.stiffness = 1.25;//currentsetpoint;
@@ -522,7 +522,7 @@ void commands_process_packet(unsigned char *data, unsigned int len,
 		int32_t ind = 0;
 		float possetpoint;
 		possetpoint = buffer_get_int32(data, &ind) / 1000000.0;
-		commands_printf("pos setpoint received: % 7.3f", possetpoint);
+		//commands_printf("pos setpoint received: % 7.3f", possetpoint);
 		if (orthopus_state.ctrl_overwrite) 
 		{
 			orthopus_state.ext_pos_setpoint = possetpoint;
