@@ -65,6 +65,7 @@ typedef struct
   int turn_now;
   float ext_current_setoint;
   float ext_pos_setpoint;
+  bool ctrl_overwrite;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t orthopus_state;
