@@ -58,6 +58,7 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->encoder_filter_error_gain       = 1;
   cfg->rate_hz                         = 2000;
   cfg->perf_compensateexectime         = true;
+  cfg->Torquegain                      = 34.8;
 }
 
 float orthopus_read_encoder(void)
