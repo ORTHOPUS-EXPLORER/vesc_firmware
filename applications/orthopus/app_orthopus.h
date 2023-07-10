@@ -37,6 +37,7 @@ typedef struct
   /* 14 - 4 */float limits_kd;
   /* 15 - 4 */int limits_powp;
   /* 16 - 4 */int limits_powd;
+  /* 17 - 4 */int limits_damp_reachangle;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;

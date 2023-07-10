@@ -283,17 +283,25 @@ static void orthopus_limits(void)
   }
   if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now < orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)){
     orthopus_state.limitreaction = orthopus_config.limits_kp*pow((orthopus_state.pos_multiturn_now-(orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)),orthopus_config.limits_powp);
-    if (orthopus_state.speed_now < 0) //add damping, only in the direction of the limit to avoid sticking effect
+    /*if (orthopus_state.speed_now < 0) //add damping, only in the direction of the limit to avoid sticking effect
     {
       orthopus_state.limitreaction += -orthopus_config.limits_kd*pow(orthopus_state.speed_now,orthopus_config.limits_powd);
-    } 
+    }*/
   }
   if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now > orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle)) { //-3 adds a zone before reach angle in which we add a friction
     orthopus_state.limitreaction = -orthopus_config.limits_kp*pow((orthopus_state.pos_multiturn_now-(orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle)),orthopus_config.limits_powp);
-    if (orthopus_state.speed_now > 0) //add damping, only in the direction of the limit to avoid sticking effect
+    /*if (orthopus_state.speed_now > 0) //add damping, only in the direction of the limit to avoid sticking effect
     {
       orthopus_state.limitreaction += -orthopus_config.limits_kd*pow(orthopus_state.speed_now,orthopus_config.limits_powd);
-    } 
+    }*/
+  }
+  if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now < orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle + orthopus_config.limits_damp_reachangle) && (orthopus_state.speed_now < 0)) //add damping, only in the direction of the limit to avoid sticking effect
+  {
+    orthopus_state.limitreaction += -orthopus_config.limits_kd*pow(orthopus_state.speed_now,orthopus_config.limits_powd);
+  }
+  if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now > orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle - orthopus_config.limits_damp_reachangle) && (orthopus_state.speed_now > 0)) //add damping, only in the direction of the limit to avoid sticking effect
+  {
+    orthopus_state.limitreaction += -orthopus_config.limits_kd*pow(orthopus_state.speed_now,orthopus_config.limits_powd);
   }
 }
 
