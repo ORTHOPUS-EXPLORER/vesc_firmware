@@ -68,6 +68,8 @@ typedef struct
   float ext_torque_setpoint;
   float ext_pos_setpoint;
   bool ctrl_overwrite;
+  float limitreaction;
+  float torqueerror;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t orthopus_state;

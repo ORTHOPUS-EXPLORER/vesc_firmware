@@ -179,18 +179,28 @@ static THD_FUNCTION(orthopus_thread, arg) {
       //TODO: control loop
       if (orthopus_state.ctrl_enable)
       {
+        orthopus_state.torqueerror = orthopus_state.ext_torque_setpoint-orthopus_state.Torque;
+        //add stiffness action
+        orthopus_state.torqueerror -= orthopus_state.stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
+        //add limits action
+        orthopus_state.torqueerror -= orthopus_state.limitreaction;
         if (orthopus_state.deadzone)
         {
-          orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
+          //orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
+          //orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_state.a)/orthopus_state.a;
+          orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.torqueerror);
           orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_state.a)/orthopus_state.a;
         } else {
-          orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
+          //orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
+          orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.torqueerror);
         }
         //add stiffness action
-        orthopus_state.ctrl_command += orthopus_state.stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
+        //orthopus_state.ctrl_command += orthopus_state.stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
+        //add limit action
+        //orthopus_state.ctrl_command += orthopus_state.limitreaction;
         mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0
         mc_interface_set_current_rel(orthopus_state.ctrl_command);
-      }
+      } //TODO: check limits after last ctrl_command computation and set to zero if out of limits?
     }
     
     
@@ -252,20 +262,38 @@ static void orthopus_estop(void)
 static void orthopus_limits(void)
 {
   //check position limits
+  orthopus_state.limitreaction = 0;
   if ((orthopus_state.pos_multiturn_now > orthopus_config.limits_pos_max) || (orthopus_state.pos_multiturn_now < orthopus_config.limits_pos_min))
   {
     orthopus_estop();
   }
-  else if ( (orthopus_state.speed_now > orthopus_config.limits_reach_speed
+  else if ( (
+            (orthopus_state.speed_now > orthopus_config.limits_reach_speed
               && (orthopus_state.pos_multiturn_now > orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle)
             )
             ||
             ( orthopus_state.speed_now < -orthopus_config.limits_reach_speed
               && (orthopus_state.pos_multiturn_now < orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)
             )
+            )
+            && (!orthopus_state.ctrl_enable)
           )
   {
     orthopus_estop();
+  }
+  if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now < orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)){
+    orthopus_state.limitreaction = pow((orthopus_state.pos_multiturn_now-(orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)),6);
+    if (orthopus_state.speed_now < 0) //add damping, only in the direction of the limit to avoid sticking effect
+    {
+      orthopus_state.limitreaction += -50*pow(orthopus_state.speed_now,3);
+    } 
+  }
+  if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now > orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle)) { //-3 adds a zone before reach angle in which we add a friction
+    orthopus_state.limitreaction = -pow((orthopus_state.pos_multiturn_now-(orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle)),6);
+    if (orthopus_state.speed_now > 0) //add damping, only in the direction of the limit to avoid sticking effect
+    {
+      orthopus_state.limitreaction += -50*pow(orthopus_state.speed_now,3);
+    } 
   }
 }
 
