@@ -34,7 +34,8 @@ extern volatile orthopus_state_t orthopus_state =
   .a = 1,
   .turn_now = 0,
   .ext_torque_setpoint = 0,
-  .ext_pos_setpoint = 0
+  .ext_pos_setpoint = 0,
+  .damping = 0
 };
 
 
@@ -182,6 +183,8 @@ static THD_FUNCTION(orthopus_thread, arg) {
         orthopus_state.torqueerror = orthopus_state.ext_torque_setpoint-orthopus_state.Torque;
         //add stiffness action
         orthopus_state.torqueerror -= orthopus_state.stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
+        // add damping action
+        orthopus_state.torqueerror += orthopus_state.damping*orthopus_state.speed_now;
         //add limits action
         orthopus_state.torqueerror -= orthopus_state.limitreaction;
         if (orthopus_state.deadzone)
