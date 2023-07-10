@@ -142,6 +142,7 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("limits_kd:                   % 7.3f",(double)orthopus_config.limits_kd                         );
     commands_printf("Limits_powp:                 % 5d",(int)orthopus_config.limits_powp                            );
     commands_printf("Limits_powd:                 % 5d",(int)orthopus_config.limits_powd                            );
+    commands_printf("limits_damp_reachangle:      % 7.3f",(double)orthopus_config.limits_damp_reachangle            );
   }
   else if(!strcmp(argv[1],"dprint"))
   {
@@ -313,6 +314,11 @@ static void orthopus_limits_cmd(int argc, const char **argv)
   {
     orthopus_config.limits_powd = (int)v;
     commands_printf("Limits powd: % 5d", (int)v);
+  }
+  else if(!strcmp(argv[1],"damp_reachangle"))
+  {
+    orthopus_config.limits_damp_reachangle = (float)v;
+    commands_printf("damp reachangle: % 7.3f", (float)v);
   } else {
     commands_printf("Invalid arguments.");
   }
