@@ -491,6 +491,11 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.stiffness = v;
     commands_printf("Control stiffness: % 7.3f", (double)v);
   }
+  else if(!strcmp(argv[1],"damping"))
+  {
+    orthopus_state.damping = v;
+    commands_printf("Control damping: % 7.3f", (double)v);
+  }
   else if(!strcmp(argv[1],"kp"))
   {
     orthopus_state.ctrl_kp = v;
@@ -524,6 +529,7 @@ static void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("limitreaction:       % 7.3f", (double)orthopus_state.limitreaction        );
     commands_printf("ext_pos_setpoint:    % 7.3f", (double)orthopus_state.ext_pos_setpoint     );
     commands_printf("ext_torque_setpoint: % 7.3f", (double)orthopus_state.ext_torque_setpoint  );
+    commands_printf("damping:             % 7.3f", (double)orthopus_state.damping              );
   } else {
     commands_printf("Invalid arguments.");
   }

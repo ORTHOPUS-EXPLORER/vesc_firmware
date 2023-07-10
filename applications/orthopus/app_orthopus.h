@@ -75,6 +75,7 @@ typedef struct
   bool ctrl_overwrite;
   float limitreaction;
   float torqueerror;
+  float damping;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t orthopus_state;
