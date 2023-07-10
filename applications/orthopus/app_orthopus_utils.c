@@ -59,6 +59,10 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->rate_hz                         = 2000;
   cfg->perf_compensateexectime         = true;
   cfg->Torquegain                      = 34.8;
+  cfg->limits_kp                       = 1.0;
+  cfg->limits_kd                       = 50.0;
+  cfg->limits_powp                     = 6;
+  cfg->limits_powd                     = 3;
 }
 
 float orthopus_read_encoder(void)
