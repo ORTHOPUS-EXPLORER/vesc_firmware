@@ -33,6 +33,10 @@ typedef struct
   /*    - 3 */uint8_t pad[3];
   /* 11 - 4 */float Torquezero;
   /* 12 - 4 */float Torquegain;
+  /* 13 - 4 */float limits_kp;
+  /* 14 - 4 */float limits_kd;
+  /* 15 - 4 */int limits_powp;
+  /* 16 - 4 */int limits_powd;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;

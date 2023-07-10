@@ -42,7 +42,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_limits",
     "[Orthopus] Actuator limits setting",
-    "[posmax/posmin/enable/disable/reachangle/reachspeed]",
+    "[posmax/posmin/enable/disable/reachangle/reachspeed/kp/kd/powp/powd]",
     orthopus_limits_cmd
   );
 
@@ -138,6 +138,10 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Loop rate:                   % 5d",(int)orthopus_config.rate_hz                                );
     commands_printf("Torquezero:                  % 7.3f",(double)orthopus_config.Torquezero                        );
     commands_printf("Torquegain:                  % 7.3f",(double)orthopus_config.Torquegain                        );
+    commands_printf("limits_kp:                   % 7.3f",(double)orthopus_config.limits_kp                         );
+    commands_printf("limits_kd:                   % 7.3f",(double)orthopus_config.limits_kd                         );
+    commands_printf("Limits_powp:                 % 5d",(int)orthopus_config.limits_powp                            );
+    commands_printf("Limits_powd:                 % 5d",(int)orthopus_config.limits_powd                            );
   }
   else if(!strcmp(argv[1],"dprint"))
   {
@@ -289,6 +293,26 @@ static void orthopus_limits_cmd(int argc, const char **argv)
   {
     orthopus_config.limits_reach_speed = v;
     commands_printf("Limits reach speed: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"kp"))
+  {
+    orthopus_config.limits_kp = v;
+    commands_printf("Limits kp: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"kd"))
+  {
+    orthopus_config.limits_kd = v;
+    commands_printf("Limits kd: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"powp"))
+  {
+    orthopus_config.limits_powp = (int)v;
+    commands_printf("Limits powp: % 5d", (int)v);
+  }
+  else if(!strcmp(argv[1],"powd"))
+  {
+    orthopus_config.limits_powd = (int)v;
+    commands_printf("Limits powd: % 5d", (int)v);
   } else {
     commands_printf("Invalid arguments.");
   }
