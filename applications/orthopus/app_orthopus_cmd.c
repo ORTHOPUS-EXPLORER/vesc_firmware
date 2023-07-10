@@ -490,6 +490,10 @@ static void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("Stiffness:           % 7.3f", (double)orthopus_state.stiffness            );
     commands_printf("Torquezero:          % 7.3f", (double)orthopus_state.ADC3zero             );
     commands_printf("Control overwrite:  %s", orthopus_state.ctrl_overwrite ? "true" : "false" );
+    commands_printf("control_command:     % 7.3f", (double)orthopus_state.ctrl_command         );
+    commands_printf("limitreaction:       % 7.3f", (double)orthopus_state.limitreaction        );
+    commands_printf("ext_pos_setpoint:    % 7.3f", (double)orthopus_state.ext_pos_setpoint     );
+    commands_printf("ext_torque_setpoint: % 7.3f", (double)orthopus_state.ext_torque_setpoint  );
   } else {
     commands_printf("Invalid arguments.");
   }
