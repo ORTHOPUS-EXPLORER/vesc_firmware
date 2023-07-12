@@ -30,11 +30,9 @@ extern volatile orthopus_state_t orthopus_state =
   .speed_now = 0.0,
   .enc_pos   = 0.0,
   .ADC3zero = 0.0,
-  .deadzone = false,
-  .a = 1,
   .turn_now = 0,
   .ext_torque_setpoint = 0,
-  .ext_pos_setpoint = 0,
+  .ext_pos_setpoint = 0
 };
 
 
@@ -171,8 +169,8 @@ static THD_FUNCTION(orthopus_thread, arg) {
         ninitadc = 0; ///TODO: debug
       }
     } else {
-      orthopus_state.Torque = (1-orthopus_state.torque_filter_const)*orthopus_state.Torque
-                              + orthopus_state.torque_filter_const*orthopus_config.Torquegain*(orthopus_state.ADC3val-orthopus_state.ADC3zero);
+      orthopus_state.Torque = (1-orthopus_config.torque_filter_const)*orthopus_state.Torque
+                              + orthopus_config.torque_filter_const*orthopus_config.Torquegain*(orthopus_state.ADC3val-orthopus_state.ADC3zero);
                               //TODO: low lag low pass filter 
       if (orthopus_state.ctrl_plot)
         orthopus_plot_impedance(nsample);
@@ -186,15 +184,15 @@ static THD_FUNCTION(orthopus_thread, arg) {
         orthopus_state.torqueerror += orthopus_config.ctrl_damping*orthopus_state.speed_now;
         //add limits action
         orthopus_state.torqueerror -= orthopus_state.limitreaction;
-        if (orthopus_state.deadzone)
+        if (orthopus_config.deadzone)
         {
-          //orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
-          //orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_state.a)/orthopus_state.a;
-          orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.torqueerror);
-          orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_state.a)/orthopus_state.a;
+          //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
+          //orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
+          orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror);
+          orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
         } else {
-          //orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
-          orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.torqueerror);
+          //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
+          orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror);
         }
         //add stiffness action
         //orthopus_state.ctrl_command += orthopus_config.ctrl_stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);

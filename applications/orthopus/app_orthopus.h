@@ -28,9 +28,10 @@ typedef struct
   /* 06 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
   /* 07 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
   /* 08 - 4 */float encoder_filter_error_gain;
-  /* 09 - 4 */int rate_hz; 
-  /* 10 - 1 */bool perf_compensateexectime; 
-  /*    - 3 */uint8_t pad[3];
+  /* 09 - 4 */int rate_hz;
+  /* 10 - 1 */bool perf_compensateexectime;
+  /* 10 - 1 */bool deadzone;
+  /*    - 2 */uint8_t pad[2];
   /* 11 - 4 */float Torquezero;
   /* 12 - 4 */float Torquegain;
   /* 13 - 4 */float limits_kp;
@@ -40,6 +41,9 @@ typedef struct
   /* 17 - 4 */int limits_damp_reachangle;
   /* 18 - 4 */float ctrl_stiffness;
   /* 19 - 4 */float ctrl_damping;
+  /* 19 - 4 */float torque_filter_const;
+  /* 20 - 4 */float ctrl_kp;
+  /* 21 - 4 */float a;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;
@@ -63,13 +67,13 @@ typedef struct
   float ADC3zero;
   float Torque;
   float ADC3init;
-  float torque_filter_const;
+  //float torque_filter_const; //-> config
   bool ctrl_enable;
   bool ctrl_plot;
-  float ctrl_kp;
+  //float ctrl_kp; //-> config
   float ctrl_command;
-  bool deadzone;
-  float a;
+  //bool deadzone; //-> config
+  //float a; //-> config
   int turn_now;
   float ext_torque_setpoint;
   float ext_pos_setpoint;

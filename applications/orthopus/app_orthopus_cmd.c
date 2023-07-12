@@ -56,10 +56,10 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_control",
     "[Orthopus] AMS filter parameters",
-    "[enable/disable/enableplot/disableplot/kp/zerotorque/torquefilterconst/enabledeadzone/disabledeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/poscontrol]",
+    "[enable/disable/enableplot/disableplot/kp/zerotorque/torquefilterconst/enabledeadzone/disabledeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/]",
     orthopus_control_cmd
   );
-  //TODO: o_perf : print performance stats (actual rate, mean rate, jitter, etc.)
+  //TODO: help
 }
 
 static void orthopus_cmd_deinit(void)
@@ -414,19 +414,19 @@ static void orthopus_control_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"enabledeadzone"))
   {
-    orthopus_state.deadzone = true;
+    orthopus_config.deadzone = true;
     commands_printf("Deadzone Enabled");
   }
   else if(!strcmp(argv[1],"disabledeadzone"))
   {
-    orthopus_state.deadzone = false;
+    orthopus_config.deadzone = false;
     commands_printf("Deadzone Disabled");
   }
   else if(!strcmp(argv[1],"a"))
   {
     if (v != 0)
     {
-      orthopus_state.a = v;
+      orthopus_config.a= v;
       commands_printf("deadzone a factor: % 7.3f", (double)v);
     } else {
       commands_printf("error: deadzone a factor can't be null");
@@ -440,10 +440,10 @@ static void orthopus_control_cmd(int argc, const char **argv)
     //orthopus_state.ADC3init = false;
     //orthopus_state.ADC3zero = 0;
     //setup
-    orthopus_state.ctrl_kp = 4;
-    orthopus_state.a = 1;
-    orthopus_state.deadzone = true;
-    orthopus_state.torque_filter_const = 0.1;
+    orthopus_config.ctrl_kp = 4;
+    orthopus_config.a= 1;
+    orthopus_config.deadzone = true;
+    orthopus_config.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
     orthopus_config.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 1: kp4 a1 filterconst0.1 deadzone zerotorque enable stiffness 0.0");
@@ -456,10 +456,10 @@ static void orthopus_control_cmd(int argc, const char **argv)
     //orthopus_state.ADC3init = false;
     //orthopus_state.ADC3zero = 0;
     //setup
-    orthopus_state.ctrl_kp = 4;
-    orthopus_state.a = 3;
-    orthopus_state.deadzone = true;
-    orthopus_state.torque_filter_const = 0.1;
+    orthopus_config.ctrl_kp = 4;
+    orthopus_config.a= 3;
+    orthopus_config.deadzone = true;
+    orthopus_config.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
     orthopus_config.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 2: kp4 a 3 filterconst0.1 deadzone zerotorque enable stiffness 0.0");
@@ -472,16 +472,16 @@ static void orthopus_control_cmd(int argc, const char **argv)
     //orthopus_state.ADC3init = false;
     //orthopus_state.ADC3zero = 0;
     //setup
-    orthopus_state.ctrl_kp = 2.8;
-    orthopus_state.a = 1;
-    orthopus_state.deadzone = true;
-    orthopus_state.torque_filter_const = 0.1;
+    //orthopus_config.ctrl_kp = 2.8;
+    //orthopus_config.a= 1;
+    //orthopus_config.deadzone = true;
+    //orthopus_config.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
-    orthopus_config.ctrl_stiffness = 0.0;
+    //orthopus_config.ctrl_stiffness = 0.0;
     orthopus_state.ctrl_overwrite = true;
     commands_printf("Overwriting current setpoints into torque setpoint");
   }
-  else if(!strcmp(argv[1],"poscontrol"))
+  /*else if(!strcmp(argv[1],"poscontrol"))
   {
     //zero torque
     mc_interface_release_motor();   //disable motor
@@ -489,19 +489,20 @@ static void orthopus_control_cmd(int argc, const char **argv)
     //orthopus_state.ADC3init = false;
     //orthopus_state.ADC3zero = 0;
     //setup
-    orthopus_state.ctrl_kp = 2.8;
-    orthopus_state.a = 1;
-    orthopus_state.deadzone = true;
-    orthopus_state.torque_filter_const = 0.1;
+    orthopus_config.ctrl_kp = 2.8;
+    orthopus_config.a= 1;
+    orthopus_config.deadzone = true;
+    orthopus_config.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
     orthopus_config.ctrl_stiffness = 0.1;
     orthopus_state.ext_torque_setpoint = 0;
     orthopus_state.ctrl_overwrite = true;
     commands_printf("Position control in impedance mode");
-  }
+  }*/
+  //todo setup joints
   else if(!strcmp(argv[1],"kp"))
   {
-    orthopus_state.ctrl_kp = v;
+    orthopus_config.ctrl_kp = v;
     commands_printf("Control kp: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"zerotorque"))
@@ -514,17 +515,17 @@ static void orthopus_control_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"torquefilterconst"))
   {
-    orthopus_state.torque_filter_const = v;
+    orthopus_config.torque_filter_const = v;
     commands_printf("Torque filter const: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"print"))
   {
     commands_printf("Control enabled:     %s", orthopus_state.ctrl_enable   ? "true" : "false" );
     commands_printf("Plot enabled:        %s", orthopus_state.ctrl_plot     ? "true" : "false" );
-    commands_printf("Deadzone enabled:    %s", orthopus_state.deadzone      ? "true" : "false" );
-    commands_printf("Torque filter const: % 7.3f", (double)orthopus_state.torque_filter_const  );
-    commands_printf("Kp:                  % 7.3f", (double)orthopus_state.ctrl_kp              );
-    commands_printf("a:                   % 7.3f", (double)orthopus_state.a                    );
+    commands_printf("Deadzone enabled:    %s", orthopus_config.deadzone     ? "true" : "false" );
+    commands_printf("Torque filter const: % 7.3f", (double)orthopus_config.torque_filter_const );
+    commands_printf("Kp:                  % 7.3f", (double)orthopus_config.ctrl_kp             );
+    commands_printf("a:                   % 7.3f", (double)orthopus_config.a                   );
     commands_printf("Stiffness:           % 7.3f", (double)orthopus_config.ctrl_stiffness      );
     commands_printf("Torquezero:          % 7.3f", (double)orthopus_state.ADC3zero             );
     commands_printf("Control overwrite:  %s", orthopus_state.ctrl_overwrite ? "true" : "false" );
