@@ -35,7 +35,6 @@ extern volatile orthopus_state_t orthopus_state =
   .turn_now = 0,
   .ext_torque_setpoint = 0,
   .ext_pos_setpoint = 0,
-  .damping = 0
 };
 
 
@@ -182,9 +181,9 @@ static THD_FUNCTION(orthopus_thread, arg) {
       {
         orthopus_state.torqueerror = orthopus_state.ext_torque_setpoint-orthopus_state.Torque;
         //add stiffness action
-        orthopus_state.torqueerror -= orthopus_state.stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
+        orthopus_state.torqueerror -= orthopus_config.ctrl_stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
         // add damping action
-        orthopus_state.torqueerror += orthopus_state.damping*orthopus_state.speed_now;
+        orthopus_state.torqueerror += orthopus_config.ctrl_damping*orthopus_state.speed_now;
         //add limits action
         orthopus_state.torqueerror -= orthopus_state.limitreaction;
         if (orthopus_state.deadzone)
@@ -198,7 +197,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
           orthopus_state.ctrl_command = -orthopus_state.ctrl_kp * (orthopus_state.torqueerror);
         }
         //add stiffness action
-        //orthopus_state.ctrl_command += orthopus_state.stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
+        //orthopus_state.ctrl_command += orthopus_config.ctrl_stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
         //add limit action
         //orthopus_state.ctrl_command += orthopus_state.limitreaction;
         mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0

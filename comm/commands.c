@@ -499,8 +499,8 @@ void commands_process_packet(unsigned char *data, unsigned int len,
 			orthopus_state.ext_torque_setpoint = currentsetpoint;
 		} else {
 			mc_interface_set_current(currentsetpoint); //TODO: switch to torque control?
-			//orthopus_state.stiffness = 1.25;//currentsetpoint;
-			//commands_printf("stiffness: % 7.3f", orthopus_state.stiffness);
+			//orthopus_config.ctrl_stiffness = 1.25;//currentsetpoint;
+			//commands_printf("stiffness: % 7.3f", orthopus_config.ctrl_stiffness);
 		}
 
 		timeout_reset();

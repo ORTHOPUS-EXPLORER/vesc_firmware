@@ -48,7 +48,7 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->encoder_filter_anglestep        = 0.25;
   cfg->encoder_filter_enable           = true;
   cfg->encoder_filter_plot_enable      = false;
-  cfg->limits_enable                   = false;
+  cfg->limits_enable                   = true;
   cfg->orthopus_config_set             = false;
   cfg->limits_pos_max                  = 90.0;
   cfg->limits_pos_min                  = -90.0;
@@ -64,6 +64,8 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->limits_powp                     = 6;
   cfg->limits_powd                     = 1;
   cfg->limits_damp_reachangle          = 7;
+  cfg->ctrl_stiffness                  = 0;
+  cfg->ctrl_damping                    = 0;
 }
 
 float orthopus_read_encoder(void)

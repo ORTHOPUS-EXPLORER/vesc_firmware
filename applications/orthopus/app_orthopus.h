@@ -38,6 +38,8 @@ typedef struct
   /* 15 - 4 */int limits_powp;
   /* 16 - 4 */int limits_powd;
   /* 17 - 4 */int limits_damp_reachangle;
+  /* 18 - 4 */float ctrl_stiffness;
+  /* 19 - 4 */float ctrl_damping;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;
@@ -68,14 +70,12 @@ typedef struct
   float ctrl_command;
   bool deadzone;
   float a;
-  float stiffness;
   int turn_now;
   float ext_torque_setpoint;
   float ext_pos_setpoint;
   bool ctrl_overwrite;
   float limitreaction;
   float torqueerror;
-  float damping;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t orthopus_state;
