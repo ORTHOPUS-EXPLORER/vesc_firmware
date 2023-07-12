@@ -66,6 +66,10 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->limits_damp_reachangle          = 7;
   cfg->ctrl_stiffness                  = 0;
   cfg->ctrl_damping                    = 0;
+  cfg->deadzone                        = true;
+  cfg->a                               = 1;
+  cfg->torque_filter_const             = 0.1;
+  cfg->deadzone                        = true;
 }
 
 float orthopus_read_encoder(void)
