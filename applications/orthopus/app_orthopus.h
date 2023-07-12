@@ -80,6 +80,9 @@ typedef struct
   bool ctrl_overwrite;
   float limitreaction;
   float torqueerror;
+  float last_ctrl_command;
+  float nid1; //number of non null identical ctrl command 
+  bool stopped;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t orthopus_state;
@@ -106,6 +109,7 @@ static void orthopus_init_lisp(void);
 
 //algo
 static void orthopus_estop(void);
+static bool orthopus_safety(void);
 static void orthopus_limits(void);
 static void orthopus_plot_encoder_filtering(int ns);
 static void orthopus_plot_cycletime(int ns);

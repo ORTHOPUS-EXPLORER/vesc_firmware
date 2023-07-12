@@ -174,33 +174,51 @@ static THD_FUNCTION(orthopus_thread, arg) {
                               //TODO: low lag low pass filter 
       if (orthopus_state.ctrl_plot)
         orthopus_plot_impedance(nsample);
-      //TODO: control loop
-      if (orthopus_state.ctrl_enable)
+
+      //safety checks
+      if (!orthopus_safety())
       {
-        orthopus_state.torqueerror = orthopus_state.ext_torque_setpoint-orthopus_state.Torque;
-        //add stiffness action
-        orthopus_state.torqueerror -= orthopus_config.ctrl_stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
-        // add damping action
-        orthopus_state.torqueerror += orthopus_config.ctrl_damping*orthopus_state.speed_now;
-        //add limits action
-        orthopus_state.torqueerror -= orthopus_state.limitreaction;
-        if (orthopus_config.deadzone)
+        orthopus_estop();
+      } else 
+      { //control loop
+        if (orthopus_state.ctrl_enable)
         {
-          //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
-          //orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
-          orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror);
-          orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
-        } else {
-          //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
-          orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror);
-        }
-        //add stiffness action
-        //orthopus_state.ctrl_command += orthopus_config.ctrl_stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
-        //add limit action
-        //orthopus_state.ctrl_command += orthopus_state.limitreaction;
-        mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0
-        mc_interface_set_current_rel(orthopus_state.ctrl_command);
-      } //TODO: check limits after last ctrl_command computation and set to zero if out of limits?
+          orthopus_state.stopped = false;
+          orthopus_state.torqueerror = orthopus_state.ext_torque_setpoint-orthopus_state.Torque;
+          //add stiffness action
+          orthopus_state.torqueerror -= orthopus_config.ctrl_stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
+          // add damping action
+          orthopus_state.torqueerror += orthopus_config.ctrl_damping*orthopus_state.speed_now;
+          //add limits action
+          orthopus_state.torqueerror -= orthopus_state.limitreaction;
+          if (orthopus_config.deadzone)
+          {
+            //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
+            //orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
+            orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror);
+            orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
+          } else {
+            //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
+            orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror);
+          }
+
+          //safety checks
+          //compute safety indicators
+          if ((orthopus_state.last_ctrl_command==orthopus_state.ctrl_command)&&(orthopus_state.ctrl_command!=0.0))
+          {
+            orthopus_state.nid1 += 1;
+          } else {
+            orthopus_state.nid1 = 0;
+          }
+          orthopus_state.last_ctrl_command = orthopus_state.ctrl_command;
+          //add stiffness action
+          //orthopus_state.ctrl_command += orthopus_config.ctrl_stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
+          //add limit action
+          //orthopus_state.ctrl_command += orthopus_state.limitreaction;
+          mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0 //todo: move somewhere else?
+          mc_interface_set_current_rel(orthopus_state.ctrl_command);
+        } //TODO: check limits after last ctrl_command computation and set to zero if out of limits?
+      }
     }
     
     
@@ -247,8 +265,31 @@ static void orthopus_estop(void)
 {
   mc_interface_release_motor();   //disable motor
   mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
+  orthopus_state.ctrl_command = 0.0;
+  orthopus_state.torqueerror = 0.0;
+  orthopus_state.stopped = true;
 }
 
+/**
+ * Safety: check control variables looking for errors, stop if anomaly detected 
+ *
+ * @param
+ * void
+ *
+ * @return
+ * bool (true: ok, false: not OK)
+ */
+static bool orthopus_safety(void)
+{
+  //check indicators
+  if (orthopus_state.nid1 > 50 ) {
+    commands_printf("estop: too many identical and non null ctrl_command detected");
+    return false;
+  } else {
+    return true;
+  }
+  return true;
+}
 
 /**
  * Limits management: stop actuator if exceeding defined limits (position, speed, etc.)
@@ -266,6 +307,7 @@ static void orthopus_limits(void)
   if ((orthopus_state.pos_multiturn_now > orthopus_config.limits_pos_max) || (orthopus_state.pos_multiturn_now < orthopus_config.limits_pos_min))
   {
     orthopus_estop();
+    orthopus_state.ctrl_enable = false;
   }
   else if ( (
             (orthopus_state.speed_now > orthopus_config.limits_reach_speed
