@@ -143,6 +143,8 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Limits_powp:                 % 5d",(int)orthopus_config.limits_powp                            );
     commands_printf("Limits_powd:                 % 5d",(int)orthopus_config.limits_powd                            );
     commands_printf("limits_damp_reachangle:      % 7.3f",(double)orthopus_config.limits_damp_reachangle            );
+    commands_printf("Stiffness:                   % 7.3f", (double)orthopus_config.ctrl_stiffness                   );
+    commands_printf("damping:                     % 7.3f", (double)orthopus_config.ctrl_damping                     );
   }
   else if(!strcmp(argv[1],"dprint"))
   {
@@ -183,7 +185,18 @@ static void orthopus_config_cmd(int argc, const char **argv)
       commands_printf("rate: % 7.3f", (double)(int)val);
     }
 
-  } else if(!strcmp(argv[1],"enabletimecomp"))
+  } 
+  else if(!strcmp(argv[1],"stiffness"))
+  {
+    orthopus_config.ctrl_stiffness = val;
+    commands_printf("Control stiffness: % 7.3f", (double)val);
+  }
+  else if(!strcmp(argv[1],"damping"))
+  {
+    orthopus_config.ctrl_damping = val;
+    commands_printf("Control damping: % 7.3f", (double)val);
+  }
+  else if(!strcmp(argv[1],"enabletimecomp"))
   {
     orthopus_config.perf_compensateexectime = true;
     commands_printf("Execution time compensation Enabled");
@@ -432,7 +445,7 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.deadzone = true;
     orthopus_state.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
-    orthopus_state.stiffness = 0.0;
+    orthopus_config.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 1: kp4 a1 filterconst0.1 deadzone zerotorque enable stiffness 0.0");
   }
   else if(!strcmp(argv[1],"demo2"))
@@ -448,7 +461,7 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.deadzone = true;
     orthopus_state.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
-    orthopus_state.stiffness = 0.0;
+    orthopus_config.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 2: kp4 a 3 filterconst0.1 deadzone zerotorque enable stiffness 0.0");
   }
   else if(!strcmp(argv[1],"torquecontrol"))
@@ -464,7 +477,7 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.deadzone = true;
     orthopus_state.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
-    orthopus_state.stiffness = 0.0;
+    orthopus_config.ctrl_stiffness = 0.0;
     orthopus_state.ctrl_overwrite = true;
     commands_printf("Overwriting current setpoints into torque setpoint");
   }
@@ -481,20 +494,10 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_state.deadzone = true;
     orthopus_state.torque_filter_const = 0.1;
     orthopus_state.ctrl_enable = true;
-    orthopus_state.stiffness = 0.1;
+    orthopus_config.ctrl_stiffness = 0.1;
     orthopus_state.ext_torque_setpoint = 0;
     orthopus_state.ctrl_overwrite = true;
     commands_printf("Position control in impedance mode");
-  }
-  else if(!strcmp(argv[1],"stiffness"))
-  {
-    orthopus_state.stiffness = v;
-    commands_printf("Control stiffness: % 7.3f", (double)v);
-  }
-  else if(!strcmp(argv[1],"damping"))
-  {
-    orthopus_state.damping = v;
-    commands_printf("Control damping: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"kp"))
   {
@@ -522,14 +525,14 @@ static void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("Torque filter const: % 7.3f", (double)orthopus_state.torque_filter_const  );
     commands_printf("Kp:                  % 7.3f", (double)orthopus_state.ctrl_kp              );
     commands_printf("a:                   % 7.3f", (double)orthopus_state.a                    );
-    commands_printf("Stiffness:           % 7.3f", (double)orthopus_state.stiffness            );
+    commands_printf("Stiffness:           % 7.3f", (double)orthopus_config.ctrl_stiffness      );
     commands_printf("Torquezero:          % 7.3f", (double)orthopus_state.ADC3zero             );
     commands_printf("Control overwrite:  %s", orthopus_state.ctrl_overwrite ? "true" : "false" );
     commands_printf("control_command:     % 7.3f", (double)orthopus_state.ctrl_command         );
     commands_printf("limitreaction:       % 7.3f", (double)orthopus_state.limitreaction        );
     commands_printf("ext_pos_setpoint:    % 7.3f", (double)orthopus_state.ext_pos_setpoint     );
     commands_printf("ext_torque_setpoint: % 7.3f", (double)orthopus_state.ext_torque_setpoint  );
-    commands_printf("damping:             % 7.3f", (double)orthopus_state.damping              );
+    commands_printf("damping:             % 7.3f", (double)orthopus_config.ctrl_damping        );
   } else {
     commands_printf("Invalid arguments.");
   }
