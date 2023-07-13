@@ -552,12 +552,10 @@ void encoder_check_faults(volatile mc_configuration *m_conf, bool is_second_moto
 
 		case SENSOR_PORT_MODE_SINCOS:
 			if (encoder_cfg_sincos.state.signal_low_error_rate > 0.05) {
-				//mc_interface_fault_stop(FAULT_CODE_ENCODER_SINCOS_BELOW_MIN_AMPLITUDE, is_second_motor, false);
-				//commands_printf("ignored FAULT_CODE_ENCODER_SINCOS_BELOW_MIN_AMPLITUDE");
+				mc_interface_fault_stop(FAULT_CODE_ENCODER_SINCOS_BELOW_MIN_AMPLITUDE, is_second_motor, false);
 			}
 			if (encoder_cfg_sincos.state.signal_above_max_error_rate > 0.05) {
-				//mc_interface_fault_stop(FAULT_CODE_ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE, is_second_motor, false);
-				//commands_printf("ignored FAULT_CODE_ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE");
+				mc_interface_fault_stop(FAULT_CODE_ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE, is_second_motor, false);
 			}
 			break;
 
