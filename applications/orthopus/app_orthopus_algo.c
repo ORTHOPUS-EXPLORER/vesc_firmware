@@ -190,15 +190,20 @@ static THD_FUNCTION(orthopus_thread, arg) {
           orthopus_state.torqueerror += orthopus_config.ctrl_damping*orthopus_state.speed_now;
           //add limits action
           orthopus_state.torqueerror -= orthopus_state.limitreaction;
+
+          //compute torque error derivative
+          orthopus_state.torqueerrorderiv = (orthopus_state.torqueerror-orthopus_state.lasttorqueerror)/(1.0/orthopus_config.rate_hz);
+          orthopus_state.torqueerrorderivfilt = orthopus_config.ctrl_kd_filter*orthopus_state.torqueerrorderiv + (1-orthopus_config.ctrl_kd_filter)*orthopus_state.torqueerrorderivfilt;
+          orthopus_state.lasttorqueerror = orthopus_state.torqueerror;
           if (orthopus_config.deadzone)
           {
             //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
             //orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
-            orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror);
+            orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror) -orthopus_config.ctrl_kd*orthopus_state.torqueerrorderiv;
             orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
           } else {
             //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
-            orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror);
+            orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror) -orthopus_config.ctrl_kd*orthopus_state.torqueerrorderiv;
           }
 
           //safety checks

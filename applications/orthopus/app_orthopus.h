@@ -44,6 +44,8 @@ typedef struct
   /* 19 - 4 */float torque_filter_const;
   /* 20 - 4 */float ctrl_kp;
   /* 21 - 4 */float a;
+  /* 22 - 4 */float ctrl_kd;
+  /* 23 - 4 */float ctrl_kd_filter;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;
@@ -84,6 +86,9 @@ typedef struct
   float nid1; //number of non null identical ctrl command 
   bool stopped;
   float ADC3filtered;
+  float lasttorqueerror;
+  float torqueerrorderiv;
+  float torqueerrorderivfilt;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t orthopus_state;

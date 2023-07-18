@@ -70,6 +70,8 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->a                               = 1;
   cfg->torque_filter_const             = 0.1;
   cfg->deadzone                        = true;
+  cfg->ctrl_kd                         = 0;
+  cfg->ctrl_kd_filter                  = 1;
 }
 
 float orthopus_read_encoder(void)

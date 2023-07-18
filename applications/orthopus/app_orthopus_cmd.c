@@ -505,6 +505,16 @@ static void orthopus_control_cmd(int argc, const char **argv)
     orthopus_config.ctrl_kp = v;
     commands_printf("Control kp: % 7.3f", (double)v);
   }
+  else if(!strcmp(argv[1],"kd"))
+  {
+    orthopus_config.ctrl_kd = v;
+    commands_printf("Control kd: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"kdfilter"))
+  {
+    orthopus_config.ctrl_kd_filter = v;
+    commands_printf("Control kd filter const: % 7.3f", (double)v);
+  }
   else if(!strcmp(argv[1],"zerotorque"))
   {
     mc_interface_release_motor();   //disable motor
@@ -525,6 +535,7 @@ static void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("Deadzone enabled:    %s", orthopus_config.deadzone     ? "true" : "false" );
     commands_printf("Torque filter const: % 7.3f", (double)orthopus_config.torque_filter_const );
     commands_printf("Kp:                  % 7.3f", (double)orthopus_config.ctrl_kp             );
+    commands_printf("Kd:                  % 7.3f", (double)orthopus_config.ctrl_kd             );
     commands_printf("a:                   % 7.3f", (double)orthopus_config.a                   );
     commands_printf("Stiffness:           % 7.3f", (double)orthopus_config.ctrl_stiffness      );
     commands_printf("Torquezero:          % 7.3f", (double)orthopus_state.ADC3zero             );
