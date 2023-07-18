@@ -83,6 +83,7 @@ typedef struct
   float last_ctrl_command;
   float nid1; //number of non null identical ctrl command 
   bool stopped;
+  float ADC3filtered;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t orthopus_state;

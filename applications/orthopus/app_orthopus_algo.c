@@ -157,7 +157,8 @@ static THD_FUNCTION(orthopus_thread, arg) {
       orthopus_limits();
 
     //Impedance control
-    orthopus_state.ADC3val = ADC_VOLTS(ADC_IND_EXT3);
+    orthopus_state.ADC3val = orthopus_state.ADC3filtered; //get high freq filtered value in orthopus_pwm_callback
+    
     if (!orthopus_state.ADC3init) //init ADC Zero
     {
       ++ninitadc;
@@ -166,12 +167,10 @@ static THD_FUNCTION(orthopus_thread, arg) {
       {
         orthopus_state.ADC3init = true;
         commands_printf("torque zero done: orthopus_state.ADC3zero: % 7.3f", (double)orthopus_state.ADC3zero);
-        ninitadc = 0; ///TODO: debug
+        ninitadc = 0;
       }
     } else {
-      orthopus_state.Torque = (1-orthopus_config.torque_filter_const)*orthopus_state.Torque
-                              + orthopus_config.torque_filter_const*orthopus_config.Torquegain*(orthopus_state.ADC3val-orthopus_state.ADC3zero);
-                              //TODO: low lag low pass filter 
+      orthopus_state.Torque = orthopus_config.Torquegain*(orthopus_state.ADC3val-orthopus_state.ADC3zero); 
       if (orthopus_state.ctrl_plot)
         orthopus_plot_impedance(nsample);
 
@@ -249,7 +248,8 @@ static THD_FUNCTION(orthopus_thread, arg) {
 static void orthopus_pwm_callback(void)
 {
 	// Called for every control iteration in interrupt context.
-
+  //Sample torque sensor ADC at high frequency
+  orthopus_state.ADC3filtered = orthopus_config.torque_filter_const*ADC_VOLTS(ADC_IND_EXT3) + (1-orthopus_config.torque_filter_const)*orthopus_state.ADC3filtered;
 }
 
 /**
