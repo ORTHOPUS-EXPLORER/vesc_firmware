@@ -44,9 +44,9 @@ static bool orthopus_config_save(const orthopus_config_t* cfg)
 
 void orthopus_config_reset(orthopus_config_t* cfg)
 {
-  cfg->encoder_offset                  = 49.7; //for OR14B005 todo set to zero
+  cfg->encoder_offset                  = 0.0;
   cfg->encoder_filter_anglestep        = 0.25;
-  cfg->encoder_filter_enable           = true;
+  cfg->encoder_filter_enable           = true; // keep enabled or move encoder filtered multiturn angle estimation
   cfg->encoder_filter_plot_enable      = false;
   cfg->limits_enable                   = true;
   cfg->orthopus_config_set             = false;
