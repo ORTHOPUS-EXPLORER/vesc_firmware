@@ -54,31 +54,27 @@ static orthopus_config_t orthopus_config;
 //global variables (interfaces with lispBM and terminal)
 typedef struct
 {
-  float pos_multiturn_now;
-  float enc_pos_filter;
-  float enc_pos_filter_multiturn;
-  int enc_turn;
-  float speed_now;
-  float enc_pos;
+  float pos_multiturn_now;            //multiturn position based from mc_interface
+  float enc_pos_filter;//encoder position filtered (removed outliers)
+  float enc_pos_filter_multiturn;//encoder position filtred and multiturn
+  int enc_turn; //encoder angle turn count
+  float speed_now; //actual speed from mc_interface
+  float enc_pos; //raw encoder position
   float time_diff;
   float time_diff_filt;
   int time_lag_filt;
   int time_lag_compensation;
-  bool perfplot;
-  int maxperiod;
-  int minperiod;
-  int exectime;
+  bool perfplot;                             //enables realtime performance plot 
+  int maxperiod;                                  //maximum execution time in us
+  int minperiod;                                  //maximum execution time in us
+  int exectime;                                      //loop time in system ticks
   float ADC3val;
   float ADC3zero;
   float Torque;
   float ADC3init;
-  //float torque_filter_const; //-> config
   bool ctrl_enable;
   bool ctrl_plot;
-  //float ctrl_kp; //-> config
   float ctrl_command;
-  //bool deadzone; //-> config
-  //float a; //-> config
   int turn_now;
   float ext_torque_setpoint;
   float ext_pos_setpoint;
@@ -103,10 +99,6 @@ static void orthopus_config_reset(orthopus_config_t* cfg);
 
 static float orthopus_read_encoder(void);
 static float orthopus_read_encoder_raw(void);
-//static float orthopus_read_encoder_filtered(void);
-//static float orthopus_read_pos_multiturn(void);
-//static float app_orthopus_get_enc_pos_filtered(void);
-//static float app_orthopus_get_pos_multiturn(void);
 static float orthopus_set_joint_offset(float v, bool use_v);
 static float orthopus_set_encoder_offset(float v, bool use_v);
 

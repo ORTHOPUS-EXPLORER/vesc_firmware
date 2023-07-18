@@ -45,7 +45,6 @@ float pid_pos_now = 0;
 float pid_pos_last = 0;
 static systime_t time_now, time_last, time_start, time_end;
 systime_t time_lasterrprint;
-//static int time_now, time_last, time_start, time_end;
 int ninitadc = 0;
 
 static THD_FUNCTION(orthopus_thread, arg) {
@@ -101,14 +100,6 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
     // Read AMS
     enc_as504x_routine(&encoder_cfg_as504x);
-
-		// Run your logic here. A lot of functionality is available in mc_interface.h.
-
-    // You can call  functions such as:
-    // - mc_interface_set_duty()
-    // - mc_interface_set_pid_speed()
-    // - mc_interface_set_pid_pos()
-
 
     // ENCODER EMI NOISE FILTERING
     orthopus_state.enc_pos = orthopus_read_encoder();
@@ -181,7 +172,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
         orthopus_state.ADC3init = true;
         commands_printf("torque zero done: orthopus_state.ADC3zero: % 7.3f", (double)orthopus_state.ADC3zero);
         ninitadc = 0;
-      }
+      } //TODO: store value in config
     } else {
       orthopus_state.Torque = orthopus_config.Torquegain*(orthopus_state.ADC3val-orthopus_state.ADC3zero); 
       if (orthopus_state.ctrl_plot)
@@ -210,12 +201,9 @@ static THD_FUNCTION(orthopus_thread, arg) {
           orthopus_state.lasttorqueerror = orthopus_state.torqueerror;
           if (orthopus_config.deadzone)
           {
-            //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
-            //orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
             orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror) -orthopus_config.ctrl_kd*orthopus_state.torqueerrorderiv;
             orthopus_state.ctrl_command = orthopus_state.ctrl_command - atanf(orthopus_state.ctrl_command*orthopus_config.a)/orthopus_config.a;
           } else {
-            //orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.ext_torque_setpoint-orthopus_state.Torque);
             orthopus_state.ctrl_command = -orthopus_config.ctrl_kp * (orthopus_state.torqueerror) -orthopus_config.ctrl_kd*orthopus_state.torqueerrorderiv;
           }
 
@@ -228,10 +216,6 @@ static THD_FUNCTION(orthopus_thread, arg) {
             orthopus_state.nid1 = 0;
           }
           orthopus_state.last_ctrl_command = orthopus_state.ctrl_command;
-          //add stiffness action
-          //orthopus_state.ctrl_command += orthopus_config.ctrl_stiffness*(orthopus_state.ext_pos_setpoint-orthopus_state.pos_multiturn_now);
-          //add limit action
-          //orthopus_state.ctrl_command += orthopus_state.limitreaction;
           mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0 //todo: move somewhere else?
           mc_interface_set_current_rel(orthopus_state.ctrl_command);
         } //TODO: check limits after last ctrl_command computation and set to zero if out of limits?
@@ -351,17 +335,9 @@ static void orthopus_limits(void)
   }
   if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now < orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)){
     orthopus_state.limitreaction = orthopus_config.limits_kp*pow((orthopus_state.pos_multiturn_now-(orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle)),orthopus_config.limits_powp);
-    /*if (orthopus_state.speed_now < 0) //add damping, only in the direction of the limit to avoid sticking effect
-    {
-      orthopus_state.limitreaction += -orthopus_config.limits_kd*pow(orthopus_state.speed_now,orthopus_config.limits_powd);
-    }*/
   }
-  if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now > orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle)) { //-3 adds a zone before reach angle in which we add a friction
+  if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now > orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle)) { 
     orthopus_state.limitreaction = -orthopus_config.limits_kp*pow((orthopus_state.pos_multiturn_now-(orthopus_config.limits_pos_max - orthopus_config.limits_reach_angle)),orthopus_config.limits_powp);
-    /*if (orthopus_state.speed_now > 0) //add damping, only in the direction of the limit to avoid sticking effect
-    {
-      orthopus_state.limitreaction += -orthopus_config.limits_kd*pow(orthopus_state.speed_now,orthopus_config.limits_powd);
-    }*/
   }
   if ((orthopus_state.ctrl_enable) && (orthopus_state.pos_multiturn_now < orthopus_config.limits_pos_min + orthopus_config.limits_reach_angle + orthopus_config.limits_damp_reachangle) && (orthopus_state.speed_now < 0)) //add damping, only in the direction of the limit to avoid sticking effect
   {
