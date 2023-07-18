@@ -3,6 +3,7 @@
 static lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn);
 static lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn);
 static lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn);
+static lbm_value orthopus_lisp_read_encoder_filtered_multiturn(lbm_value *args, lbm_uint argn);
 static lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn);
 static lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn);
 static lbm_value orthopus_lisp_read_torque(lbm_value *args, lbm_uint argn);
@@ -60,6 +61,7 @@ void orthopus_init_lisp(void)
   lbm_add_extension("orthopus-read-encoder", orthopus_lisp_read_encoder);
   lbm_add_extension("orthopus-read-encoder-raw", orthopus_lisp_read_encoder_raw);
   lbm_add_extension("orthopus-read-encoder-filt", orthopus_lisp_read_encoder_filtered);
+  lbm_add_extension("orthopus-read-encoder-filt-multiturn", orthopus_lisp_read_encoder_filtered_multiturn);
   lbm_add_extension("orthopus-read-pos-multiturn", orthopus_lisp_read_pos_multiturn);
   lbm_add_extension("orthopus-read-speed", orthopus_lisp_read_speed);
   lbm_add_extension("orthopus-read-torque", orthopus_lisp_read_torque);
@@ -87,6 +89,12 @@ static lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint a
 {
 	(void)args; (void)argn;
 	return lbm_enc_float(orthopus_state.enc_pos_filter);
+}
+
+static lbm_value orthopus_lisp_read_encoder_filtered_multiturn(lbm_value *args, lbm_uint argn)
+{
+	(void)args; (void)argn;
+	return lbm_enc_float(orthopus_state.enc_pos_filter_multiturn);
 }
 
 static lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn)

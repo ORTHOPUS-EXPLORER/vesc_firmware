@@ -46,6 +46,7 @@ typedef struct
   /* 21 - 4 */float a;
   /* 22 - 4 */float ctrl_kd;
   /* 23 - 4 */float ctrl_kd_filter;
+  /* 24 - 4 */float max_enc_diff;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
 static orthopus_config_t orthopus_config;
@@ -55,6 +56,8 @@ typedef struct
 {
   float pos_multiturn_now;
   float enc_pos_filter;
+  float enc_pos_filter_multiturn;
+  int enc_turn;
   float speed_now;
   float enc_pos;
   float time_diff;
