@@ -21,7 +21,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[print/dprint/load/save/reset/setrate/enabletimecomp/disabletimecomp/storetorquezero/settorquegain/max_enc_diff]",
+    "[print/dprint/load/save/reset/setrate/enabletimecomp/disabletimecomp/storetorquezero/settorquegain/encoder_max_diff]",
     orthopus_config_cmd
   );
 
@@ -77,13 +77,13 @@ static void orthopus_pos_cmd(int argc, const char **argv)
   double pid_v     = mc_interface_get_pid_pos_now();
   double pid_o     = mc_interface_get_configuration()->p_pid_offset;
 
-  commands_printf("orthopus_config.encoder_offset : % 7.3f", (double)orthopus_config.encoder_offset   );
+  commands_printf("or_conf.encoder_offset : % 7.3f", (double)or_conf.encoder_offset   );
   commands_printf("PID_pos offset                 : % 7.3f", pid_o                                    );
   commands_printf("AMS_pos                        : % 7.3f", ams_v                                    );
   commands_printf("SINCOS_pos                     : % 7.3f", sincos_v                                 );
   commands_printf("orthopus_read_encoder()        : % 7.3f", orthop_v                                 );
   commands_printf("PID_pos_now                    : % 7.3f", pid_v                                    );
-  commands_printf("pos_multiturn_now              : % 7.3f", (double)orthopus_state.pos_multiturn_now );
+  commands_printf("pos_multiturn_now              : % 7.3f", (double)or_state.pos_multiturn_now );
 }
 
 static void orthopus_offset_cmd(int argc, const char **argv)
@@ -105,7 +105,7 @@ static void orthopus_offset_cmd(int argc, const char **argv)
   else if(!strcmp(argv[1],"encoder"))
   {
     v = orthopus_set_encoder_offset(v,argc == 3);
-    commands_printf("Init encoder offset: % 7.3f", (double)orthopus_config.encoder_offset);
+    commands_printf("Init encoder offset: % 7.3f", (double)or_conf.encoder_offset);
   } else {
     commands_printf("Invalid arguments.");
   }
@@ -124,28 +124,28 @@ static void orthopus_config_cmd(int argc, const char **argv)
 
   if(argc == 0 || !strcmp(argv[1],"print"))
   {
-    commands_printf("Encoder offset:              % 7.3f",(double)orthopus_config.encoder_offset                    );
-    commands_printf("Encoder filter anglestep:    % 7.3f",(double)orthopus_config.encoder_filter_anglestep          );
-    commands_printf("Encoder Filter enabled:      %s", orthopus_config.encoder_filter_enable ? "true" : "false"     );
-    commands_printf("Encoder Filter plot enabled: %s", orthopus_config.encoder_filter_plot_enable ? "true" : "false");
-    commands_printf("Limits enabled:              %s", orthopus_config.limits_enable ? "true" : "false"             );
-    commands_printf("Config set:                  %s", orthopus_config.orthopus_config_set ? "true" : "false"       );
-    commands_printf("Limits pos max:              % 7.3f",(double)orthopus_config.limits_pos_max                    );
-    commands_printf("Limits pos min:              % 7.3f",(double)orthopus_config.limits_pos_min                    );
-    commands_printf("Limits reach angle:          % 7.3f",(double)orthopus_config.limits_reach_angle                );
-    commands_printf("Limits reach speed:          % 7.3f",(double)orthopus_config.limits_reach_speed                );
-    commands_printf("Encoder filter error gain:   % 7.3f",(double)orthopus_config.encoder_filter_error_gain         );
-    commands_printf("Loop rate:                   % 5d",(int)orthopus_config.rate_hz                                );
-    commands_printf("Torquezero:                  % 7.3f",(double)orthopus_config.Torquezero                        );
-    commands_printf("Torquegain:                  % 7.3f",(double)orthopus_config.Torquegain                        );
-    commands_printf("limits_kp:                   % 7.3f",(double)orthopus_config.limits_kp                         );
-    commands_printf("limits_kd:                   % 7.3f",(double)orthopus_config.limits_kd                         );
-    commands_printf("Limits_powp:                 % 5d",(int)orthopus_config.limits_powp                            );
-    commands_printf("Limits_powd:                 % 5d",(int)orthopus_config.limits_powd                            );
-    commands_printf("limits_damp_reachangle:      % 7.3f",(double)orthopus_config.limits_damp_reachangle            );
-    commands_printf("Stiffness:                   % 7.3f", (double)orthopus_config.ctrl_stiffness                   );
-    commands_printf("damping:                     % 7.3f", (double)orthopus_config.ctrl_damping                     );
-    commands_printf("max_enc_diff:                % 7.3f", (double)orthopus_config.max_enc_diff                     );
+    commands_printf("Encoder offset:              % 7.3f",(double)or_conf.encoder_offset                    );
+    commands_printf("Encoder filter anglestep:    % 7.3f",(double)or_conf.encoder_filter_anglestep          );
+    commands_printf("Encoder Filter enabled:      %s", or_conf.encoder_filter_enable ? "true" : "false"     );
+    commands_printf("Encoder Filter plot enabled: %s", or_conf.encoder_filter_plot_enable ? "true" : "false");
+    commands_printf("Limits enabled:              %s", or_conf.limits_enable ? "true" : "false"             );
+    commands_printf("Config set:                  %s", or_conf.or_conf_set ? "true" : "false"       );
+    commands_printf("Limits pos max:              % 7.3f",(double)or_conf.limits_pos_max                    );
+    commands_printf("Limits pos min:              % 7.3f",(double)or_conf.limits_pos_min                    );
+    commands_printf("Limits reach angle:          % 7.3f",(double)or_conf.limits_reach_angle                );
+    commands_printf("Limits reach speed:          % 7.3f",(double)or_conf.limits_reach_speed                );
+    commands_printf("Encoder filter error gain:   % 7.3f",(double)or_conf.encoder_filter_error_gain         );
+    commands_printf("Loop rate:                   % 5d",(int)or_conf.perf_rate_hz                                );
+    commands_printf("ctrl_torquezero:                  % 7.3f",(double)or_conf.ctrl_torquezero                        );
+    commands_printf("ctrl_torquegain:                  % 7.3f",(double)or_conf.ctrl_torquegain                        );
+    commands_printf("limits_kp:                   % 7.3f",(double)or_conf.limits_kp                         );
+    commands_printf("limits_kd:                   % 7.3f",(double)or_conf.limits_kd                         );
+    commands_printf("Limits_powp:                 % 5d",(int)or_conf.limits_powp                            );
+    commands_printf("Limits_powd:                 % 5d",(int)or_conf.limits_powd                            );
+    commands_printf("limits_damp_reachangle:      % 7.3f",(double)or_conf.limits_damp_reachangle            );
+    commands_printf("Stiffness:                   % 7.3f", (double)or_conf.ctrl_stiffness                   );
+    commands_printf("damping:                     % 7.3f", (double)or_conf.ctrl_damping                     );
+    commands_printf("encoder_max_diff:                % 7.3f", (double)or_conf.encoder_max_diff                     );
   }
   else if(!strcmp(argv[1],"dprint"))
   {
@@ -155,79 +155,77 @@ static void orthopus_config_cmd(int argc, const char **argv)
     uint32_t addr=0;
     for(addr=0;addr<sz;addr++)
     {
-      uint32_t* raddr = (uint32_t*)((uint8_t*)(&orthopus_config)+addr*4);
+      uint32_t* raddr = (uint32_t*)((uint8_t*)(&or_conf)+addr*4);
       eeprom_var v; v.as_u32 = *raddr;
       commands_printf("  [0x%02X][0x%08p] '0x%04X/% 5d/% 5.3f'",addr,raddr,v.as_u32,v.as_i32,(double)v.as_float);
     }
   }
   else if(!strcmp(argv[1],"reset"))
   {
-    orthopus_config_reset(&orthopus_config);
+    orthopus_config_reset(&or_conf);
     commands_printf("Orthopus config reset to default. Don't forget to save to EEPROM !");
   }
   else if(!strcmp(argv[1],"load"))
   {
-    if(orthopus_config_load(&orthopus_config))
+    if(orthopus_config_load(&or_conf))
       commands_printf("Orthopus config loaded from EEPROM");
     else
       commands_printf("Orthopus config load failed =/");
   }
   else if(!strcmp(argv[1],"save"))
   {
-    orthopus_config.orthopus_config_set = true;
-    if(orthopus_config_save(&orthopus_config))
+    or_conf.or_conf_set = true;
+    if(orthopus_config_save(&or_conf))
       commands_printf("Orthopus config saved to EEPROM");
     else
       commands_printf("Orthopus config save failed =/");
   } else if(!strcmp(argv[1],"setrate"))
   {
     if (val > 10) {
-      orthopus_config.rate_hz = (int)val;
+      or_conf.perf_rate_hz = (int)val;
       commands_printf("rate: % 7.3f", (double)(int)val);
     }
 
   } 
   else if(!strcmp(argv[1],"stiffness"))
   {
-    orthopus_config.ctrl_stiffness = val;
+    or_conf.ctrl_stiffness = val;
     commands_printf("Control stiffness: % 7.3f", (double)val);
   }
   else if(!strcmp(argv[1],"damping"))
   {
-    orthopus_config.ctrl_damping = val;
+    or_conf.ctrl_damping = val;
     commands_printf("Control damping: % 7.3f", (double)val);
   }
-  else if(!strcmp(argv[1],"max_enc_diff"))
+  else if(!strcmp(argv[1],"encoder_max_diff"))
   {
-    orthopus_config.max_enc_diff = val;
+    or_conf.encoder_max_diff = val;
     commands_printf("Max allowed angle between encoders: % 7.3f", (double)val);
   }
   
   else if(!strcmp(argv[1],"enabletimecomp"))
   {
-    orthopus_config.perf_compensateexectime = true;
+    or_conf.perf_compensateexectime = true;
     commands_printf("Execution time compensation Enabled");
   }
   else if(!strcmp(argv[1],"disabletimecomp"))
   {
-    orthopus_config.perf_compensateexectime = false;
+    or_conf.perf_compensateexectime = false;
     commands_printf("Execution time compensation Disabled");
   }
   else if(!strcmp(argv[1],"storetorquezero"))
   {
-    orthopus_config.Torquezero  = orthopus_state.ADC3zero;
-    commands_printf("Saved actual torque zero [% 7.3f] to config, don't forget to save config to eeprom", (double)orthopus_config.Torquezero);
-    //commands_printf("debug: orthopus_state.ADC3zero: % 7.3f", (double)orthopus_state.ADC3zero);
-    //commands_printf("debug: orthopus_state.ADC3init: % 7.3f", (double)orthopus_state.ADC3init);
+    or_conf.ctrl_torquezero  = or_state.adc3_zero;
+    commands_printf("Saved actual torque zero [% 7.3f] to config, don't forget to save config to eeprom", (double)or_conf.ctrl_torquezero);
   } 
   else if(!strcmp(argv[1],"settorquegain"))
   {
-    orthopus_config.Torquegain = val;
-    commands_printf("Torquegain: % 7.3f", (double)val);
+    or_conf.ctrl_torquegain = val;
+    commands_printf("ctrl_torquegain: % 7.3f", (double)val);
   } else {
     commands_printf("Invalid arguments.");
   }
-} //orthopus_config.perf_compensatelag 
+}
 
 static void orthopus_filter_cmd(int argc, const char **argv)
 {
@@ -242,32 +240,32 @@ static void orthopus_filter_cmd(int argc, const char **argv)
 
   if(!strcmp(argv[1],"anglestep"))
   {
-    orthopus_config.encoder_filter_anglestep = v;
+    or_conf.encoder_filter_anglestep = v;
     commands_printf("Update filter angle step: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"enable"))
   {
-    orthopus_config.encoder_filter_enable = true;
+    or_conf.encoder_filter_enable = true;
     commands_printf("Encoder filter Enabled");
   }
   else if(!strcmp(argv[1],"disable"))
   {
-    orthopus_config.encoder_filter_enable = false;
+    or_conf.encoder_filter_enable = false;
     commands_printf("Encoder filter Disabled");
   }
   else if(!strcmp(argv[1],"enableplot"))
   {
-    orthopus_config.encoder_filter_plot_enable = true;
+    or_conf.encoder_filter_plot_enable = true;
     commands_printf("Encoder filter plot Enabled");
   }
   else if(!strcmp(argv[1],"disableplot"))
   {
-    orthopus_config.encoder_filter_plot_enable = false;
+    or_conf.encoder_filter_plot_enable = false;
     commands_printf("Encoder filter plot Disabled");
   }
   else if(!strcmp(argv[1],"encerrorgain"))
   {
-    orthopus_config.encoder_filter_error_gain = v;
+    or_conf.encoder_filter_error_gain = v;
     commands_printf("Encoder error gain: % 7.3f", (double)v);
   } else {
     commands_printf("Invalid arguments.");
@@ -287,57 +285,57 @@ static void orthopus_limits_cmd(int argc, const char **argv)
 
   if(!strcmp(argv[1],"posmax"))
   {
-    orthopus_config.limits_pos_max = v;
+    or_conf.limits_pos_max = v;
     commands_printf("Update max pos: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"posmin"))
   {
-    orthopus_config.limits_pos_min = v;
+    or_conf.limits_pos_min = v;
     commands_printf("Update min pos: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"enable"))
   {
-    orthopus_config.limits_enable = true;
+    or_conf.limits_enable = true;
     commands_printf("limits Enabled");
   }
   else if(!strcmp(argv[1],"disable"))
   {
-    orthopus_config.limits_enable = false;
+    or_conf.limits_enable = false;
     commands_printf("limits Disabled");
   }
   else if(!strcmp(argv[1],"reachangle"))
   {
-    orthopus_config.limits_reach_angle = v;
+    or_conf.limits_reach_angle = v;
     commands_printf("Limits reach angle: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"reachspeed"))
   {
-    orthopus_config.limits_reach_speed = v;
+    or_conf.limits_reach_speed = v;
     commands_printf("Limits reach speed: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"kp"))
   {
-    orthopus_config.limits_kp = v;
+    or_conf.limits_kp = v;
     commands_printf("Limits kp: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"kd"))
   {
-    orthopus_config.limits_kd = v;
+    or_conf.limits_kd = v;
     commands_printf("Limits kd: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"powp"))
   {
-    orthopus_config.limits_powp = (int)v;
+    or_conf.limits_powp = (int)v;
     commands_printf("Limits powp: % 5d", (int)v);
   }
   else if(!strcmp(argv[1],"powd"))
   {
-    orthopus_config.limits_powd = (int)v;
+    or_conf.limits_powd = (int)v;
     commands_printf("Limits powd: % 5d", (int)v);
   }
   else if(!strcmp(argv[1],"damp_reachangle"))
   {
-    orthopus_config.limits_damp_reachangle = (float)v;
+    or_conf.limits_damp_reachangle = (float)v;
     commands_printf("damp reachangle: % 7.3f", (float)v);
   } else {
     commands_printf("Invalid arguments.");
@@ -349,27 +347,27 @@ static void orthopus_perf_cmd(int argc, const char **argv)
   if(argc == 1)
   {
     (void)argc;(void)argv;
-    commands_printf("measured period (us) : % f", (double)orthopus_state.time_diff);
-    commands_printf("loop execution time (ticks) : % d", orthopus_state.exectime);
-    commands_printf("requested rade (Hz) : % 7.3f", (double)orthopus_config.rate_hz);
-    if (orthopus_state.time_diff != 0)
-      commands_printf("measured rate (Hz) : % 7.3f", (double)(1.0/(orthopus_state.time_diff/1000000.0)));
-    commands_printf("measured mean period  (us) : % 7.3f", (double)orthopus_state.time_diff_filt);
-    if (orthopus_state.time_diff_filt != 0)
-      commands_printf("measured mean rate (Hz) : % 7.3f", (double)(1.0/(orthopus_state.time_diff_filt/1000000.0)));
-    commands_printf("max period since last call of o_perf (us) : % d", orthopus_state.maxperiod);
-    commands_printf("min period since last call of o_perf (us) : % d", orthopus_state.minperiod);
-    orthopus_state.maxperiod = 0; //reset max period
-    orthopus_state.minperiod = 10000; //reset min period
+    commands_printf("measured period (us) : % f", (double)or_state.time_diff);
+    commands_printf("loop execution time (ticks) : % d", or_state.exec_time);
+    commands_printf("requested rade (Hz) : % 7.3f", (double)or_conf.perf_rate_hz);
+    if (or_state.time_diff != 0)
+      commands_printf("measured rate (Hz) : % 7.3f", (double)(1.0/(or_state.time_diff/1000000.0)));
+    commands_printf("measured mean period  (us) : % 7.3f", (double)or_state.time_diff_filt);
+    if (or_state.time_diff_filt != 0)
+      commands_printf("measured mean rate (Hz) : % 7.3f", (double)(1.0/(or_state.time_diff_filt/1000000.0)));
+    commands_printf("max period since last call of o_perf (us) : % d", or_state.max_period);
+    commands_printf("min period since last call of o_perf (us) : % d", or_state.min_period);
+    or_state.max_period = 0; //reset max period
+    or_state.min_period = 10000; //reset min period
   } else if (argc == 2){
     if(!strcmp(argv[1],"enableplot"))
     {
-      orthopus_state.perfplot= true;
+      or_state.perf_plot= true;
       commands_printf("Perf plot Enabled");
     }
     else if(!strcmp(argv[1],"disableplot"))
     {
-      orthopus_state.perfplot = false;
+      or_state.perf_plot = false;
       commands_printf("Perf plot Disabled");
     } else {
       commands_printf("Invalid arguments.");
@@ -390,171 +388,135 @@ static void orthopus_control_cmd(int argc, const char **argv)
 
   if(!strcmp(argv[1],"enable"))
   {
-    orthopus_state.ctrl_enable = true;
+    or_state.ctrl_enable = true;
     commands_printf("Control Enabled");
   }
   else if(!strcmp(argv[1],"disable"))
   {
-    orthopus_state.ctrl_enable = false;
+    or_state.ctrl_enable = false;
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //todo set zero torque and/or estop
   }
   else if(!strcmp(argv[1],"eoverwrite"))
   {
-    orthopus_state.ctrl_overwrite = true;
+    or_state.ctrl_overwrite = true;
 
   }
   else if(!strcmp(argv[1],"doverwrite"))
   {
-    orthopus_state.ctrl_overwrite = false;
+    or_state.ctrl_overwrite = false;
   }
   else if(!strcmp(argv[1],"enableplot"))
   {
-    orthopus_state.ctrl_plot = true;
+    or_state.ctrl_plot = true;
     commands_printf("Control plot Enabled");
   }
   else if(!strcmp(argv[1],"disableplot"))
   {
-    orthopus_state.ctrl_plot = false;
+    or_state.ctrl_plot = false;
     commands_printf("Control plot Disabled");
   }
   else if(!strcmp(argv[1],"enabledeadzone"))
   {
-    orthopus_config.deadzone = true;
+    or_conf.ctrl_deadzone = true;
     commands_printf("Deadzone Enabled");
   }
   else if(!strcmp(argv[1],"disabledeadzone"))
   {
-    orthopus_config.deadzone = false;
+    or_conf.ctrl_deadzone = false;
     commands_printf("Deadzone Disabled");
   }
   else if(!strcmp(argv[1],"a"))
   {
     if (v != 0)
     {
-      orthopus_config.a= v;
-      commands_printf("deadzone a factor: % 7.3f", (double)v);
+      or_conf.ctrl_a= v;
+      commands_printf("ctrl_deadzone a factor: % 7.3f", (double)v);
     } else {
-      commands_printf("error: deadzone a factor can't be null");
+      commands_printf("error: ctrl_deadzone a factor can't be null");
     }
   }
   else if(!strcmp(argv[1],"demo1"))
   {
-    //zero torque
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
-    //orthopus_state.ADC3init = false;
-    //orthopus_state.ADC3zero = 0;
-    //setup
-    orthopus_config.ctrl_kp = 4;
-    orthopus_config.a= 1;
-    orthopus_config.deadzone = true;
-    orthopus_config.torque_filter_const = 0.1;
-    orthopus_state.ctrl_enable = true;
-    orthopus_config.ctrl_stiffness = 0.0;
-    commands_printf("Configured demo 1: kp4 a1 filterconst0.1 deadzone zerotorque enable stiffness 0.0");
+    or_conf.ctrl_kp = 4;
+    or_conf.ctrl_a= 1;
+    or_conf.ctrl_deadzone = true;
+    or_conf.torque_filter_const = 0.1;
+    or_state.ctrl_enable = true;
+    or_conf.ctrl_stiffness = 0.0;
+    commands_printf("Configured demo 1: kp4 a1 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
   }
   else if(!strcmp(argv[1],"demo2"))
   {
-    //zero torque
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
-    //orthopus_state.ADC3init = false;
-    //orthopus_state.ADC3zero = 0;
-    //setup
-    orthopus_config.ctrl_kp = 4;
-    orthopus_config.a= 3;
-    orthopus_config.deadzone = true;
-    orthopus_config.torque_filter_const = 0.1;
-    orthopus_state.ctrl_enable = true;
-    orthopus_config.ctrl_stiffness = 0.0;
-    commands_printf("Configured demo 2: kp4 a 3 filterconst0.1 deadzone zerotorque enable stiffness 0.0");
+    or_conf.ctrl_kp = 4;
+    or_conf.ctrl_a= 3;
+    or_conf.ctrl_deadzone = true;
+    or_conf.torque_filter_const = 0.1;
+    or_state.ctrl_enable = true;
+    or_conf.ctrl_stiffness = 0.0;
+    commands_printf("Configured demo 2: kp4 a 3 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
   }
   else if(!strcmp(argv[1],"torquecontrol"))
   {
-    //zero torque
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
-    //orthopus_state.ADC3init = false;
-    //orthopus_state.ADC3zero = 0;
-    //setup
-    //orthopus_config.ctrl_kp = 2.8;
-    //orthopus_config.a= 1;
-    //orthopus_config.deadzone = true;
-    //orthopus_config.torque_filter_const = 0.1;
-    orthopus_state.ctrl_enable = true;
-    //orthopus_config.ctrl_stiffness = 0.0;
-    orthopus_state.ctrl_overwrite = true;
+    or_state.ctrl_enable = true;
+    or_state.ctrl_overwrite = true;
     commands_printf("Overwriting current setpoints into torque setpoint");
   }
-  /*else if(!strcmp(argv[1],"poscontrol"))
-  {
-    //zero torque
-    mc_interface_release_motor();   //disable motor
-    mc_interface_ignore_input(1000);
-    //orthopus_state.ADC3init = false;
-    //orthopus_state.ADC3zero = 0;
-    //setup
-    orthopus_config.ctrl_kp = 2.8;
-    orthopus_config.a= 1;
-    orthopus_config.deadzone = true;
-    orthopus_config.torque_filter_const = 0.1;
-    orthopus_state.ctrl_enable = true;
-    orthopus_config.ctrl_stiffness = 0.1;
-    orthopus_state.ext_torque_setpoint = 0;
-    orthopus_state.ctrl_overwrite = true;
-    commands_printf("Position control in impedance mode");
-  }*/
-  //todo setup joints
   else if(!strcmp(argv[1],"kp"))
   {
-    orthopus_config.ctrl_kp = v;
+    or_conf.ctrl_kp = v;
     commands_printf("Control kp: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"kd"))
   {
-    orthopus_config.ctrl_kd = v;
+    or_conf.ctrl_kd = v;
     commands_printf("Control kd: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"kdfilter"))
   {
-    orthopus_config.ctrl_kd_filter = v;
+    or_conf.ctrl_kd_filter = v;
     commands_printf("Control kd filter const: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"zerotorque"))
   {
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
-    orthopus_state.ADC3init = false;
-    orthopus_state.ADC3zero = 0;
+    or_state.adc3_init = false;
+    or_state.adc3_zero = 0;
     commands_printf("reinitializing torque zero");
   }
   else if(!strcmp(argv[1],"torquefilterconst"))
   {
-    orthopus_config.torque_filter_const = v;
-    commands_printf("Torque filter const: % 7.3f", (double)v);
+    or_conf.torque_filter_const = v;
+    commands_printf("torque_now filter const: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"print"))
   {
-    commands_printf("Control enabled:     %s", orthopus_state.ctrl_enable   ? "true" : "false" );
-    commands_printf("Plot enabled:        %s", orthopus_state.ctrl_plot     ? "true" : "false" );
-    commands_printf("Deadzone enabled:    %s", orthopus_config.deadzone     ? "true" : "false" );
-    commands_printf("Torque filter const: % 7.3f", (double)orthopus_config.torque_filter_const );
-    commands_printf("Kp:                  % 7.3f", (double)orthopus_config.ctrl_kp             );
-    commands_printf("Kd:                  % 7.3f", (double)orthopus_config.ctrl_kd             );
-    commands_printf("a:                   % 7.3f", (double)orthopus_config.a                   );
-    commands_printf("Stiffness:           % 7.3f", (double)orthopus_config.ctrl_stiffness      );
-    commands_printf("Torquezero:          % 7.3f", (double)orthopus_state.ADC3zero             );
-    commands_printf("Control overwrite:  %s", orthopus_state.ctrl_overwrite ? "true" : "false" );
-    commands_printf("control_command:     % 7.3f", (double)orthopus_state.ctrl_command         );
-    commands_printf("last_control_command:% 7.3f", (double)orthopus_state.last_ctrl_command    );
-    commands_printf("limitreaction:       % 7.3f", (double)orthopus_state.limitreaction        );
-    commands_printf("ext_pos_setpoint:    % 7.3f", (double)orthopus_state.ext_pos_setpoint     );
-    commands_printf("ext_torque_setpoint: % 7.3f", (double)orthopus_state.ext_torque_setpoint  );
-    commands_printf("damping:             % 7.3f", (double)orthopus_config.ctrl_damping        );
-    commands_printf("safety stopped:      %s", orthopus_state.stopped       ? "true" : "false" );
-    commands_printf("nid1:                % 5d",(int)orthopus_state.nid1                       );
+    commands_printf("Control enabled:     %s", or_state.ctrl_enable   ? "true" : "false" );
+    commands_printf("Plot enabled:        %s", or_state.ctrl_plot     ? "true" : "false" );
+    commands_printf("Deadzone enabled:    %s", or_conf.ctrl_deadzone     ? "true" : "false" );
+    commands_printf("torque_now filter const: % 7.3f", (double)or_conf.torque_filter_const );
+    commands_printf("Kp:                  % 7.3f", (double)or_conf.ctrl_kp             );
+    commands_printf("Kd:                  % 7.3f", (double)or_conf.ctrl_kd             );
+    commands_printf("a:                   % 7.3f", (double)or_conf.ctrl_a                   );
+    commands_printf("Stiffness:           % 7.3f", (double)or_conf.ctrl_stiffness      );
+    commands_printf("ctrl_torquezero:          % 7.3f", (double)or_state.adc3_zero             );
+    commands_printf("Control overwrite:  %s", or_state.ctrl_overwrite ? "true" : "false" );
+    commands_printf("control_command:     % 7.3f", (double)or_state.ctrl_command         );
+    commands_printf("last_control_command:% 7.3f", (double)or_state.last_ctrl_command    );
+    commands_printf("limit_reaction:       % 7.3f", (double)or_state.limit_reaction        );
+    commands_printf("ext_pos_setpoint:    % 7.3f", (double)or_state.ext_pos_setpoint     );
+    commands_printf("ext_torque_setpoint: % 7.3f", (double)or_state.ext_torque_setpoint  );
+    commands_printf("damping:             % 7.3f", (double)or_conf.ctrl_damping        );
+    commands_printf("safety stopped:      %s", or_state.stopped       ? "true" : "false" );
+    commands_printf("nid1:                % 5d",(int)or_state.nid1                       );
   } else {
     commands_printf("Invalid arguments.");
   }
