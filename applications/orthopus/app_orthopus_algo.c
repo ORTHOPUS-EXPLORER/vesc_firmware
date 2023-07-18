@@ -66,12 +66,12 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
   pid_pos_now = mc_interface_get_pid_pos_now();
   pid_pos_last = pid_pos_now;
-  if ( pid_pos_now > 180)
+  if ( pid_pos_now > 180.0)
   {
     or_state.turn_now = -1;
   }
 
-  if (orthopus_read_encoder() > 180)
+  if (orthopus_read_encoder() > 180.0)
   {
     or_state.enc_turn = -1;
   }
@@ -107,12 +107,12 @@ static THD_FUNCTION(orthopus_thread, arg) {
     if (or_conf.encoder_filter_enable)
     {
       last_nb_enc_filter_error = nb_enc_filter_error;
-      if ( ( (float)fabs(or_state.enc_pos - enc_pos_filter_last) >
+      if ( ( (float)fabsf(or_state.enc_pos - enc_pos_filter_last) >
              ( or_conf.encoder_filter_anglestep *
                (1 + or_conf.encoder_filter_error_gain*nb_enc_filter_error)
              )
            )
-           && (fabs(or_state.enc_pos - enc_pos_filter_last) < 350)
+           && (fabsf(or_state.enc_pos - enc_pos_filter_last) < 350.0)
            && (nb_enc_filter_error < 5)
          )
       {
@@ -125,7 +125,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
         nb_enc_filter_error = 0;
       }
 
-      if (fabs(or_state.enc_pos - enc_pos_filter_last) > 350)
+      if (fabsf(or_state.enc_pos - enc_pos_filter_last) > 350.0)
         nb_enc_filter_error = 0;
       ++nsample;
 
@@ -133,11 +133,11 @@ static THD_FUNCTION(orthopus_thread, arg) {
         orthopus_plot_encoder_filtering(nsample);
       
       //count turns on encoder pos
-      if (or_state.enc_pos_filter - enc_pos_filter_last < -350)
+      if (or_state.enc_pos_filter - enc_pos_filter_last < -350.0)
         ++or_state.enc_turn;
-      else if (or_state.enc_pos_filter - enc_pos_filter_last > 350)
+      else if (or_state.enc_pos_filter - enc_pos_filter_last > 350.0)
         --or_state.enc_turn;
-      or_state.enc_pos_filter_multiturn = 0.1*(or_state.enc_pos_filter + 360*or_state.enc_turn)+0.9*or_state.enc_pos_filter_multiturn;//filtered position
+      or_state.enc_pos_filter_multiturn = 0.1*(or_state.enc_pos_filter + 360.0*or_state.enc_turn)+0.9*or_state.enc_pos_filter_multiturn;//filtered position
     }
     else
     {
@@ -147,12 +147,12 @@ static THD_FUNCTION(orthopus_thread, arg) {
     enc_pos_filter_last = or_state.enc_pos_filter;
     // Compute encoder position multiturn
     pid_pos_now = mc_interface_get_pid_pos_now();
-    if (pid_pos_now - pid_pos_last < -350)
+    if (pid_pos_now - pid_pos_last < -350.0)
       ++or_state.turn_now;
-    else if (pid_pos_now - pid_pos_last > 350)
+    else if (pid_pos_now - pid_pos_last > 350.0)
       --or_state.turn_now;
 
-    or_state.pos_multiturn_now = pid_pos_now + 360*or_state.turn_now;
+    or_state.pos_multiturn_now = pid_pos_now + 360.0*or_state.turn_now;
     pid_pos_last = pid_pos_now;
     or_state.speed_now = mc_interface_get_rpm()/or_conf.angle_division;
     // Check coherence between rotor position (sin/cos) and encoder position
@@ -287,7 +287,7 @@ static bool orthopus_safety(void)
   if (or_state.nid1 > 50 ) {
     commands_printf("estop: too many identical and non null ctrl_command detected");
     return false;
-  } else if (fabs(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now) > or_conf.encoder_max_diff)
+  } else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now) > or_conf.encoder_max_diff)
   {
     if (ST2US2(chVTGetSystemTimeX()-time_lasterrprint) > 100000) //TODO: check why it is not working witn > 100000
     {
@@ -334,18 +334,18 @@ static void orthopus_limits(void)
     orthopus_estop();
   }
   if ((or_state.ctrl_enable) && (or_state.pos_multiturn_now < or_conf.limits_pos_min + or_conf.limits_reach_angle)){
-    or_state.limit_reaction = or_conf.limits_kp*pow((or_state.pos_multiturn_now-(or_conf.limits_pos_min + or_conf.limits_reach_angle)),or_conf.limits_powp);
+    or_state.limit_reaction = or_conf.limits_kp*powf((or_state.pos_multiturn_now-(or_conf.limits_pos_min + or_conf.limits_reach_angle)),or_conf.limits_powp);
   }
   if ((or_state.ctrl_enable) && (or_state.pos_multiturn_now > or_conf.limits_pos_max - or_conf.limits_reach_angle)) { 
-    or_state.limit_reaction = -or_conf.limits_kp*pow((or_state.pos_multiturn_now-(or_conf.limits_pos_max - or_conf.limits_reach_angle)),or_conf.limits_powp);
+    or_state.limit_reaction = -or_conf.limits_kp*powf((or_state.pos_multiturn_now-(or_conf.limits_pos_max - or_conf.limits_reach_angle)),or_conf.limits_powp);
   }
   if ((or_state.ctrl_enable) && (or_state.pos_multiturn_now < or_conf.limits_pos_min + or_conf.limits_reach_angle + or_conf.limits_damp_reachangle) && (or_state.speed_now < 0)) //add damping, only in the direction of the limit to avoid sticking effect
   {
-    or_state.limit_reaction += -or_conf.limits_kd*pow(or_state.speed_now,or_conf.limits_powd);
+    or_state.limit_reaction += -or_conf.limits_kd*powf(or_state.speed_now,or_conf.limits_powd);
   }
   if ((or_state.ctrl_enable) && (or_state.pos_multiturn_now > or_conf.limits_pos_max - or_conf.limits_reach_angle - or_conf.limits_damp_reachangle) && (or_state.speed_now > 0)) //add damping, only in the direction of the limit to avoid sticking effect
   {
-    or_state.limit_reaction += -or_conf.limits_kd*pow(or_state.speed_now,or_conf.limits_powd);
+    or_state.limit_reaction += -or_conf.limits_kd*powf(or_state.speed_now,or_conf.limits_powd);
   }
 }
 
