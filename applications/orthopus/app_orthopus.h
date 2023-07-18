@@ -21,19 +21,19 @@ typedef struct
   /* 02 - 1 */bool encoder_filter_enable;
   /*    - 1 */bool encoder_filter_plot_enable;
   /*    - 1 */bool limits_enable;
-  /*    - 1 */bool orthopus_config_set;
+  /*    - 1 */bool or_conf_set;
   /* 03 - 4 */float limits_pos_max;
   /* 04 - 4 */float limits_pos_min;
   /* 05 - 4 */float angle_division;
   /* 06 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
   /* 07 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
   /* 08 - 4 */float encoder_filter_error_gain;
-  /* 09 - 4 */int rate_hz;
+  /* 09 - 4 */int perf_rate_hz;
   /* 10 - 1 */bool perf_compensateexectime;
-  /* 10 - 1 */bool deadzone;
+  /* 10 - 1 */bool ctrl_deadzone;
   /*    - 2 */uint8_t pad[2];
-  /* 11 - 4 */float Torquezero;
-  /* 12 - 4 */float Torquegain;
+  /* 11 - 4 */float ctrl_torquezero;
+  /* 12 - 4 */float ctrl_torquegain;
   /* 13 - 4 */float limits_kp;
   /* 14 - 4 */float limits_kd;
   /* 15 - 4 */int limits_powp;
@@ -43,13 +43,13 @@ typedef struct
   /* 19 - 4 */float ctrl_damping;
   /* 19 - 4 */float torque_filter_const;
   /* 20 - 4 */float ctrl_kp;
-  /* 21 - 4 */float a;
+  /* 21 - 4 */float ctrl_a;
   /* 22 - 4 */float ctrl_kd;
   /* 23 - 4 */float ctrl_kd_filter;
-  /* 24 - 4 */float max_enc_diff;
+  /* 24 - 4 */float encoder_max_diff;
 } orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
 
-static orthopus_config_t orthopus_config;
+static orthopus_config_t or_conf;
 
 //global variables (interfaces with lispBM and terminal)
 typedef struct
@@ -64,14 +64,14 @@ typedef struct
   float time_diff_filt;
   int time_lag_filt;
   int time_lag_compensation;
-  bool perfplot;                             //enables realtime performance plot 
-  int maxperiod;                                  //maximum execution time in us
-  int minperiod;                                  //maximum execution time in us
-  int exectime;                                      //loop time in system ticks
-  float ADC3val;
-  float ADC3zero;
-  float Torque;
-  float ADC3init;
+  bool perf_plot;                             //enables realtime performance plot 
+  int max_period;                                  //maximum execution time in us
+  int min_period;                                  //maximum execution time in us
+  int exec_time;                                      //loop time in system ticks
+  float adc3_val;
+  float adc3_zero;
+  float torque_now;
+  float adc3_init;
   bool ctrl_enable;
   bool ctrl_plot;
   float ctrl_command;
@@ -79,18 +79,18 @@ typedef struct
   float ext_torque_setpoint;
   float ext_pos_setpoint;
   bool ctrl_overwrite;
-  float limitreaction;
-  float torqueerror;
+  float limit_reaction;
+  float torque_err;
   float last_ctrl_command;
   float nid1; //number of non null identical ctrl command 
   bool stopped;
-  float ADC3filtered;
-  float lasttorqueerror;
-  float torqueerrorderiv;
-  float torqueerrorderivfilt;
+  float adc3_filt;
+  float torque_err_last;
+  float d_torque_err;
+  float d_torque_err_filt;
 } orthopus_state_t;
 
-extern volatile orthopus_state_t orthopus_state;
+extern volatile orthopus_state_t or_state;
 
 // Utils
 static bool orthopus_config_load(orthopus_config_t* cfg);

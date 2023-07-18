@@ -49,16 +49,16 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->encoder_filter_enable           = true; // keep enabled or move encoder filtered multiturn angle estimation
   cfg->encoder_filter_plot_enable      = false;
   cfg->limits_enable                   = true;
-  cfg->orthopus_config_set             = false;
+  cfg->or_conf_set             = false;
   cfg->limits_pos_max                  = 90.0;
   cfg->limits_pos_min                  = -90.0;
   cfg->angle_division                  = 700;
   cfg->limits_reach_angle              = 15;
   cfg->limits_reach_speed              = 2;
   cfg->encoder_filter_error_gain       = 1;
-  cfg->rate_hz                         = 2000;
+  cfg->perf_rate_hz                         = 2000;
   cfg->perf_compensateexectime         = true;
-  cfg->Torquegain                      = 34.8;
+  cfg->ctrl_torquegain                      = 34.8;
   cfg->limits_kp                       = 0.1;
   cfg->limits_kd                       = 5.0;
   cfg->limits_powp                     = 6;
@@ -66,18 +66,18 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->limits_damp_reachangle          = 7;
   cfg->ctrl_stiffness                  = 0;
   cfg->ctrl_damping                    = 0;
-  cfg->deadzone                        = true;
-  cfg->a                               = 1;
+  cfg->ctrl_deadzone                        = true;
+  cfg->ctrl_a                               = 1;
   cfg->torque_filter_const             = 0.1;
-  cfg->deadzone                        = true;
+  cfg->ctrl_deadzone                        = true;
   cfg->ctrl_kd                         = 0;
   cfg->ctrl_kd_filter                  = 1;
-  cfg->max_enc_diff                    = 2;
+  cfg->encoder_max_diff                    = 2;
 }
 
 float orthopus_read_encoder(void)
 {
-  return orthopus_read_encoder_raw()-orthopus_config.encoder_offset;
+  return orthopus_read_encoder_raw()-or_conf.encoder_offset;
 }
 
 float orthopus_read_encoder_raw(void)
@@ -108,17 +108,17 @@ float orthopus_set_encoder_offset(float v, bool use_v)
 {
   if(!use_v)
     v = orthopus_read_encoder_raw();
-  orthopus_state.turn_now = 0;
-  orthopus_state.enc_turn = 0;
-  orthopus_config.encoder_offset = v;
+  or_state.turn_now = 0;
+  or_state.enc_turn = 0;
+  or_conf.encoder_offset = v;
   orthopus_set_joint_offset(0,false);
   if ( mc_interface_get_pid_pos_now() > 180)
   {
-    orthopus_state.turn_now = -1;
+    or_state.turn_now = -1;
   }
   if (orthopus_read_encoder() > 180)
   {
-    orthopus_state.enc_turn = -1;
+    or_state.enc_turn = -1;
   }
   return v;
 }

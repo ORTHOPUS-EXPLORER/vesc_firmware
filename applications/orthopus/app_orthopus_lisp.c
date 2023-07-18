@@ -65,7 +65,7 @@ void orthopus_init_lisp(void)
   lbm_add_extension("orthopus-read-pos-multiturn", orthopus_lisp_read_pos_multiturn);
   lbm_add_extension("orthopus-read-speed", orthopus_lisp_read_speed);
   lbm_add_extension("orthopus-read-torque", orthopus_lisp_read_torque);
-  lbm_add_extension("orthopus-read-limitreaction", orthopus_lisp_limitreaction);
+  lbm_add_extension("orthopus-read-limit_reaction", orthopus_lisp_limitreaction);
   // in REPL, test with: (orthopus-offset "encoder") or (orthopus-init-offset "encoder" 45)
   lbm_add_extension("orthopus-offset", orthopus_lisp_offset);
   // in REPL, test with: (orthopus-config) or (orthopus-config "print/load/save")
@@ -88,37 +88,37 @@ static lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn)
 static lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-	return lbm_enc_float(orthopus_state.enc_pos_filter);
+	return lbm_enc_float(or_state.enc_pos_filter);
 }
 
 static lbm_value orthopus_lisp_read_encoder_filtered_multiturn(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-	return lbm_enc_float(orthopus_state.enc_pos_filter_multiturn);
+	return lbm_enc_float(or_state.enc_pos_filter_multiturn);
 }
 
 static lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-  return lbm_enc_float(orthopus_state.pos_multiturn_now);
+  return lbm_enc_float(or_state.pos_multiturn_now);
 }
 
 static lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-  return lbm_enc_float(orthopus_state.speed_now);
+  return lbm_enc_float(or_state.speed_now);
 }
 
 static lbm_value orthopus_lisp_read_torque(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-  return lbm_enc_float(orthopus_state.Torque);
+  return lbm_enc_float(or_state.torque_now);
 }
 
 static lbm_value orthopus_lisp_limitreaction(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-  return lbm_enc_float(orthopus_state.limitreaction);
+  return lbm_enc_float(or_state.limit_reaction);
 }
 
 static lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn)
@@ -160,18 +160,18 @@ static lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn)
   const char* s = lbm_dec_str(args[0]);
   if(!strcmp(s,"print"))
   {
-    commands_printf_lisp("Encoder offset: % 5.3f", (double)orthopus_config.encoder_offset);
+    commands_printf_lisp("Encoder offset: % 5.3f", (double)or_conf.encoder_offset);
   }
   else if(!strcmp(s,"load"))
   {
-    if(orthopus_config_load(&orthopus_config))
+    if(orthopus_config_load(&or_conf))
       commands_printf_lisp("Orthopus config loaded from EEPROM");
     else
       commands_printf_lisp("Orthopus config load failed =/");
   }
   else if(!strcmp(s,"save"))
   {
-    if(orthopus_config_save(&orthopus_config))
+    if(orthopus_config_save(&or_conf))
       commands_printf("Orthopus config saved to EEPROM");
     else
       commands_printf("Orthopus config save failed =/");

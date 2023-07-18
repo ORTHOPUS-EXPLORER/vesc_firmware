@@ -49,7 +49,7 @@ static THD_WORKING_AREA(orthopus_thread_wa, 1024);
 // Eg: if you add an uint8_t param, add 3 bytes of padding after.
 //                   uint16_t param     2
 // uint8_t myparam; uint8_t[3] pad;
-static orthopus_config_t orthopus_config =
+static orthopus_config_t or_conf =
 {
   .encoder_offset = 0.0,
 }; //init values to zero in case flash can't be read
@@ -65,12 +65,12 @@ void app_custom_start(void)
   commands_printf("OrthopusAppStart");
 
   // Load config from EEPROM
-  if(!orthopus_config_load(&orthopus_config))
+  if(!orthopus_config_load(&or_conf))
      commands_printf("Orthopus_config_load failed");
   // if orthopus config not set, set default values
-  if (!orthopus_config.orthopus_config_set)
+  if (!or_conf.or_conf_set)
   {
-    orthopus_config_reset(&orthopus_config);
+    orthopus_config_reset(&or_conf);
   }
 
   // Init AMS sensor
