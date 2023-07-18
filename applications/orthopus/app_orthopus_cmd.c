@@ -21,7 +21,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[print/dprint/load/save/reset/setrate/enabletimecomp/disabletimecomp/storetorquezero/settorquegain]",
+    "[print/dprint/load/save/reset/setrate/enabletimecomp/disabletimecomp/storetorquezero/settorquegain/max_enc_diff]",
     orthopus_config_cmd
   );
 
@@ -145,6 +145,7 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("limits_damp_reachangle:      % 7.3f",(double)orthopus_config.limits_damp_reachangle            );
     commands_printf("Stiffness:                   % 7.3f", (double)orthopus_config.ctrl_stiffness                   );
     commands_printf("damping:                     % 7.3f", (double)orthopus_config.ctrl_damping                     );
+    commands_printf("max_enc_diff:                % 7.3f", (double)orthopus_config.max_enc_diff                     );
   }
   else if(!strcmp(argv[1],"dprint"))
   {
@@ -196,6 +197,12 @@ static void orthopus_config_cmd(int argc, const char **argv)
     orthopus_config.ctrl_damping = val;
     commands_printf("Control damping: % 7.3f", (double)val);
   }
+  else if(!strcmp(argv[1],"max_enc_diff"))
+  {
+    orthopus_config.max_enc_diff = val;
+    commands_printf("Max allowed angle between encoders: % 7.3f", (double)val);
+  }
+  
   else if(!strcmp(argv[1],"enabletimecomp"))
   {
     orthopus_config.perf_compensateexectime = true;

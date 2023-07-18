@@ -44,6 +44,7 @@ unsigned long int nsample = 0;
 float pid_pos_now = 0;
 float pid_pos_last = 0;
 static systime_t time_now, time_last, time_start, time_end;
+systime_t time_lasterrprint;
 //static int time_now, time_last, time_start, time_end;
 int ninitadc = 0;
 
@@ -71,11 +72,16 @@ static THD_FUNCTION(orthopus_thread, arg) {
     orthopus_state.turn_now = -1;
   }
 
+  if (orthopus_read_encoder() > 180)
+  {
+    orthopus_state.enc_turn = -1;
+  }
   get_fw_version_cnt = 0;
   orthopus_state.maxperiod = -1; //init max period
   orthopus_state.minperiod = -1; //init min period
   orthopus_thread_running = true;
   time_now = chVTGetSystemTimeX();
+  time_lasterrprint = chVTGetSystemTimeX();
   time_last = time_now;
   //check if torquezero set in config
   if (orthopus_config.Torquezero != 0.0 && orthopus_config.orthopus_config_set){
@@ -134,6 +140,13 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
       if (orthopus_config.encoder_filter_plot_enable)//debug encoder filter
         orthopus_plot_encoder_filtering(nsample);
+      
+      //count turns on encoder pos
+      if (orthopus_state.enc_pos_filter - enc_pos_filter_last < -350)
+        ++orthopus_state.enc_turn;
+      else if (orthopus_state.enc_pos_filter - enc_pos_filter_last > 350)
+        --orthopus_state.enc_turn;
+      orthopus_state.enc_pos_filter_multiturn = 0.1*(orthopus_state.enc_pos_filter + 360*orthopus_state.enc_turn)+0.9*orthopus_state.enc_pos_filter_multiturn;//filtered position
     }
     else
     {
@@ -289,6 +302,14 @@ static bool orthopus_safety(void)
   //check indicators
   if (orthopus_state.nid1 > 50 ) {
     commands_printf("estop: too many identical and non null ctrl_command detected");
+    return false;
+  } else if (fabs(orthopus_state.enc_pos_filter_multiturn-orthopus_state.pos_multiturn_now) > orthopus_config.max_enc_diff)
+  {
+    if (ST2US2(chVTGetSystemTimeX()-time_lasterrprint) > 100000) //TODO: check why it is not working witn > 100000
+    {
+      time_lasterrprint = chVTGetSystemTimeX();
+      commands_printf("estop: Error: unconsistent sincos/encoder position");
+    }
     return false;
   } else {
     return true;
