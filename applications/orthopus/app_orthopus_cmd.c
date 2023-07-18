@@ -336,7 +336,7 @@ static void orthopus_limits_cmd(int argc, const char **argv)
   else if(!strcmp(argv[1],"damp_reachangle"))
   {
     or_conf.limits_damp_reachangle = (float)v;
-    commands_printf("damp reachangle: % 7.3f", (float)v);
+    commands_printf("damp reachangle: % 7.3f", (double)v);
   } else {
     commands_printf("Invalid arguments.");
   }
