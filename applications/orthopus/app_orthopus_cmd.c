@@ -21,7 +21,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[print/dprint/load/save/reset/setrate/enabletimecomp/disabletimecomp/storetorquezero/settorquegain/encoder_max_diff]",
+    "[print/dprint/load/save/reset/setrate/etimecomp/dtimecomp/settorquegain/encoder_max_diff]",
     orthopus_config_cmd
   );
 
@@ -35,7 +35,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_filter",
     "[Orthopus] AMS filter parameters",
-    "[anglestep/enable/disable/enableplot/disableplot/encerrorgain]",
+    "[anglestep/enable/disable/eplot/dplot/encerrorgain]",
     orthopus_filter_cmd
   );
 
@@ -49,14 +49,14 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_perf",
     "[Orthopus] Performance stats",
-    "[void/enableplot]",
+    "[void/eplot]",
     orthopus_perf_cmd
   );
 
   terminal_register_command_callback(
     "o_control",
     "[Orthopus] AMS filter parameters",
-    "[enable/disable/enableplot/disableplot/kp/zerotorque/torquefilterconst/enabledeadzone/disabledeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/]",
+    "[enable/disable/eplot/dplot/kp/zerotorque/loadedzerotorque/torquefilterconst/edeadzone/ddeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/]",
     orthopus_control_cmd
   );
   //TODO: help
@@ -86,6 +86,9 @@ static void orthopus_pos_cmd(int argc, const char **argv)
   commands_printf("pos_multiturn_now              : % 7.3f", (double)or_state.pos_multiturn_now );
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                   OFFSET                                   */
+/* -------------------------------------------------------------------------- */
 static void orthopus_offset_cmd(int argc, const char **argv)
 {
   if(argc == 1)
@@ -203,21 +206,21 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Max allowed angle between encoders: % 7.3f", (double)val);
   }
   
-  else if(!strcmp(argv[1],"enabletimecomp"))
+  else if(!strcmp(argv[1],"etimecomp"))
   {
     or_conf.perf_compensateexectime = true;
     commands_printf("Execution time compensation Enabled");
   }
-  else if(!strcmp(argv[1],"disabletimecomp"))
+  else if(!strcmp(argv[1],"dtimecomp"))
   {
     or_conf.perf_compensateexectime = false;
     commands_printf("Execution time compensation Disabled");
   }
-  else if(!strcmp(argv[1],"storetorquezero"))
+  /*else if(!strcmp(argv[1],"storetorquezero"))
   {
     or_conf.ctrl_torquezero  = or_state.adc3_zero;
     commands_printf("Saved actual torque zero [% 7.3f] to config, don't forget to save config to eeprom", (double)or_conf.ctrl_torquezero);
-  } 
+  }*/
   else if(!strcmp(argv[1],"settorquegain"))
   {
     or_conf.ctrl_torquegain = val;
@@ -227,6 +230,9 @@ static void orthopus_config_cmd(int argc, const char **argv)
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                   FILTER                                   */
+/* -------------------------------------------------------------------------- */
 static void orthopus_filter_cmd(int argc, const char **argv)
 {
   if(argc == 1)
@@ -253,12 +259,12 @@ static void orthopus_filter_cmd(int argc, const char **argv)
     or_conf.encoder_filter_enable = false;
     commands_printf("Encoder filter Disabled");
   }
-  else if(!strcmp(argv[1],"enableplot"))
+  else if(!strcmp(argv[1],"eplot"))
   {
     or_conf.encoder_filter_plot_enable = true;
     commands_printf("Encoder filter plot Enabled");
   }
-  else if(!strcmp(argv[1],"disableplot"))
+  else if(!strcmp(argv[1],"dplot"))
   {
     or_conf.encoder_filter_plot_enable = false;
     commands_printf("Encoder filter plot Disabled");
@@ -272,6 +278,9 @@ static void orthopus_filter_cmd(int argc, const char **argv)
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                   LIMITS                                   */
+/* -------------------------------------------------------------------------- */
 static void orthopus_limits_cmd(int argc, const char **argv)
 {
   if(argc == 1)
@@ -342,6 +351,9 @@ static void orthopus_limits_cmd(int argc, const char **argv)
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                    PERF                                    */
+/* -------------------------------------------------------------------------- */
 static void orthopus_perf_cmd(int argc, const char **argv)
 {
   if(argc == 1)
@@ -360,12 +372,12 @@ static void orthopus_perf_cmd(int argc, const char **argv)
     or_state.perf_max_period = 0; //reset max period
     or_state.perf_min_period = 10000; //reset min period
   } else if (argc == 2){
-    if(!strcmp(argv[1],"enableplot"))
+    if(!strcmp(argv[1],"eplot"))
     {
       or_state.perf_plot= true;
       commands_printf("Perf plot Enabled");
     }
-    else if(!strcmp(argv[1],"disableplot"))
+    else if(!strcmp(argv[1],"dplot"))
     {
       or_state.perf_plot = false;
       commands_printf("Perf plot Disabled");
@@ -375,6 +387,9 @@ static void orthopus_perf_cmd(int argc, const char **argv)
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                   CONTROL                                  */
+/* -------------------------------------------------------------------------- */
 static void orthopus_control_cmd(int argc, const char **argv)
 {
   if(argc == 1)//TODO: print all parameter values
@@ -407,22 +422,22 @@ static void orthopus_control_cmd(int argc, const char **argv)
   {
     or_state.ctrl_overwrite = false;
   }
-  else if(!strcmp(argv[1],"enableplot"))
+  else if(!strcmp(argv[1],"eplot"))
   {
     or_state.ctrl_plot = true;
     commands_printf("Control plot Enabled");
   }
-  else if(!strcmp(argv[1],"disableplot"))
+  else if(!strcmp(argv[1],"dplot"))
   {
     or_state.ctrl_plot = false;
     commands_printf("Control plot Disabled");
   }
-  else if(!strcmp(argv[1],"enabledeadzone"))
+  else if(!strcmp(argv[1],"edeadzone"))
   {
     or_conf.ctrl_deadzone = true;
     commands_printf("Deadzone Enabled");
   }
-  else if(!strcmp(argv[1],"disabledeadzone"))
+  else if(!strcmp(argv[1],"ddeadzone"))
   {
     or_conf.ctrl_deadzone = false;
     commands_printf("Deadzone Disabled");
@@ -488,6 +503,15 @@ static void orthopus_control_cmd(int argc, const char **argv)
   {
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
+    or_state.adc3_init = false;
+    or_state.adc3_zero = 0;
+    commands_printf("reinitializing torque zero");
+  }
+  else if(!strcmp(argv[1],"loadedzerotorque"))
+  {
+    mc_interface_release_motor();   //disable motor
+    commands_printf("enabled brake current %7.3f",(double)v);
+    mc_interface_set_brake_current(v);
     or_state.adc3_init = false;
     or_state.adc3_zero = 0;
     commands_printf("reinitializing torque zero");

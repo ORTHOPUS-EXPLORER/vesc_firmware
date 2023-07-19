@@ -104,10 +104,9 @@ static THD_FUNCTION(orthopus_thread, arg) {
     // Read AMS
     enc_as504x_routine(&encoder_cfg_as504x);
 
-    // ENCODER EMI NOISE FILTERING
     or_state.enc_pos = orthopus_read_encoder();
     //TODO: take into account current speed to compare raw value with next 
-    //expected value instead of previous value
+                                      //expected value instead of previous value
 /* ---------------------------- encoder filtering --------------------------- */
     if (or_conf.encoder_filter_enable)
     {
@@ -132,11 +131,14 @@ static THD_FUNCTION(orthopus_thread, arg) {
       }
 
       if (fabsf(or_state.enc_pos - enc_pos_filter_last) > 350.0)
-        nb_enc_filter_error = 0;//TODO: remove? -> useless?
-      ++nsample; //increment plot samples TODO: move into the if below?
-
+        nb_enc_filter_error = 0;           //reinit filter when passing one turn
+      
+/* --------------------------- Plot encoder filter -------------------------- */
       if (or_conf.encoder_filter_plot_enable)//debug encoder filter
+      {
+        ++nsample;                                      //increment plot samples
         orthopus_plot_encoder_filtering(nsample);
+      }
     }
     else                           //if filtering is disabled -> keep raw values
     {
@@ -183,7 +185,10 @@ static THD_FUNCTION(orthopus_thread, arg) {
         commands_printf("torque zero done: or_state.adc3_zero: % 7.3f", 
                                                     (double)or_state.adc3_zero);
         ninitadc = 0;
-      } //TODO: store value in config
+        or_conf.ctrl_torquezero = or_state.adc3_zero;
+        commands_printf("save config to store in EEPROM");
+        mc_interface_release_motor();
+      }
     } else {
 /* ------------------ Scaling ADC3 (volts) -> Torque (N.m) ------------------ */
       or_state.torque_now = or_conf.ctrl_torquegain
