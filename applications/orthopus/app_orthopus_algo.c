@@ -171,8 +171,14 @@ static THD_FUNCTION(orthopus_thread, arg) {
       orthopus_limits();
 
 /* ---------------------------- Sample adc3 value --------------------------- */
-    or_state.adc3_val = or_state.adc3_filt;
-                         //get high freq filtered value in orthopus_pwm_callback
+    if (or_conf.ctrl_sample_adc3)
+    {
+      or_state.adc3_val = or_state.adc3_filt;        //get hi freq sampled value
+    }
+    else
+    {
+      or_state.adc3_val = ADC_VOLTS(ADC_IND_EXT3);               //get adc value
+    }
 
 /* ---------------------------- Init zero torque ---------------------------- */
     if (!or_state.adc3_init) //init ADC Zero
@@ -191,8 +197,17 @@ static THD_FUNCTION(orthopus_thread, arg) {
       }
     } else {
 /* ------------------ Scaling ADC3 (volts) -> Torque (N.m) ------------------ */
-      or_state.torque_now = or_conf.ctrl_torquegain
-                            * (or_state.adc3_val-or_state.adc3_zero); 
+      if (or_conf.ctrl_sample_adc3)
+      {
+        or_state.torque_now = or_conf.ctrl_torquegain
+                              * (or_state.adc3_val-or_state.adc3_zero); 
+      } else {
+        or_state.torque_now = (1-or_conf.torque_filter_const)
+                              * or_state.torque_now
+                            + or_conf.torque_filter_const
+                              * or_conf.ctrl_torquegain
+                              * (or_state.adc3_val-or_state.adc3_zero);
+      }
 
 /* ------------------------------ Control plot ------------------------------ */
       if (or_state.ctrl_plot)
