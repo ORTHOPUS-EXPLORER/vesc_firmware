@@ -348,17 +348,17 @@ static void orthopus_perf_cmd(int argc, const char **argv)
   {
     (void)argc;(void)argv;
     commands_printf("measured period (us) : % f", (double)or_state.time_diff);
-    commands_printf("loop execution time (ticks) : % d", or_state.exec_time);
+    commands_printf("loop execution time (ticks) : % d", or_state.perf_exec_time);
     commands_printf("requested rade (Hz) : % 7.3f", (double)or_conf.perf_rate_hz);
     if (or_state.time_diff != 0)
       commands_printf("measured rate (Hz) : % 7.3f", (double)(1.0/(or_state.time_diff/1000000.0)));
     commands_printf("measured mean period  (us) : % 7.3f", (double)or_state.time_diff_filt);
     if (or_state.time_diff_filt != 0)
       commands_printf("measured mean rate (Hz) : % 7.3f", (double)(1.0/(or_state.time_diff_filt/1000000.0)));
-    commands_printf("max period since last call of o_perf (us) : % d", or_state.max_period);
-    commands_printf("min period since last call of o_perf (us) : % d", or_state.min_period);
-    or_state.max_period = 0; //reset max period
-    or_state.min_period = 10000; //reset min period
+    commands_printf("max period since last call of o_perf (us) : % d", or_state.perf_max_period);
+    commands_printf("min period since last call of o_perf (us) : % d", or_state.perf_min_period);
+    or_state.perf_max_period = 0; //reset max period
+    or_state.perf_min_period = 10000; //reset min period
   } else if (argc == 2){
     if(!strcmp(argv[1],"enableplot"))
     {

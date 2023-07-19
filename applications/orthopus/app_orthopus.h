@@ -65,9 +65,9 @@ typedef struct
   int time_lag_filt;
   int time_lag_compensation;
   bool perf_plot;                             //enables realtime performance plot 
-  int max_period;                                  //maximum execution time in us
-  int min_period;                                  //maximum execution time in us
-  int exec_time;                                      //loop time in system ticks
+  int perf_max_period;                                  //maximum execution time in us
+  int perf_min_period;                                  //maximum execution time in us
+  int perf_exec_time;                                      //loop time in system ticks
   float adc3_val;
   float adc3_zero;
   float torque_now;
