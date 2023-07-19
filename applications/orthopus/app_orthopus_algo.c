@@ -76,8 +76,8 @@ static THD_FUNCTION(orthopus_thread, arg) {
     or_state.enc_turn = -1;
   }
   get_fw_version_cnt = 0;
-  or_state.max_period = -1; //init max period
-  or_state.min_period = -1; //init min period
+  or_state.perf_max_period = -1; //init max period
+  or_state.perf_min_period = -1; //init min period
   orthopus_thread_running = true;
   time_now = chVTGetSystemTimeX();
   time_lasterrprint = chVTGetSystemTimeX();
@@ -87,6 +87,9 @@ static THD_FUNCTION(orthopus_thread, arg) {
       or_state.adc3_init = true;
       or_state.adc3_zero = or_conf.ctrl_torquezero;
   }
+/* -------------------------------------------------------------------------- */
+/*                                  MAIN LOOP                                 */
+/* -------------------------------------------------------------------------- */
 	for(;;)
   {
     time_start = chVTGetSystemTimeX();
@@ -232,14 +235,14 @@ static THD_FUNCTION(orthopus_thread, arg) {
                                   + 0.01*(or_state.time_diff
                                   + or_state.time_lag_compensation); //simple filter
     or_state.time_lag_filt = or_state.time_diff_filt - 1000000.0*1.0/or_conf.perf_rate_hz;
-    if (or_state.time_diff > or_state.max_period)
-      or_state.max_period = or_state.time_diff;
-    if (or_state.time_diff < or_state.min_period)
-      or_state.min_period = or_state.time_diff;
+    if (or_state.time_diff > or_state.perf_max_period)
+      or_state.perf_max_period = or_state.time_diff;
+    if (or_state.time_diff < or_state.perf_min_period)
+      or_state.perf_min_period = or_state.time_diff;
     time_end = chVTGetSystemTimeX();
-    or_state.exec_time = time_end - time_start;
+    or_state.perf_exec_time = time_end - time_start;
     if (or_conf.perf_compensateexectime)
-      chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz-ST2US2(or_state.exec_time));
+      chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz-ST2US2(or_state.perf_exec_time));
     else 
       chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz);
     time_last = time_now;
