@@ -413,7 +413,7 @@ static void orthopus_limits(void)
         or_conf.limits_kp
         * powf(or_state.pos_multiturn_now
                - or_conf.limits_pos_min
-               + or_conf.limits_reach_angle
+               - or_conf.limits_reach_angle
           ,or_conf.limits_powp);
   }
   if ( (or_state.ctrl_enable)
@@ -426,7 +426,7 @@ static void orthopus_limits(void)
         -or_conf.limits_kp
         * powf(or_state.pos_multiturn_now
                - or_conf.limits_pos_max
-               - or_conf.limits_reach_angle
+               + or_conf.limits_reach_angle
           ,or_conf.limits_powp);
   }
   if ( (or_state.ctrl_enable) 
