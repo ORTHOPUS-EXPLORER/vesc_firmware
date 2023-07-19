@@ -31,7 +31,8 @@ typedef struct
   /* 09 - 4 */int perf_rate_hz;
   /* 10 - 1 */bool perf_compensateexectime;
   /* 10 - 1 */bool ctrl_deadzone;
-  /*    - 2 */uint8_t pad[2];
+  /* 10 - 1 */bool ctrl_sample_adc3;
+  /*    - 1 */uint8_t pad[1];
   /* 11 - 4 */float ctrl_torquezero;
   /* 12 - 4 */float ctrl_torquegain;
   /* 13 - 4 */float limits_kp;

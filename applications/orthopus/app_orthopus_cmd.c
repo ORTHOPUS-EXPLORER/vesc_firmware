@@ -21,7 +21,7 @@ static void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[print/dprint/load/save/reset/setrate/etimecomp/dtimecomp/settorquegain/encoder_max_diff]",
+    "[print/dprint/load/save/reset/setrate/etimecomp/dtimecomp/settorquegain/encoder_max_diff/esampleadc3/dsampleadc3]",
     orthopus_config_cmd
   );
 
@@ -149,6 +149,7 @@ static void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Stiffness:                   % 7.3f", (double)or_conf.ctrl_stiffness                   );
     commands_printf("damping:                     % 7.3f", (double)or_conf.ctrl_damping                     );
     commands_printf("encoder_max_diff:                % 7.3f", (double)or_conf.encoder_max_diff                     );
+    commands_printf("adc3 sampled in mc pwm callback: %s", or_conf.ctrl_sample_adc3 ? "true" : "false"       );
   }
   else if(!strcmp(argv[1],"dprint"))
   {
@@ -215,6 +216,16 @@ static void orthopus_config_cmd(int argc, const char **argv)
   {
     or_conf.perf_compensateexectime = false;
     commands_printf("Execution time compensation Disabled");
+  }
+  else if(!strcmp(argv[1],"esampleadc3"))
+  {
+    or_conf.ctrl_sample_adc3 = true;
+    commands_printf("Sampling ADC3 in high freq loop");
+  }
+  else if(!strcmp(argv[1],"dsampleadc3"))
+  {
+    or_conf.ctrl_sample_adc3 = false;
+    commands_printf("Sampling ADC3 in main control loop");
   }
   /*else if(!strcmp(argv[1],"storetorquezero"))
   {
