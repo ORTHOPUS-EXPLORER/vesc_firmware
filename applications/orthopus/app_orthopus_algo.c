@@ -334,6 +334,7 @@ static bool orthopus_safety(void)
   //check indicators
   if (or_state.nid1 > 50 ) {
     commands_printf("estop: too many identical !=0 ctrl_command detected");
+    or_state.nid1 = 0;
     return false;
   } else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now)
                                                      > or_conf.encoder_max_diff)
