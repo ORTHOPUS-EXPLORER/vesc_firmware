@@ -61,9 +61,7 @@ typedef struct
   float speed_now; //actual speed from mc_interface
   float enc_pos; //raw encoder position
   float time_diff;
-  float time_diff_filt;/* -------------------------------------------------------------------------- */
-/*                                  MAIN LOOP                                 */
-/* -------------------------------------------------------------------------- */
+  float time_diff_filt;
   int time_lag_filt;
   int time_lag_compensation;
   bool perf_plot;                             //enables realtime performance plot 
