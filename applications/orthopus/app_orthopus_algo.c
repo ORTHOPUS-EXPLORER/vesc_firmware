@@ -106,7 +106,9 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
     // ENCODER EMI NOISE FILTERING
     or_state.enc_pos = orthopus_read_encoder();
-    //TODO: take into account current speed to compare raw value with next expected value instead of previous value
+    //TODO: take into account current speed to compare raw value with next 
+    //expected value instead of previous value
+/* ---------------------------- encoder filtering --------------------------- */
     if (or_conf.encoder_filter_enable)
     {
       last_nb_enc_filter_error = nb_enc_filter_error;
@@ -117,55 +119,60 @@ static THD_FUNCTION(orthopus_thread, arg) {
            )
            && (fabsf(or_state.enc_pos - enc_pos_filter_last) < 350.0)
            && (nb_enc_filter_error < 5)
+                                    //detect outliers values and keep last value
          )
       {
         ++nb_enc_filter_error;
         or_state.enc_pos_filter = enc_pos_filter_last;
       }
-      else
+      else                                  //keep raw encoder value if coherent
       {
         or_state.enc_pos_filter = or_state.enc_pos;
         nb_enc_filter_error = 0;
       }
 
       if (fabsf(or_state.enc_pos - enc_pos_filter_last) > 350.0)
-        nb_enc_filter_error = 0;
-      ++nsample;
+        nb_enc_filter_error = 0;//TODO: remove? -> useless?
+      ++nsample; //increment plot samples TODO: move into the if below?
 
       if (or_conf.encoder_filter_plot_enable)//debug encoder filter
         orthopus_plot_encoder_filtering(nsample);
-      
-      //count turns on encoder pos
-      if (or_state.enc_pos_filter - enc_pos_filter_last < -350.0)
-        ++or_state.enc_turn;
-      else if (or_state.enc_pos_filter - enc_pos_filter_last > 350.0)
-        --or_state.enc_turn;
-      or_state.enc_pos_filter_multiturn = 0.1*(or_state.enc_pos_filter + 360.0*or_state.enc_turn)+0.9*or_state.enc_pos_filter_multiturn;//filtered position
     }
-    else
+    else                           //if filtering is disabled -> keep raw values
     {
       or_state.enc_pos_filter = or_state.enc_pos;
       nb_enc_filter_error = 0;
     }
+
+/* ------------------------------- Count turns ------------------------------ */
+    //Output encoder
+    if (or_state.enc_pos_filter - enc_pos_filter_last < -350.0)
+      ++or_state.enc_turn;
+    else if (or_state.enc_pos_filter - enc_pos_filter_last > 350.0)
+      --or_state.enc_turn;
+    or_state.enc_pos_filter_multiturn = 0.1*(or_state.enc_pos_filter
+                                              + 360.0*or_state.enc_turn)
+                                        + 0.9*or_state.enc_pos_filter_multiturn;
     enc_pos_filter_last = or_state.enc_pos_filter;
-    // Compute encoder position multiturn
+    //Input encoder
     pid_pos_now = mc_interface_get_pid_pos_now();
     if (pid_pos_now - pid_pos_last < -350.0)
       ++or_state.turn_now;
     else if (pid_pos_now - pid_pos_last > 350.0)
       --or_state.turn_now;
-
     or_state.pos_multiturn_now = pid_pos_now + 360.0*or_state.turn_now;
     pid_pos_last = pid_pos_now;
     or_state.speed_now = mc_interface_get_rpm()/or_conf.angle_division;
-    // Check coherence between rotor position (sin/cos) and encoder position
-    //TODO
+
+/* --------------------------------- Limits --------------------------------- */
     if (or_conf.limits_enable)
       orthopus_limits();
 
-    //Impedance control
-    or_state.adc3_val = or_state.adc3_filt; //get high freq filtered value in orthopus_pwm_callback
-    
+/* ---------------------------- Sample adc3 value --------------------------- */
+    or_state.adc3_val = or_state.adc3_filt;
+                         //get high freq filtered value in orthopus_pwm_callback
+
+/* ---------------------------- Init zero torque ---------------------------- */
     if (!or_state.adc3_init) //init ADC Zero
     {
       ++ninitadc;
@@ -173,76 +180,108 @@ static THD_FUNCTION(orthopus_thread, arg) {
       if (ninitadc == 500)
       {
         or_state.adc3_init = true;
-        commands_printf("torque zero done: or_state.adc3_zero: % 7.3f", (double)or_state.adc3_zero);
+        commands_printf("torque zero done: or_state.adc3_zero: % 7.3f", 
+                                                    (double)or_state.adc3_zero);
         ninitadc = 0;
       } //TODO: store value in config
     } else {
-      or_state.torque_now = or_conf.ctrl_torquegain*(or_state.adc3_val-or_state.adc3_zero); 
+/* ------------------ Scaling ADC3 (volts) -> Torque (N.m) ------------------ */
+      or_state.torque_now = or_conf.ctrl_torquegain
+                            * (or_state.adc3_val-or_state.adc3_zero); 
+
+/* ------------------------------ Control plot ------------------------------ */
       if (or_state.ctrl_plot)
         orthopus_plot_impedance(nsample);
 
-      //safety checks
+/* ------------------------------ Safety checks ----------------------------- */
       if (!orthopus_safety())
       {
         orthopus_estop();
       } else 
-      { //control loop
+      {
+/* -------------------------------------------------------------------------- */
+/*                              Main control loop                             */
+/* -------------------------------------------------------------------------- */
         if (or_state.ctrl_enable)
         {
           or_state.stopped = false;
-          or_state.torque_err = or_state.ext_torque_setpoint-or_state.torque_now;
+          //TODO write clear control law bloc diagram
+          or_state.torque_err = or_state.ext_torque_setpoint
+                                - or_state.torque_now;
           //add stiffness action
-          or_state.torque_err -= or_conf.ctrl_stiffness*(or_state.ext_pos_setpoint-or_state.pos_multiturn_now);
+          or_state.torque_err -= or_conf.ctrl_stiffness
+                        *(or_state.ext_pos_setpoint-or_state.pos_multiturn_now);
           // add damping action
           or_state.torque_err += or_conf.ctrl_damping*or_state.speed_now;
           //add limits action
           or_state.torque_err -= or_state.limit_reaction;
 
           //compute torque error derivative
-          or_state.d_torque_err = (or_state.torque_err-or_state.torque_err_last)/(1.0/or_conf.perf_rate_hz);
-          or_state.d_torque_err_filt = or_conf.ctrl_kd_filter*or_state.d_torque_err + (1-or_conf.ctrl_kd_filter)*or_state.d_torque_err_filt;
+          or_state.d_torque_err = (or_state.torque_err-or_state.torque_err_last)
+                                  / (1.0/or_conf.perf_rate_hz);
+          or_state.d_torque_err_filt = or_conf.ctrl_kd_filter
+                                       * or_state.d_torque_err
+                                     + (1-or_conf.ctrl_kd_filter)
+                                       * or_state.d_torque_err_filt;
           or_state.torque_err_last = or_state.torque_err;
           if (or_conf.ctrl_deadzone)
           {
-            or_state.ctrl_command = -or_conf.ctrl_kp * (or_state.torque_err) -or_conf.ctrl_kd*or_state.d_torque_err;
-            or_state.ctrl_command = or_state.ctrl_command - atanf(or_state.ctrl_command*or_conf.ctrl_a)/or_conf.ctrl_a;
+            or_state.ctrl_command = - or_conf.ctrl_kp * or_state.torque_err
+                                    - or_conf.ctrl_kd * or_state.d_torque_err;
+            or_state.ctrl_command = or_state.ctrl_command
+                                  - atanf(or_state.ctrl_command*or_conf.ctrl_a)
+                                    / or_conf.ctrl_a;
           } else {
-            or_state.ctrl_command = -or_conf.ctrl_kp * (or_state.torque_err) -or_conf.ctrl_kd*or_state.d_torque_err;
+            or_state.ctrl_command = -or_conf.ctrl_kp * (or_state.torque_err)
+                                    -or_conf.ctrl_kd*or_state.d_torque_err;
           }
 
-          //safety checks
-          //compute safety indicators
-          if ((or_state.last_ctrl_command==or_state.ctrl_command)&&(or_state.ctrl_command!=0.0))
+/* ------------------------ Compute safety indicators ----------------------- */
+          if ((or_state.last_ctrl_command == or_state.ctrl_command)
+                                             &&
+                                             (or_state.ctrl_command!=0.0))
           {
             or_state.nid1 += 1;
           } else {
             or_state.nid1 = 0;
           }
           or_state.last_ctrl_command = or_state.ctrl_command;
-          mc_interface_set_current_off_delay(0.1); //prevent disabling motor if torque request is 0 //todo: move somewhere else?
+/* -------------------------------------------------------------------------- */
+/*                    Send current setpoint to mc_interface                   */
+/* -------------------------------------------------------------------------- */
+          mc_interface_set_current_off_delay(0.1);  //prevent disabling motor if 
+                              //torque request is 0 //todo: move somewhere else?
           mc_interface_set_current_rel(or_state.ctrl_command);
-        } //TODO: check limits after last ctrl_command computation and set to zero if out of limits?
+        }    //TODO: check limits after last ctrl_command computation and set to
+                                                        //zero if out of limits?
       }
     }
     
-    
+/* -------------------------------------------------------------------------- */
+/*                          Execution time management                         */
+/* -------------------------------------------------------------------------- */
     //compute and control loop time TODO: clean
+/* ---------------------------- Performances plot --------------------------- */
     if (or_state.perf_plot)
       orthopus_plot_cycletime(nsample);
     time_now = chVTGetSystemTimeX();
     or_state.time_diff = ST2US2(time_now - time_last);
     or_state.time_diff_filt = 0.99*or_state.time_diff_filt
                                   + 0.01*(or_state.time_diff
-                                  + or_state.time_lag_compensation); //simple filter
-    or_state.time_lag_filt = or_state.time_diff_filt - 1000000.0*1.0/or_conf.perf_rate_hz;
+                                  + or_state.time_lag_compensation);
+    or_state.time_lag_filt = or_state.time_diff_filt
+                           - 1000000.0*1.0/or_conf.perf_rate_hz;
     if (or_state.time_diff > or_state.perf_max_period)
       or_state.perf_max_period = or_state.time_diff;
     if (or_state.time_diff < or_state.perf_min_period)
       or_state.perf_min_period = or_state.time_diff;
     time_end = chVTGetSystemTimeX();
     or_state.perf_exec_time = time_end - time_start;
+/* ------ Loop time compensation activated - sleep compensated duration ----- */
     if (or_conf.perf_compensateexectime)
-      chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz-ST2US2(or_state.perf_exec_time));
+      chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz
+                                              -ST2US2(or_state.perf_exec_time));
+/* --------------------- Non compensated sleep (1/rate) --------------------- */
     else 
       chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz);
     time_last = time_now;
@@ -254,7 +293,8 @@ static void orthopus_pwm_callback(void)
 {
 	// Called for every control iteration in interrupt context.
   //Sample torque sensor ADC at high frequency
-  or_state.adc3_filt = or_conf.torque_filter_const*ADC_VOLTS(ADC_IND_EXT3) + (1-or_conf.torque_filter_const)*or_state.adc3_filt;
+  or_state.adc3_filt = or_conf.torque_filter_const*ADC_VOLTS(ADC_IND_EXT3)
+                     + (1-or_conf.torque_filter_const)*or_state.adc3_filt;
 }
 
 /**
@@ -269,7 +309,7 @@ static void orthopus_pwm_callback(void)
 static void orthopus_estop(void)
 {
   mc_interface_release_motor();   //disable motor
-  mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
+  mc_interface_ignore_input(100);  //disable new inputs for 100 ms
   or_state.ctrl_command = 0.0;
   or_state.torque_err = 0.0;
   or_state.stopped = true;
@@ -288,11 +328,13 @@ static bool orthopus_safety(void)
 {
   //check indicators
   if (or_state.nid1 > 50 ) {
-    commands_printf("estop: too many identical and non null ctrl_command detected");
+    commands_printf("estop: too many identical !=0 ctrl_command detected");
     return false;
-  } else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now) > or_conf.encoder_max_diff)
+  } else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now)
+                                                     > or_conf.encoder_max_diff)
   {
-    if (ST2US2(chVTGetSystemTimeX()-time_lasterrprint) > 100000) //TODO: check why it is not working witn > 100000
+    if (ST2US2(chVTGetSystemTimeX()-time_lasterrprint) > 100000) 
+                               //TODO: check why it is not working witn > 100000
     {
       time_lasterrprint = chVTGetSystemTimeX();
       commands_printf("estop: Error: unconsistent sincos/encoder position");
@@ -305,7 +347,8 @@ static bool orthopus_safety(void)
 }
 
 /**
- * Limits management: stop actuator if exceeding defined limits (position, speed, etc.)
+ * Limits management: stop actuator if exceeding defined limits
+ * (position, speed, etc.)
  *
  * @param
  * void
@@ -317,18 +360,21 @@ static void orthopus_limits(void)
 {
   //check position limits
   or_state.limit_reaction = 0;
-  if ((or_state.pos_multiturn_now > or_conf.limits_pos_max) || (or_state.pos_multiturn_now < or_conf.limits_pos_min))
+  if (   (or_state.pos_multiturn_now > or_conf.limits_pos_max)
+      || (or_state.pos_multiturn_now < or_conf.limits_pos_min))
   {
     orthopus_estop();
     or_state.ctrl_enable = false;
   }
   else if ( (
             (or_state.speed_now > or_conf.limits_reach_speed
-              && (or_state.pos_multiturn_now > or_conf.limits_pos_max - or_conf.limits_reach_angle)
+              && (or_state.pos_multiturn_now 
+                  > or_conf.limits_pos_max - or_conf.limits_reach_angle)
             )
             ||
             ( or_state.speed_now < -or_conf.limits_reach_speed
-              && (or_state.pos_multiturn_now < or_conf.limits_pos_min + or_conf.limits_reach_angle)
+              && (or_state.pos_multiturn_now 
+                  < or_conf.limits_pos_min + or_conf.limits_reach_angle)
             )
             )
             && (!or_state.ctrl_enable)
@@ -336,19 +382,57 @@ static void orthopus_limits(void)
   {
     orthopus_estop();
   }
-  if ((or_state.ctrl_enable) && (or_state.pos_multiturn_now < or_conf.limits_pos_min + or_conf.limits_reach_angle)){
-    or_state.limit_reaction = or_conf.limits_kp*powf((or_state.pos_multiturn_now-(or_conf.limits_pos_min + or_conf.limits_reach_angle)),or_conf.limits_powp);
-  }
-  if ((or_state.ctrl_enable) && (or_state.pos_multiturn_now > or_conf.limits_pos_max - or_conf.limits_reach_angle)) { 
-    or_state.limit_reaction = -or_conf.limits_kp*powf((or_state.pos_multiturn_now-(or_conf.limits_pos_max - or_conf.limits_reach_angle)),or_conf.limits_powp);
-  }
-  if ((or_state.ctrl_enable) && (or_state.pos_multiturn_now < or_conf.limits_pos_min + or_conf.limits_reach_angle + or_conf.limits_damp_reachangle) && (or_state.speed_now < 0)) //add damping, only in the direction of the limit to avoid sticking effect
+  if ( (or_state.ctrl_enable)
+       &&
+       (or_state.pos_multiturn_now 
+                         < or_conf.limits_pos_min + or_conf.limits_reach_angle))
   {
-    or_state.limit_reaction += -or_conf.limits_kd*powf(or_state.speed_now,or_conf.limits_powd);
+/* --------------------------- Reaching min limit --------------------------- */
+    or_state.limit_reaction =
+        or_conf.limits_kp
+        * powf(or_state.pos_multiturn_now
+               - or_conf.limits_pos_min
+               + or_conf.limits_reach_angle
+          ,or_conf.limits_powp);
   }
-  if ((or_state.ctrl_enable) && (or_state.pos_multiturn_now > or_conf.limits_pos_max - or_conf.limits_reach_angle - or_conf.limits_damp_reachangle) && (or_state.speed_now > 0)) //add damping, only in the direction of the limit to avoid sticking effect
+  if ( (or_state.ctrl_enable)
+       &&
+       (or_state.pos_multiturn_now
+                         > or_conf.limits_pos_max - or_conf.limits_reach_angle))
+  { 
+/* --------------------------- Reaching max limit --------------------------- */
+    or_state.limit_reaction =
+        -or_conf.limits_kp
+        * powf(or_state.pos_multiturn_now
+               - or_conf.limits_pos_max
+               - or_conf.limits_reach_angle
+          ,or_conf.limits_powp);
+  }
+  if ( (or_state.ctrl_enable) 
+       &&
+       (or_state.pos_multiturn_now
+          < or_conf.limits_pos_min
+            + or_conf.limits_reach_angle
+            + or_conf.limits_damp_reachangle)
+        && (or_state.speed_now < 0)) //add damping, only in the direction of the
+                                                //limit to avoid sticking effect
   {
-    or_state.limit_reaction += -or_conf.limits_kd*powf(or_state.speed_now,or_conf.limits_powd);
+/* -------------------- Damping before reaching min limit ------------------- */
+    or_state.limit_reaction += -or_conf.limits_kd
+                               *powf(or_state.speed_now,or_conf.limits_powd);
+  }
+  if ( (or_state.ctrl_enable)
+       &&
+       (or_state.pos_multiturn_now
+          > or_conf.limits_pos_max
+            - or_conf.limits_reach_angle
+            - or_conf.limits_damp_reachangle)
+        && (or_state.speed_now > 0)) //add damping, only in the direction of the
+                                                //limit to avoid sticking effect
+  {
+/* -------------------- Damping before reaching min limit ------------------- */
+    or_state.limit_reaction += -or_conf.limits_kd
+                               *powf(or_state.speed_now,or_conf.limits_powd);
   }
 }
 
