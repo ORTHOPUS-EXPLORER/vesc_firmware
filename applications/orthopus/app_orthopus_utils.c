@@ -115,10 +115,8 @@ float orthopus_set_encoder_offset(float v, bool use_v)
   if ( mc_interface_get_pid_pos_now() > 180)
   {
     or_state.turn_now = -1;
+    commands_printf("-1 turn sincos");
   }
-  if (orthopus_read_encoder() > 180)
-  {
-    or_state.enc_turn = -1;
-  }
+  or_state.encoders_init = false;
   return v;
 }

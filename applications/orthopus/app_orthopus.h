@@ -89,6 +89,7 @@ typedef struct
   float torque_err_last;
   float d_torque_err;
   float d_torque_err_filt;
+  bool encoders_init;
 } orthopus_state_t;
 
 extern volatile orthopus_state_t or_state;
