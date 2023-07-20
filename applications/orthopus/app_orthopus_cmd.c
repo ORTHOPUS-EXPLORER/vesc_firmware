@@ -552,6 +552,8 @@ static void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("damping:             % 7.3f", (double)or_conf.ctrl_damping        );
     commands_printf("safety stopped:      %s", or_state.stopped       ? "true" : "false" );
     commands_printf("nid1:                % 5d",(int)or_state.nid1                       );
+    commands_printf("turn sincos:         % 5d",(int)or_state.turn_now                   );
+    commands_printf("turn encoder:        % 5d",(int)or_state.enc_turn                   );
   } else {
     commands_printf("Invalid arguments.");
   }

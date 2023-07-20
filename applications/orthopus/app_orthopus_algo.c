@@ -32,7 +32,8 @@ extern volatile orthopus_state_t or_state =
   .adc3_zero = 0.0,
   .turn_now = 0,
   .ext_torque_setpoint = 0,
-  .ext_pos_setpoint = 0
+  .ext_pos_setpoint = 0,
+  .encoders_init = false
 };
 
 
@@ -158,6 +159,11 @@ static THD_FUNCTION(orthopus_thread, arg) {
     enc_pos_filter_last = or_state.enc_pos_filter;
     //Input encoder
     pid_pos_now = mc_interface_get_pid_pos_now();
+    if (!or_state.encoders_init)
+    {
+      pid_pos_last = pid_pos_now;
+      or_state.encoders_init = true;
+    }
     if (pid_pos_now - pid_pos_last < -350.0)
       ++or_state.turn_now;
     else if (pid_pos_now - pid_pos_last > 350.0)
