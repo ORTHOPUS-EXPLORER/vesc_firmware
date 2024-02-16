@@ -48,7 +48,7 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->encoder_filter_anglestep        = 0.25;
   cfg->encoder_filter_enable           = true; // keep enabled or move encoder filtered multiturn angle estimation
   cfg->encoder_filter_plot_enable      = false;
-  cfg->limits_enable                   = true;
+  cfg->limits_enable                   = false;
   cfg->or_conf_set             = false;
   cfg->limits_pos_max                  = 90.0;
   cfg->limits_pos_min                  = -90.0;
@@ -72,7 +72,7 @@ void orthopus_config_reset(orthopus_config_t* cfg)
   cfg->ctrl_deadzone                        = true;
   cfg->ctrl_kd                         = 0;
   cfg->ctrl_kd_filter                  = 1;
-  cfg->encoder_max_diff                    = 2;
+  cfg->encoder_max_diff                    = 5;
 }
 
 float orthopus_read_encoder(void)
