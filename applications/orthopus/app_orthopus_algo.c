@@ -360,9 +360,8 @@ static bool orthopus_safety(void)
   } else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now)
                                                      > or_conf.encoder_max_diff)
   {
-    if (ST2US2(chVTGetSystemTimeX()-time_lasterrprint) > 100000) 
-                               //TODO: check why it is not working witn > 100000
-    {
+    if (ST2S(chVTGetSystemTimeX()-time_lasterrprint) > 2) 
+    { //Print an error message every 2 seconds
       time_lasterrprint = chVTGetSystemTimeX();
       commands_printf("estop: Error: unconsistent sincos/encoder position");
     }
