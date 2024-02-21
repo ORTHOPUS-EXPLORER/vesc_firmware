@@ -357,7 +357,7 @@ static bool orthopus_safety(void)
     commands_printf("estop: too many identical !=0 ctrl_command detected");
     or_state.nid1 = 0;
     return false;
-  } else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now)
+  } /* else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now) //TODO debug: o_offset encoder causes vesc reboot when activated
                                                      > or_conf.encoder_max_diff)
   {
     if (ST2S(chVTGetSystemTimeX()-time_lasterrprint) > 2) 
@@ -366,7 +366,7 @@ static bool orthopus_safety(void)
       commands_printf("estop: Error: unconsistent sincos/encoder position");
     }
     return false;
-  } else {
+  } */ else {
     return true;
   }
   return true;
