@@ -167,6 +167,8 @@ typedef struct {
 	float phase_correction; //phase angle correction (in deg) when encoder outputs sin(anle)/cos(angle+pase_correction)
 	float sph; // sin of the phase_correction angle
 	float cph; // cos of the phase_correction angle
+	float max_amplitude; //sincos module max amplitude error threshold
+	float min_amplitude; //sincos module min amplitude threshold
 
 	ENCSINCOS_state state;
 } ENCSINCOS_config_t;
