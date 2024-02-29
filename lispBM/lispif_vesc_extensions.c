@@ -256,6 +256,8 @@ typedef struct {
 	lbm_uint sin_offset;
 	lbm_uint cos_offset;
 	lbm_uint sincos_phase_correction;
+	lbm_uint sincos_max_amplitude;
+	lbm_uint sincos_min_amplitude;
 
 	// Sysinfo
 	lbm_uint hw_name;
@@ -735,7 +737,11 @@ static bool compare_symbol(lbm_uint sym, lbm_uint *comp) {
 			get_add_symbol("sin-offset", comp);
 		} else if (comp == &syms_vesc.sincos_phase_correction) {
 			get_add_symbol("sincos-phase-correction", comp);
-		}
+		} else if (comp == &syms_vesc.sincos_max_amplitude) {
+			get_add_symbol("sincos-max-amplitude", comp);
+		}  else if (comp == &syms_vesc.sincos_min_amplitude) {
+			get_add_symbol("sincos-min-amplitude", comp);
+		} 
 	}
 
 	return *comp == sym;
@@ -3994,6 +4000,12 @@ static lbm_value ext_conf_set(lbm_value *args, lbm_uint argn) {
 		} else if (compare_symbol(name, &syms_vesc.sincos_phase_correction)) {
 			mcconf->m_encoder_sincos_phase_correction = lbm_dec_as_float(args[1]);
 			changed_mc = 2;
+		} else if (compare_symbol(name, &syms_vesc.sincos_max_amplitude)) {
+			mcconf->m_encoder_sincos_max_amplitude = lbm_dec_as_float(args[1]);
+			changed_mc = 2;
+		}  else if (compare_symbol(name, &syms_vesc.sincos_min_amplitude)) {
+			mcconf->m_encoder_sincos_min_amplitude = lbm_dec_as_float(args[1]);
+			changed_mc = 2;
 		}
 	}
 
@@ -4351,6 +4363,10 @@ static lbm_value ext_conf_get(lbm_value *args, lbm_uint argn) {
 		res = lbm_enc_float(mcconf->m_encoder_cos_offset);
 	} else if (compare_symbol(name, &syms_vesc.sincos_phase_correction)) {
 		res = lbm_enc_float(mcconf->m_encoder_sincos_phase_correction);
+	}  if (compare_symbol(name, &syms_vesc.sincos_max_amplitude)) {
+		res = lbm_enc_float(mcconf->m_encoder_sincos_max_amplitude);
+	}  if (compare_symbol(name, &syms_vesc.sincos_min_amplitude)) {
+		res = lbm_enc_float(mcconf->m_encoder_sincos_min_amplitude);
 	}
 
 	if (defaultcfg) {

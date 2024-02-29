@@ -32,8 +32,6 @@
 #include <math.h>
 #include <string.h>
 
-#define SINCOS_MIN_AMPLITUDE        0.7         // sqrt(sin^2 + cos^2) has to be larger than this
-#define SINCOS_MAX_AMPLITUDE        1.3         // sqrt(sin^2 + cos^2) has to be smaller than this
 
 bool enc_sincos_init(ENCSINCOS_config_t *cfg) {
 	memset(&cfg->state, 0, sizeof(ENCSINCOS_state));
@@ -64,11 +62,11 @@ float enc_sincos_read_deg(ENCSINCOS_config_t *cfg) {
 	}
 	cfg->state.last_update_time = timer_time_now();
 
-	if (module > SQ(SINCOS_MAX_AMPLITUDE) )	{
+	if (module > SQ(cfg->max_amplitude) )	{
 		// signals vector outside of the valid area. Increase error count and discard measurement
 		++cfg->state.signal_above_max_error_cnt;
 		UTILS_LP_FAST(cfg->state.signal_above_max_error_rate, 1.0, timestep);
-	} else if (module < SQ(SINCOS_MIN_AMPLITUDE)) {
+	} else if (module < SQ(cfg->min_amplitude)) {
 		++cfg->state.signal_below_min_error_cnt;
 		UTILS_LP_FAST(cfg->state.signal_low_error_rate, 1.0, timestep);
 	} else {

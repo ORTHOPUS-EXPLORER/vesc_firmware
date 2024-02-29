@@ -554,6 +554,8 @@ typedef struct {
 	float m_encoder_cos_amp;
 	float m_encoder_sincos_filter_constant;
 	float m_encoder_sincos_phase_correction;
+	float m_encoder_sincos_max_amplitude;
+	float m_encoder_sincos_min_amplitude;
 	sensor_port_mode m_sensor_port_mode;
 	bool m_invert_direction;
 	drv8301_oc_mode m_drv8301_oc_mode;
