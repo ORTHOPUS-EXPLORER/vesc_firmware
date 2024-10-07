@@ -8,6 +8,7 @@ static void orthopus_config_cmd(int argc, const char **argv);
 static void orthopus_limits_cmd(int argc, const char **argv);
 static void orthopus_perf_cmd(int argc, const char **argv);
 static void orthopus_control_cmd(int argc, const char **argv);
+static void orthopus_comm_cmd(int argc, const char **argv);
 
 static void orthopus_cmd_init(void)
 {
@@ -59,13 +60,47 @@ static void orthopus_cmd_init(void)
     "[enable/disable/eplot/dplot/kp/zerotorque/loadedzerotorque/torquefilterconst/edeadzone/ddeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/]",
     orthopus_control_cmd
   );
-  //TODO: help
+  //TODO: o_perf : print performance stats (actual rate, mean rate, jitter, etc.)
+
+  terminal_register_command_callback(
+    "o_comm",
+    "[Orthopus] Debug Comm packets",
+    "",
+    orthopus_comm_cmd
+  );
+
 }
 
 static void orthopus_cmd_deinit(void)
 {
   terminal_unregister_callback(orthopus_offset_cmd);
   terminal_unregister_callback(orthopus_config_cmd);
+  terminal_unregister_callback(orthopus_pos_cmd);
+  terminal_unregister_callback(orthopus_filter_cmd);
+  terminal_unregister_callback(orthopus_limits_cmd);
+  terminal_unregister_callback(orthopus_perf_cmd);
+  terminal_unregister_callback(orthopus_comm_cmd);
+}
+
+static void orthopus_comm_cmd(int argc, const char **argv)
+{
+  if(argc == 1 || !strcmp(argv[1],"print"))
+  {
+    orthopus_comm_control_t* ctrl = orthopus_comm.ctrl;
+    commands_printf("Last RX:");
+    commands_printf("  Control word: 0x%08X",        ctrl->word);
+    commands_printf("  Position    :  % 9.5f",(double)ctrl->pos);
+    commands_printf("  Velocity    :  % 9.5f",(double)ctrl->vel);
+    commands_printf("  Torque      :  % 9.5f",(double)ctrl->trq);
+    orthopus_comm_state_t* st = orthopus_comm.state;
+    commands_printf("Last TX:");
+    commands_printf("  Status word : 0x%08X",         st->word);
+    commands_printf("  Position    :  % 9.5f",(double)st->pos );
+    commands_printf("  Velocity    :  % 9.5f",(double)st->vel );
+    commands_printf("  Torque      :  % 9.5f",(double)st->trq );
+    commands_printf("  Temperature :  % 9.5f",(double)st->temp);
+    commands_printf("  Curent      :  % 9.5f",(double)st->curr);
+  }
 }
 
 static void orthopus_pos_cmd(int argc, const char **argv)
@@ -125,7 +160,7 @@ static void orthopus_config_cmd(int argc, const char **argv)
   if (argc == 3)
       sscanf(argv[2], "%f", &val);
 
-  if(argc == 0 || !strcmp(argv[1],"print"))
+  if(argc == 1 || !strcmp(argv[1],"print"))
   {
     commands_printf("Encoder offset:              % 7.3f",(double)or_conf.encoder_offset                    );
     commands_printf("Encoder filter anglestep:    % 7.3f",(double)or_conf.encoder_filter_anglestep          );

@@ -120,8 +120,9 @@ typedef struct
   orthopus_comm_control_t ctrl0, 
                           ctrl1, 
                           *ctrl;
-  bool                    lock, has_new;
 } orthopus_comm_t;
+
+static orthopus_comm_t orthopus_comm;
 
 // Utils
 static bool orthopus_config_load(orthopus_config_t* cfg);
