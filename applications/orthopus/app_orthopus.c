@@ -35,6 +35,7 @@
 #include "hw.h"
 #include "commands.h"
 #include "timeout.h"
+#include "buffer.h"
 
 #include <math.h>
 #include <string.h>
@@ -54,6 +55,20 @@ static orthopus_config_t or_conf =
   .encoder_offset = 0.0,
 }; //init values to zero in case flash can't be read
 
+
+static orthopus_comm_t orthopus_comm =
+{
+  .st0 = {},
+  .st1 = {},
+  .state = &orthopus_comm.st0,
+  .ctrl0 = { 
+    .word = 0x0
+  },
+  .ctrl1 = { 
+    .word = 0x0
+  },
+  .ctrl  = &orthopus_comm.ctrl0
+};
 
 static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
 static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len);
@@ -137,33 +152,44 @@ void app_custom_configure(app_configuration *conf) {
 	(void)conf;
 }
 
-
-extern orthopus_comm_t orthopus_comm;
-
-orthopus_comm_t orthopus_comm;
-
-
+void orthopus_comm_update_state(void);
 
 static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len)
 {
   // RX
-  if(len == sizeof(orthopus_comm_control_t)+2 && rx_d[0] == 0x70)
+  const size_t isize = sizeof(orthopus_comm_control_t)+2;
+  if(len == isize && rx_d[0] == 0x70)
   {
+    // Get the "free" buffer
     orthopus_comm_control_t* ctrl = orthopus_comm.ctrl  = orthopus_comm.ctrl  == &(orthopus_comm.ctrl1)
                                   ? &(orthopus_comm.ctrl0) 
                                   : &(orthopus_comm.ctrl1);
-    memcpy(ctrl, rx_d+2, sizeof(orthopus_comm_control_t));
+    long int ilen = 2;
+    // Fill in some data from the received packet
+    ctrl->word = buffer_get_uint32      (rx_d, &ilen);
+    ctrl->pos  = buffer_get_float32_auto(rx_d, &ilen);
+    ctrl->vel  = buffer_get_float32_auto(rx_d, &ilen);
+    ctrl->trq  = buffer_get_float32_auto(rx_d, &ilen);
+    // Activate
     orthopus_comm.ctrl = ctrl; // Swap !
   }
 
   // TX
-  unsigned int olen=0;
-  unsigned char tx_d[sizeof(orthopus_comm_state_t)+2];
+  const size_t osize = sizeof(orthopus_comm_state_t)+2; 
+  unsigned char tx_d[osize];
+  long int olen=2;
   tx_d[0] = 0x12;
   tx_d[1] = 0x45;
+  // Get the current buffer
   orthopus_comm_state_t* st = orthopus_comm.state;
-  memcpy(tx_d+2, st, sizeof(orthopus_comm_state_t));
-  commands_send_app_data(tx_d, sizeof(orthopus_comm_state_t)+2);
+  // Copy the data to te send buffer
+  buffer_append_uint32      (tx_d, st->word, &olen);
+  buffer_append_float32_auto(tx_d, st->pos,  &olen);
+  buffer_append_float32_auto(tx_d, st->vel,  &olen);
+  buffer_append_float32_auto(tx_d, st->trq,  &olen);
+  buffer_append_float32_auto(tx_d, st->temp, &olen);
+  buffer_append_float32_auto(tx_d, st->curr, &olen);
+  commands_send_app_data(tx_d, osize);
 }
 
 static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len)

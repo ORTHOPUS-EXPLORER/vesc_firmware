@@ -311,6 +311,34 @@ static THD_FUNCTION(orthopus_thread, arg) {
     else 
       chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz);
     time_last = time_now;
+
+
+    // Read control from comm'
+    {
+      // Get the current buffer
+      orthopus_comm_control_t* c = orthopus_comm.ctrl;
+      // Read some data
+      // FIXME: Do something with the refs ! 
+      (void)c->word;
+      (void)c->pos;
+      (void)c->vel;
+      (void)c->trq;
+    }
+    // Update state for comm'
+    // FIXME: Slow it down, only update at twice the comm rate, should be enough
+    {
+      // Get the "free" buffer
+      orthopus_comm_state_t* st = orthopus_comm.state == &(orthopus_comm.st1)   ? &(orthopus_comm.st0)   : &(orthopus_comm.st1);
+      // Fill in some data
+      st->word = 0x17921145;
+      st->pos  = 12.34;
+      st->vel  =  0.01;
+      st->trq  =  0.00;
+      st->temp =  0.10;
+      st->curr = 17.90;
+      // Activate
+      orthopus_comm.state = st; // Swap !
+    }
 	}
 }
 
@@ -321,18 +349,6 @@ static void orthopus_pwm_callback(void)
   //Sample torque sensor ADC at high frequency
   or_state.adc3_filt = or_conf.torque_filter_const*ADC_VOLTS(ADC_IND_EXT3)
                      + (1-or_conf.torque_filter_const)*or_state.adc3_filt;
-}
-
-void orthopus_comm_update_state(orthopus_comm_t* c)
-{
-  orthopus_comm_state_t* st = c->state == &(c->st1)   ? &(c->st0)   : &(c->st1);
-  st->pos  = 12.34;
-  st->vel  =  0.01;
-  st->trq  =  0.00;
-  st->temp =  0.10;
-  st->curr = 17.90;
-  
-  c->state = st; // Swap !
 }
 
 /**
