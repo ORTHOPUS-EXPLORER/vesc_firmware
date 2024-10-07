@@ -89,7 +89,7 @@ void app_custom_start(void)
   orthopus_cmd_init();
 
   // Add LISP commands/symbols
-  lispif_set_ext_load_callback(&orthopus_init_lisp);
+  lispif_add_ext_load_callback(&orthopus_init_lisp);
 
   commands_set_app_data_handler(orthopus_process_custom_app_data);
   commands_set_hw_data_handler(orthopus_process_custom_hw_data);

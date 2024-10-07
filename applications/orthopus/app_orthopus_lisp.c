@@ -18,21 +18,23 @@ static lbm_value orthopus_ca_sym;
 static unsigned char orthopus_ca[3] = { 0x01, 0x42, 0x03 };
 static lbm_uint orthopus_fv_sym,orthopus_fc_sym;
 
-static lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn);
+// BMi,2024107, Broken since rebase on 6.05
+//static lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn);
 
 void orthopus_init_lisp(void)
 {
     // in REPL, test with: (orthopus-test-syms 'orthopus0)    => ok
     //                     (orthopus-test-syms 'orthopus1)    => ok
     //                     (orthopus-test-syms 'not_a_symbol) => eval_error
-  lbm_add_variable_symbol_const("orthopus0", &orthopus_lisp_s0);
-  lbm_add_variable_symbol_const("orthopus1", &orthopus_lisp_s1);
-  lbm_add_extension("orthopus-test-syms", orthopus_lisp_test_symbols);
+  // BMi,2024107, Broken since rebase on 6.05
+  //lbm_add_variable_symbol_const("orthopus0", &orthopus_lisp_s0);
+  //lbm_add_variable_symbol_const("orthopus1", &orthopus_lisp_s1);
+  //lbm_add_extension("orthopus-test-syms", orthopus_lisp_test_symbols);
 
   // Share array
   // Access from lisp: Read:  (print (bufget-u8 orthopus-ca 1))
   //                   Write: (bufset-u8 orthopus-ca 1 65)
-  if(lbm_share_array(&orthopus_ca_sym,(char*)orthopus_ca, LBM_TYPE_CHAR, 3))
+  if(lbm_share_array(&orthopus_ca_sym,(char*)orthopus_ca, 3))
     lbm_define("orthopus-ca",orthopus_ca_sym);
   // bufset only exists for -(i/u)(8/16/32), so...
   // not really sure about the compatibility of types of orthopus_ca and the LBM_TYPE_***
@@ -178,7 +180,7 @@ static lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn)
   }
   return ENC_SYM_TRUE;
 }
-
+/* BMi,2024107, Broken since rebase on 6.05
 static lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn)
 {
   if (argn != 1)
@@ -209,3 +211,4 @@ static lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn)
 
 	return ENC_SYM_TRUE;
 }
+*/
