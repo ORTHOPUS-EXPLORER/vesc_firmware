@@ -323,6 +323,18 @@ static void orthopus_pwm_callback(void)
                      + (1-or_conf.torque_filter_const)*or_state.adc3_filt;
 }
 
+void orthopus_comm_update_state(orthopus_comm_t* c)
+{
+  orthopus_comm_state_t* st = c->state == &(c->st1)   ? &(c->st0)   : &(c->st1);
+  st->pos  = 12.34;
+  st->vel  =  0.01;
+  st->trq  =  0.00;
+  st->temp =  0.10;
+  st->curr = 17.90;
+  
+  c->state = st; // Swap !
+}
+
 /**
  * Emergency stop of the actuator
  *
