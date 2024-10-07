@@ -94,6 +94,35 @@ typedef struct
 
 extern volatile orthopus_state_t or_state;
 
+typedef struct 
+{
+  uint32_t  word;
+  float     pos,
+            vel,
+            trq;
+} orthopus_comm_control_t;
+
+typedef struct 
+{
+  uint32_t  word;
+  float     pos,
+            vel,
+            trq,
+            temp,
+            curr;
+} orthopus_comm_state_t;
+
+typedef struct
+{
+  orthopus_comm_state_t   st0, 
+                          st1,
+                          *state;
+  orthopus_comm_control_t ctrl0, 
+                          ctrl1, 
+                          *ctrl;
+  bool                    lock, has_new;
+} orthopus_comm_t;
+
 // Utils
 static bool orthopus_config_load(orthopus_config_t* cfg);
 static bool orthopus_config_save(const orthopus_config_t* cfg);

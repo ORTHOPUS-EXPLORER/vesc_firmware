@@ -137,18 +137,33 @@ void app_custom_configure(app_configuration *conf) {
 	(void)conf;
 }
 
+
+extern orthopus_comm_t orthopus_comm;
+
+orthopus_comm_t orthopus_comm;
+
+
+
 static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len)
 {
-  (void)rx_d; (void)len;
+  // RX
+  if(len == sizeof(orthopus_comm_control_t)+2 && rx_d[0] == 0x70)
+  {
+    orthopus_comm_control_t* ctrl = orthopus_comm.ctrl  = orthopus_comm.ctrl  == &(orthopus_comm.ctrl1)
+                                  ? &(orthopus_comm.ctrl0) 
+                                  : &(orthopus_comm.ctrl1);
+    memcpy(ctrl, rx_d+2, sizeof(orthopus_comm_control_t));
+    orthopus_comm.ctrl = ctrl; // Swap !
+  }
 
+  // TX
   unsigned int olen=0;
-  unsigned char tx_d[256];
+  unsigned char tx_d[sizeof(orthopus_comm_state_t)+2];
   tx_d[0] = 0x12;
   tx_d[1] = 0x45;
-  for(olen=2;olen<2+6*4+1;olen++)
-    tx_d[olen] = olen - 2;
-  if(olen)
-    commands_send_app_data(tx_d, olen);
+  orthopus_comm_state_t* st = orthopus_comm.state;
+  memcpy(tx_d+2, st, sizeof(orthopus_comm_state_t));
+  commands_send_app_data(tx_d, sizeof(orthopus_comm_state_t)+2);
 }
 
 static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len)
