@@ -9,6 +9,7 @@ static void orthopus_limits_cmd(int argc, const char **argv);
 static void orthopus_perf_cmd(int argc, const char **argv);
 static void orthopus_control_cmd(int argc, const char **argv);
 static void orthopus_comm_cmd(int argc, const char **argv);
+static void orthopus_can_cmd(int argc, const char **argv);
 
 static void orthopus_cmd_init(void)
 {
@@ -69,6 +70,12 @@ static void orthopus_cmd_init(void)
     orthopus_comm_cmd
   );
 
+  terminal_register_command_callback(
+    "o_can",
+    "[Orthopus] CAN debug/test commands",
+    "<send>",
+    orthopus_can_cmd
+  );
 }
 
 static void orthopus_cmd_deinit(void)
@@ -80,6 +87,73 @@ static void orthopus_cmd_deinit(void)
   terminal_unregister_callback(orthopus_limits_cmd);
   terminal_unregister_callback(orthopus_perf_cmd);
   terminal_unregister_callback(orthopus_comm_cmd);
+  terminal_unregister_callback(orthopus_can_cmd);
+}
+
+
+//void comm_can_transmit_eid(uint32_t id, const uint8_t *data, uint8_t len);
+//void comm_can_transmit_sid(uint32_t id, const uint8_t *data, uint8_t len);
+//void comm_can_send_buffer(uint8_t controller_id, uint8_t *data, unsigned int len, uint8_t send);
+//bool comm_can_ping(uint8_t controller_id, HW_TYPE *hw_type);
+// https://www.vesc-project.com/sites/default/files/imce/u15301/VESC6_CAN_CommandsTelemetry.pdf
+static void orthopus_can_cmd(int argc, const char **argv)
+{
+  uint8_t buffer[16] = {0};
+  size_t len=0;
+  if(argc == 1)
+    return;
+  // Expecting:
+  //  can0  00000179   [2]  01 42
+  buffer[0] = 0x01;
+  buffer[1] = 0x42;
+  len = 2;
+  if(argc >= 3)
+    sscanf(argv[2],"%d",&len);
+  len = len > 16 ? 16 : len;
+
+  // Lower 8 bits are VESC Board IDs
+  if(!strcmp(argv[1],"tx_eid")) // 29b IDs, caped to 8 bytes
+  {
+    comm_can_transmit_eid(0x179, buffer, len);
+  }
+  else if(!strcmp(argv[1],"tx_sid"))  // 11b IDs, caped to 8 bytes
+  {
+    comm_can_transmit_sid(0x179, buffer, len);
+  }
+  else if(!strcmp(argv[1],"tx_b"))  // 29b IDs, 
+  {
+    // 0: Packet goes to commands_process_packet of receiver
+    // 1: Packet goes to commands_send_packet of receiver
+    // 2: Packet goes to commands_process and send function is set to null
+    //    so that no reply is sent back.
+    uint8_t send = 0;
+    int r =0;
+    if(argc >= 4)
+      sscanf(argv[3],"%d",&r);
+    send = r > 2 ? 2 : r&0xFF;
+    //commands_printf("Len: %d, Send: %d", len, send);
+    comm_can_send_buffer(0x79, buffer, len, send);
+
+    // o_can tx_b 1:
+    //      can0  00000879   [3]  16 00 01
+    // o_can tx_b 6:
+    //      can0  00000879   [8]  16 00 01 42 00 00 00 00
+    // o_can tx_b 7:
+    //      can0  00000579   [8]  00 01 42 00 00 00 00 00
+    //      can0  00000779   [6]  16 00 00 07 59 31
+    // o_can tx_b 10:
+    //      can0  00000579   [8]  00 01 42 00 00 00 00 00
+    //      can0  00000579   [4]  07 00 00 00
+    //      can0  00000779   [6]  16 00 00 0A F6 FB
+    // O_can_tx_b 16:
+    //      can0  00000579   [8]  00 01 42 00 00 00 00 00
+    //      can0  00000579   [8]  07 00 00 00 00 00 00 00
+    //      can0  00000579   [3]  0E 00 00
+    //      can0  00000779   [6]  16 00 00 10 CF F4s
+    // o_can tx_b  6 1  
+    //      can0  00000879   [8]  16 01 01 42 00 00 00 00
+  }
+
 }
 
 static void orthopus_comm_cmd(int argc, const char **argv)

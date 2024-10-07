@@ -209,10 +209,25 @@ static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int le
 static bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
 {
   (void)id; (void)data; (void)len;
-  //int32_t send_index = 0;
-	//uint8_t buffer[8];
-	//buffer_append_uint32(buffer, 0x1234567890, &send_index);
-	//comm_can_send_buffer(id, buffer, send_index, 0);
+  int32_t send_index = 0;
+	uint8_t buffer[8];
+	buffer_append_uint32(buffer, 0x12345678, &send_index);
+  if(id == 0x179)
+  {
+    // RX: can0       179   [8]  11 22 33 44 55 66 77 88
+    // TX: can0       179   [4]  12 34 56 78
+    if(len > 0 && data[0] == 0x11)
+	    comm_can_transmit_sid(id, buffer, send_index);
+    // RX: can0       179   [8]  22 33 44 55 66 77 88 99
+    // TX: can0  00000179   [4]  12 34 56 78
+    else if(len > 0 && data[0] == 0x22)
+	    comm_can_transmit_eid(id, buffer, send_index);
+    // RX: can0       179   [8]  33 44 55 66 77 88 99 00
+    // TX: can0  00000879   [6]  16 00 12 34 56 78
+    else if(len > 0 && data[0] == 0x33)
+	    comm_can_send_buffer(id, buffer, send_index, 0);
+    return true;
+  }
   return false;
 }
 
