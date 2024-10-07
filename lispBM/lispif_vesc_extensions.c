@@ -625,19 +625,19 @@ static bool compare_symbol(lbm_uint sym, lbm_uint *comp) {
 		}
 
 		else if (comp == &syms_vesc.sin_amp) {
-			get_add_symbol("sin-amp", comp);
+			lbm_add_symbol_const("sin-amp", comp);
 		} else if (comp == &syms_vesc.cos_amp) {
-			get_add_symbol("cos-amp", comp);
+			lbm_add_symbol_const("cos-amp", comp);
 		} else if (comp == &syms_vesc.sin_offset) {
-			get_add_symbol("cos-offset", comp);
+			lbm_add_symbol_const("cos-offset", comp);
 		} else if (comp == &syms_vesc.cos_offset) {
-			get_add_symbol("sin-offset", comp);
+			lbm_add_symbol_const("sin-offset", comp);
 		} else if (comp == &syms_vesc.sincos_phase_correction) {
-			get_add_symbol("sincos-phase-correction", comp);
+			lbm_add_symbol_const("sincos-phase-correction", comp);
 		} else if (comp == &syms_vesc.sincos_max_amplitude) {
-			get_add_symbol("sincos-max-amplitude", comp);
+			lbm_add_symbol_const("sincos-max-amplitude", comp);
 		}  else if (comp == &syms_vesc.sincos_min_amplitude) {
-			get_add_symbol("sincos-min-amplitude", comp);
+			lbm_add_symbol_const("sincos-min-amplitude", comp);
 		} 
 	}
 
