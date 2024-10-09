@@ -153,7 +153,7 @@ void hw_setup_adc_channels(void) {
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_0,  	     2, ADC_SampleTime_15Cycles);    //  3 - ADC_IND_SENS3
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     3, ADC_SampleTime_15Cycles);    //  6 - ADC_IND_CURR2
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     4, ADC_SampleTime_15Cycles);    //  9 - ADC_IND_CURR2
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     5, ADC_SampleTime_15Cycles);    // 12 - ADC_IND_CURR2
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 	     5, ADC_SampleTime_15Cycles);    // 12 - ADC_IND_EXT3
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     6, ADC_SampleTime_15Cycles);    // 15 - ADC_IND_CURR2
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_10,       7, ADC_SampleTime_15Cycles);    // 18 - ADC_IND_CURR2
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_0,        8, ADC_SampleTime_15Cycles);    // 21 - ADC_IND_SENS3
@@ -166,7 +166,7 @@ void hw_setup_adc_channels(void) {
 	ADC_RegularChannelConfig(ADC2, ADC_Channel_1,   2, ADC_SampleTime_15Cycles);          //  4 - ADC_IND_SENS2
 	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  3, ADC_SampleTime_15Cycles);          //  7 - ADC_IND_CURR1
 	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  4, ADC_SampleTime_15Cycles);          // 10 - ADC_IND_CURR1
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  5, ADC_SampleTime_15Cycles);          // 13 - ADC_IND_CURR1
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_13,  5, ADC_SampleTime_15Cycles);          // 13 - UNUSED
 	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  6, ADC_SampleTime_15Cycles);          // 16 - ADC_IND_CURR1
 	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  7, ADC_SampleTime_15Cycles);          // 19 - ADC_IND_CURR1
 	ADC_RegularChannelConfig(ADC2, ADC_Channel_1,   8, ADC_SampleTime_15Cycles);          // 22 - ADC_IND_SENS2
