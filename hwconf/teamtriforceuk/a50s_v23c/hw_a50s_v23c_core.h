@@ -42,8 +42,8 @@
  * 9  (1): IN10    IND_CURR2_3
  * 10 (2): IN11    IND_CURR1_3
  * 11 (3): IN13    UNUSED ?
- * 12 (1): IN10    IND_CURR2_4
- * 13 (2): IN11    IND_CURR1_4
+ * 12 (1): IN10    IND_EXT3
+ * 13 (2): IN11    UNUSED ?
  * 14 (3): IN13    UNUSED ?
  * 15 (1): IN10    IND_CURR2_5
  * 16 (2): IN11    IND_CURR1_5
@@ -66,43 +66,42 @@
  */
 
 // ADC Vectors, see .c
-#define HW_ADC_CHANNELS				30
-#define HW_ADC_INJ_CHANNELS		2
-#define HW_ADC_NBR_CONV				10 // 3 ADCs doing 10 conversions each => 30 channels
+#define HW_ADC_CHANNELS     30
+#define HW_ADC_INJ_CHANNELS  2
+#define HW_ADC_NBR_CONV     10 // 3 ADCs doing 10 conversions each => 30 channels
 
 // ADC Indexes
 
-#define ADC_IND_CURR2				0
-#define ADC_IND_CURR1				1
-#define ADC_IND_VIN_SENS		2
-#define ADC_IND_SENS1				3
-#define ADC_IND_SENS2				4
-#define ADC_IND_SENS3				5
-#define ADC_IND_CURR2_2			6
-#define ADC_IND_CURR1_2			7
-// Unused                   8
-#define ADC_IND_CURR2_3			9
-#define ADC_IND_CURR1_3			10
+#define ADC_IND_CURR2        0
+#define ADC_IND_CURR1        1
+#define ADC_IND_VIN_SENS     2
+#define ADC_IND_SENS1        3
+#define ADC_IND_SENS2        4
+#define ADC_IND_SENS3        5
+#define ADC_IND_CURR2_2      6
+#define ADC_IND_CURR1_2	     7
+// Unused                    8
+#define ADC_IND_CURR2_3	     9
+#define ADC_IND_CURR1_3	    10
 // Unused                   11
-#define ADC_IND_CURR2_4			12
-#define ADC_IND_CURR1_4			13
+#define ADC_IND_EXT3        12
+// Unused                   13
 // Unused                   14
-#define ADC_IND_CURR2_5			15
-#define ADC_IND_CURR1_5			16
+#define ADC_IND_CURR2_5     15
+#define ADC_IND_CURR1_5     16
 // Unused                   17
-#define ADC_IND_CURR2_6			18
-#define ADC_IND_CURR1_6			19
+#define ADC_IND_CURR2_6     18
+#define ADC_IND_CURR1_6     19
 // Unused                   20
-#define ADC_IND_SENS1_2			21
-#define ADC_IND_SENS2_2			22
-#define ADC_IND_SENS3_2			23
-#define ADC_IND_EXT					24
-#define ADC_IND_EXT2				25
-#define ADC_IND_TEMP_MOS		26
-#define ADC_IND_VREFINT			27
-#define ADC_IND_TEMP_MOTOR	28
+#define ADC_IND_SENS1_2     21
+#define ADC_IND_SENS2_2     22
+#define ADC_IND_SENS3_2     23
+#define ADC_IND_EXT         24
+#define ADC_IND_EXT2        25
+#define ADC_IND_TEMP_MOS    26
+#define ADC_IND_VREFINT     27
+#define ADC_IND_TEMP_MOTOR  28
 // Unused                   29
-#define ADC_IND_EXT3        29
 
 // Define CURR3 so the half transfer complete interrupt is not used
 // When taking 6 current samples need to wait till they are all there
@@ -133,8 +132,8 @@
 #define CURRENT_CAL2				hw_a50s_get_current_cal_2()
 
 // Current is sampled 6 times and averaged to reduce noise
-#define GET_CURRENT1()		(((float)(ADC_Value[ADC_IND_CURR1] + ADC_Value[ADC_IND_CURR1_2] + ADC_Value[ADC_IND_CURR1_3] + ADC_Value[ADC_IND_CURR1_4] + ADC_Value[ADC_IND_CURR1_5] + ADC_Value[ADC_IND_CURR1_6]))/6.0)
-#define GET_CURRENT2()		(((float)(ADC_Value[ADC_IND_CURR2] + ADC_Value[ADC_IND_CURR2_2] + ADC_Value[ADC_IND_CURR2_3] + ADC_Value[ADC_IND_CURR2_4] + ADC_Value[ADC_IND_CURR2_5] + ADC_Value[ADC_IND_CURR2_6]))/6.0)
+#define GET_CURRENT1()		(((float)(ADC_Value[ADC_IND_CURR1] + ADC_Value[ADC_IND_CURR1_2] + ADC_Value[ADC_IND_CURR1_3] + ADC_Value[ADC_IND_CURR1_5] + ADC_Value[ADC_IND_CURR1_6]))/5.0)
+#define GET_CURRENT2()		(((float)(ADC_Value[ADC_IND_CURR2] + ADC_Value[ADC_IND_CURR2_2] + ADC_Value[ADC_IND_CURR2_3] + ADC_Value[ADC_IND_CURR2_5] + ADC_Value[ADC_IND_CURR2_6]))/5.0)
 #define GET_CURRENT3()		0
 //#define GET_CURRENT1()		(float)(ADC_Value[ADC_IND_CURR1])
 //#define GET_CURRENT2()		(float)(ADC_Value[ADC_IND_CURR2])
