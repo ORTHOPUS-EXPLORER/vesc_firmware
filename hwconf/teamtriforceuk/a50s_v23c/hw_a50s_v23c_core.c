@@ -101,20 +101,31 @@ void hw_init_gpio(void) {
 	PHASE_FILTER_OFF();
 
 	// ADC Pins
-	palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG);
-	palSetPadMode(GPIOA, 1, PAL_MODE_INPUT_ANALOG);
-	palSetPadMode(GPIOA, 2, PAL_MODE_INPUT_ANALOG);
-	palSetPadMode(GPIOA, 3, PAL_MODE_INPUT_ANALOG);
-	palSetPadMode(GPIOA, 5, PAL_MODE_INPUT_ANALOG);
-	palSetPadMode(GPIOA, 6, PAL_MODE_INPUT_ANALOG);
+	palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG); //  ADC123_IN0
+	palSetPadMode(GPIOA, 1, PAL_MODE_INPUT_ANALOG); //  ADC123_IN1
+	palSetPadMode(GPIOA, 2, PAL_MODE_INPUT_ANALOG); //  ADC123_IN2
+	palSetPadMode(GPIOA, 3, PAL_MODE_INPUT_ANALOG); //  ADC123_IN3
+	//               PA  4  is                           ADC12_IN4
+	palSetPadMode(GPIOA, 5, PAL_MODE_INPUT_ANALOG); //   ADC12_IN5
+	palSetPadMode(GPIOA, 6, PAL_MODE_INPUT_ANALOG); //   ADC12_IN6
+	//               PA  7  is                           ADC12_IN7, see below
+	//               PB  0  is                           ADC12_IN8
+	//               PB  1  is                           ADC12_IN9
+	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG); // ADC123_IN10
+	palSetPadMode(GPIOC, 1, PAL_MODE_INPUT_ANALOG); // ADC123_IN11
+	//               PC  2  is                         ADC123_IN12
+	palSetPadMode(GPIOC, 3, PAL_MODE_INPUT_ANALOG); // ADC123_IN13
+	palSetPadMode(GPIOC, 4, PAL_MODE_INPUT_ANALOG);	//  ADC12_IN14
+	//               PC  5  is                          ADC12_IN15
+	//              Vsense  is                           ADC1_INT16 (internal temp sensor)
+	//             VrefInt  is                           ADC1_IN17  
+	//                Vbat  is                           ADC1_INT18 (battery voltage)
 	
-	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG);
-	palSetPadMode(GPIOC, 1, PAL_MODE_INPUT_ANALOG);
-	
-	palSetPadMode(GPIOC, 3, PAL_MODE_INPUT_ANALOG);
-	palSetPadMode(GPIOC, 4, PAL_MODE_INPUT_ANALOG);	
-	
-	
+	// Use SCL/MOSI/TX as ADC_EXT3.
+	//   Header pin is tied to PA7 (AIN7) and PB10.
+	//   Set PA7 as Analog input and PB10 in Hi-Z.
+	palSetPadMode(GPIOA, 7, PAL_MODE_INPUT_ANALOG); //   ADC12_IN7
+	palSetPadMode(GPIOB, 10, PAL_MODE_INPUT);
 	
 	terminal_register_command_callback(
 			"read_current_cal",
@@ -138,48 +149,48 @@ void hw_init_gpio(void) {
 
 void hw_setup_adc_channels(void) {
 	// ADC1 regular channels
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 1, ADC_SampleTime_15Cycles);          // 0 -  ADC_IND_CURR2
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 2, ADC_SampleTime_15Cycles);	         // 3 -  ADC_IND_SENS3	
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 3, ADC_SampleTime_15Cycles);          // 6 -  ADC_IND_CURR2
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 4, ADC_SampleTime_15Cycles);          // 9 -  ADC_IND_CURR2
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 5, ADC_SampleTime_15Cycles);          // 12 -  ADC_IND_CURR2
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 6, ADC_SampleTime_15Cycles);          // 15 -  ADC_IND_CURR2
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 7, ADC_SampleTime_15Cycles);          // 18 -  ADC_IND_CURR2	
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 8, ADC_SampleTime_15Cycles);	         // 21 -  ADC_IND_SENS3	
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 9, ADC_SampleTime_15Cycles);           // 24 -  ADC_IND_EXT	
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint, 10, ADC_SampleTime_56Cycles);    // 27 - ADC_IND_VREFINT     
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     1, ADC_SampleTime_15Cycles);    //  0 - ADC_IND_CURR2
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_0,  	     2, ADC_SampleTime_15Cycles);    //  3 - ADC_IND_SENS3
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     3, ADC_SampleTime_15Cycles);    //  6 - ADC_IND_CURR2
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     4, ADC_SampleTime_15Cycles);    //  9 - ADC_IND_CURR2
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     5, ADC_SampleTime_15Cycles);    // 12 - ADC_IND_CURR2
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 	     6, ADC_SampleTime_15Cycles);    // 15 - ADC_IND_CURR2
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_10,       7, ADC_SampleTime_15Cycles);    // 18 - ADC_IND_CURR2
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_0,        8, ADC_SampleTime_15Cycles);    // 21 - ADC_IND_SENS3
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_5,        9, ADC_SampleTime_15Cycles);    // 24 - ADC_IND_EXT
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint, 10, ADC_SampleTime_56Cycles);    // 27 - ADC_IND_VREFINT
 	
 	
 	// ADC2 regular channels                                                             
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 1, ADC_SampleTime_15Cycles);          // 1 -  ADC_IND_CURR1
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_1, 2, ADC_SampleTime_15Cycles);	         // 4 -  ADC_IND_SENS2
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 3, ADC_SampleTime_15Cycles);          // 7 -  ADC_IND_CURR1
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 4, ADC_SampleTime_15Cycles);          // 10 -  ADC_IND_CURR1
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 5, ADC_SampleTime_15Cycles);          // 13 -  ADC_IND_CURR1
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 6, ADC_SampleTime_15Cycles);          // 16 -  ADC_IND_CURR1
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_11, 7, ADC_SampleTime_15Cycles);          // 19 -  ADC_IND_CURR1	
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_1, 8, ADC_SampleTime_15Cycles);	         // 22 -  ADC_IND_SENS2	
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_6, 9, ADC_SampleTime_15Cycles);           // 25 -  ADC_IND_EXT2
-	ADC_RegularChannelConfig(ADC2, ADC_Channel_14, 10, ADC_SampleTime_56Cycles);     	 // 28 -  ADC_IND_TEMP_MOTOR
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  1, ADC_SampleTime_15Cycles);          //  1 - ADC_IND_CURR1
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_1,   2, ADC_SampleTime_15Cycles);          //  4 - ADC_IND_SENS2
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  3, ADC_SampleTime_15Cycles);          //  7 - ADC_IND_CURR1
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  4, ADC_SampleTime_15Cycles);          // 10 - ADC_IND_CURR1
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  5, ADC_SampleTime_15Cycles);          // 13 - ADC_IND_CURR1
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  6, ADC_SampleTime_15Cycles);          // 16 - ADC_IND_CURR1
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_11,  7, ADC_SampleTime_15Cycles);          // 19 - ADC_IND_CURR1
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_1,   8, ADC_SampleTime_15Cycles);          // 22 - ADC_IND_SENS2
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_6,   9, ADC_SampleTime_15Cycles);          // 25 - ADC_IND_EXT2
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_14, 10, ADC_SampleTime_56Cycles);          // 28 - ADC_IND_TEMP_MOTOR
 		
 		
 	// ADC3 regular channels	
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 1, ADC_SampleTime_15Cycles);          // 2 -  ADC_IND_VIN_SENS
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_2, 2, ADC_SampleTime_15Cycles);	         // 5 -  ADC_IND_SENS1	
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 3, ADC_SampleTime_15Cycles);          // 8 -  UNUSED
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 4, ADC_SampleTime_15Cycles);          // 11 -  UNUSED
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 5, ADC_SampleTime_15Cycles);          // 14 -  UNUSED
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 6, ADC_SampleTime_15Cycles);          // 17 -  UNUSED
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 7, ADC_SampleTime_15Cycles);          // 20 -  UNUSED	
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_2, 8, ADC_SampleTime_15Cycles);	         // 23 -  ADC_IND_SENS1	
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_3, 9, ADC_SampleTime_15Cycles);           // 26 -  ADC_IND_TEMP_MOS
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_15, 10, ADC_SampleTime_56Cycles);     	 // 29 - UNUSED
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13,  1, ADC_SampleTime_15Cycles);          //  2 - ADC_IND_VIN_SENS
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_2,   2, ADC_SampleTime_15Cycles);          //  5 - ADC_IND_SENS1
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13,  3, ADC_SampleTime_15Cycles);          //  8 - UNUSED
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13,  4, ADC_SampleTime_15Cycles);          // 11 - UNUSED
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13,  5, ADC_SampleTime_15Cycles);          // 14 - UNUSED
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13,  6, ADC_SampleTime_15Cycles);          // 17 - UNUSED
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13,  7, ADC_SampleTime_15Cycles);          // 20 - UNUSED
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_2,   8, ADC_SampleTime_15Cycles);          // 23 - ADC_IND_SENS1
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_3,   9, ADC_SampleTime_15Cycles);          // 26 - ADC_IND_TEMP_MOS
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_15, 10, ADC_SampleTime_56Cycles);          // 29 - UNUSED
 
 	// Injected channels 	
 	ADC_InjectedChannelConfig(ADC1, ADC_Channel_11, 1, ADC_SampleTime_15Cycles);         // ADC_IND_CURR2
-	ADC_InjectedChannelConfig(ADC2, ADC_Channel_10, 1, ADC_SampleTime_15Cycles);         // ADC_IND_CURR1	
+	ADC_InjectedChannelConfig(ADC2, ADC_Channel_10, 1, ADC_SampleTime_15Cycles);         // ADC_IND_CURR1
 	ADC_InjectedChannelConfig(ADC1, ADC_Channel_10, 2, ADC_SampleTime_15Cycles);         // ADC_IND_CURR1
-	ADC_InjectedChannelConfig(ADC2, ADC_Channel_11, 2, ADC_SampleTime_15Cycles);         // ADC_IND_CURR2	
+	ADC_InjectedChannelConfig(ADC2, ADC_Channel_11, 2, ADC_SampleTime_15Cycles);         // ADC_IND_CURR2
 	
 }
 
