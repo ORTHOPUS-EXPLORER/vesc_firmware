@@ -71,8 +71,9 @@ orthopus_comm_t orthopus_comm =
     .word = 0x0,
   },
   .ctrl  = &orthopus_comm.ctrl0,
-  .process_ctrl = false,
-  .stream_rate_hz = 250
+  .process_ctrl = true,
+  .stream_rate_hz = 250,
+  .simu_mode = true,
 };
 
 void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
@@ -146,11 +147,9 @@ void app_custom_start(void)
 
   // Custom thread
 	orthopus_thread_stop = false;
-	chThdCreateStatic(orthopus_thread_wa, sizeof(orthopus_thread_wa),
-			NORMALPRIO+40, orthopus_thread, NULL);
+	chThdCreateStatic(orthopus_thread_wa, sizeof(orthopus_thread_wa), NORMALPRIO+40, orthopus_thread, NULL);
   orthopus_comm_thread_stop = false;
-  chThdCreateStatic(orthopus_comm_thread_wa, sizeof(orthopus_comm_thread_wa),
-      NORMALPRIO, orthopus_comm_thread, NULL);
+  chThdCreateStatic(orthopus_comm_thread_wa, sizeof(orthopus_comm_thread_wa), NORMALPRIO, orthopus_comm_thread, NULL);
 }
 
 // Called when the custom application is stopped. Stop our threads
@@ -216,6 +215,8 @@ int app_custom_get_cfg_xml(uint8_t **data)
 volatile bool orthopus_comm_thread_stop = true;
 volatile bool orthopus_comm_thread_running = false;
 
+#define SIMU_LP_ALPHA 0.005
+
 THD_FUNCTION(orthopus_comm_thread, arg) 
 {
   (void)arg;
@@ -233,6 +234,15 @@ THD_FUNCTION(orthopus_comm_thread, arg)
 		}
 
     // Read RX, done in CAN Callback
+    if(orthopus_comm.simu_mode)
+    {
+      // Get the current Refs and refs
+      const orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+      orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
+      st->pos += SIMU_LP_ALPHA*(ctrl->pos - st->pos);
+      st->vel += SIMU_LP_ALPHA*(ctrl->vel - st->vel);
+      st->trq += SIMU_LP_ALPHA*(ctrl->trq - st->trq);
+    }
     
     // Write TX
     unsigned int rate = orthopus_comm.stream_rate_hz; // Fast copy to avoid locking it before use
