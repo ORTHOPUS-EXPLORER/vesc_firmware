@@ -128,6 +128,7 @@ typedef struct
   volatile orthopus_comm_control_t*ctrl;
   volatile bool process_ctrl;      
   volatile unsigned int stream_rate_hz;
+  volatile bool simu_mode;
 } orthopus_comm_t;
 
 extern orthopus_comm_t orthopus_comm;
