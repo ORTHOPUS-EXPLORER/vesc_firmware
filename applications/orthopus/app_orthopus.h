@@ -177,13 +177,14 @@ void orthopus_plot_impedance(int ns);
 // CAN Endpoints
 #define CAN_RT_DATA_UPSTREAM   179
 #define CAN_RT_DATA_DOWNSTREAM 180
+
 // Float scaling
 #define ORTHOPUS_COMM_RT_POS_SCALE 1000
 #define ORTHOPUS_COMM_RT_VEL_SCALE 1000
 #define ORTHOPUS_COMM_RT_TRQ_SCALE 1000
 
 // We could remove these if we define the right values in the XML file: _gen/orthopus_settings.xml (using VESC Tool XML Editor)
-#define ORTHOPUS_CFG_DEF_ENCODER_OFFSET             0.0
+#define ORTHOPUS_CFG_DEF_ENCODER_OFFSET             0.1
 #define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ANGLESTEP   0.25
 #define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ENABLE      true // keep enabled or move encoder filtered multiturn angle estimation
 #define ORTHOPUS_CFG_DEF_ENCODER_FILTER_PLOT_ENABLE false
@@ -201,16 +202,16 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_CFG_DEF_LIMITS_REACH_SPEED         2
 #define ORTHOPUS_CFG_DEF_ANGLE_DIVISION             700
 #define ORTHOPUS_CFG_DEF_PERF_RATE_HZ               2000
-#define ORTHOPUS_CFG_DEF_PERF_COMPENSATEEXECTIME    true
-#define ORTHOPUS_CFG_DEF_CTRL_DEADZONE              true
+#define ORTHOPUS_CFG_DEF_PERF_COMPENSATEEXECTIME    false
+#define ORTHOPUS_CFG_DEF_CTRL_DEADZONE              false
 #define ORTHOPUS_CFG_DEF_CTRL_SAMPLE_ADC3           false
-#define ORTHOPUS_CFG_DEF_CTRL_STIFFNESS             0.0
-#define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO            0.0
+#define ORTHOPUS_CFG_DEF_CTRL_STIFFNESS             0.1
+#define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO            0.1
 #define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN            34.8
-#define ORTHOPUS_CFG_DEF_CTRL_DAMPING               0.0
+#define ORTHOPUS_CFG_DEF_CTRL_DAMPING               0.1
 #define ORTHOPUS_CFG_DEF_CTRL_KP                    0.1
 #define ORTHOPUS_CFG_DEF_CTRL_A                     1.0
-#define ORTHOPUS_CFG_DEF_CTRL_KD                    0.0
+#define ORTHOPUS_CFG_DEF_CTRL_KD                    0.1
 #define ORTHOPUS_CFG_DEF_CTRL_KD_FILTER             1.0
 #define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.1
 
