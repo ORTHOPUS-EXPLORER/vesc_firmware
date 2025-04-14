@@ -1,25 +1,25 @@
 #include "app_orthopus.h"
 
-static lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_read_encoder_filtered_multiturn(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_read_torque(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_limitreaction(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn);
-static lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_read_encoder_filtered_multiturn(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_read_torque(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_limitreaction(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn);
 
-static lbm_uint orthopus_lisp_s0
+lbm_uint orthopus_lisp_s0
               , orthopus_lisp_s1;
 
-static lbm_value orthopus_ca_sym;
-static unsigned char orthopus_ca[3] = { 0x01, 0x42, 0x03 };
-static lbm_uint orthopus_fv_sym,orthopus_fc_sym;
+lbm_value orthopus_ca_sym;
+unsigned char orthopus_ca[3] = { 0x01, 0x42, 0x03 };
+lbm_uint orthopus_fv_sym,orthopus_fc_sym;
 
 // BMi,2024107, Broken since rebase on 6.05
-//static lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn);
+//lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn);
 
 void orthopus_init_lisp(void)
 {
@@ -75,55 +75,55 @@ void orthopus_init_lisp(void)
 }
 
 
-static lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
 	return lbm_enc_float(orthopus_read_encoder());
 }
 
-static lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
 	return lbm_enc_float(orthopus_read_encoder_raw());
 }
 
-static lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
 	return lbm_enc_float(or_state.enc_pos_filter);
 }
 
-static lbm_value orthopus_lisp_read_encoder_filtered_multiturn(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_read_encoder_filtered_multiturn(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
 	return lbm_enc_float(or_state.enc_pos_filter_multiturn);
 }
 
-static lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
   return lbm_enc_float(or_state.pos_multiturn_now);
 }
 
-static lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
   return lbm_enc_float(or_state.speed_now);
 }
 
-static lbm_value orthopus_lisp_read_torque(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_read_torque(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
   return lbm_enc_float(or_state.torque_now);
 }
 
-static lbm_value orthopus_lisp_limitreaction(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_limitreaction(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
   return lbm_enc_float(or_state.limit_reaction);
 }
 
-static lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn)
 {
   //LBM_CHECK_ARGN_NUMBER(1);
   if(argn > 2)
@@ -150,7 +150,7 @@ static lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn)
   return ENC_SYM_TRUE;
 }
 
-static lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn)
 {
   //LBM_CHECK_ARGN_NUMBER(1);
   if(argn == 0)
@@ -181,7 +181,7 @@ static lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn)
   return ENC_SYM_TRUE;
 }
 /* BMi,2024107, Broken since rebase on 6.05
-static lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn)
+lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn)
 {
   if (argn != 1)
 		return ENC_SYM_EERROR;

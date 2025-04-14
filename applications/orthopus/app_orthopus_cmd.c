@@ -1,17 +1,17 @@
 #include "app_orthopus.h"
 #include "commands.h"
 
-static void orthopus_pos_cmd(int argc, const char **argv);
-static void orthopus_filter_cmd(int argc, const char **argv);
-static void orthopus_offset_cmd(int argc, const char **argv);
-static void orthopus_config_cmd(int argc, const char **argv);
-static void orthopus_limits_cmd(int argc, const char **argv);
-static void orthopus_perf_cmd(int argc, const char **argv);
-static void orthopus_control_cmd(int argc, const char **argv);
-static void orthopus_comm_cmd(int argc, const char **argv);
-static void orthopus_can_cmd(int argc, const char **argv);
+void orthopus_pos_cmd(int argc, const char **argv);
+void orthopus_filter_cmd(int argc, const char **argv);
+void orthopus_offset_cmd(int argc, const char **argv);
+void orthopus_config_cmd(int argc, const char **argv);
+void orthopus_limits_cmd(int argc, const char **argv);
+void orthopus_perf_cmd(int argc, const char **argv);
+void orthopus_control_cmd(int argc, const char **argv);
+void orthopus_comm_cmd(int argc, const char **argv);
+void orthopus_can_cmd(int argc, const char **argv);
 
-static void orthopus_cmd_init(void)
+void orthopus_cmd_init(void)
 {
    terminal_register_command_callback(
     "o_offset",
@@ -78,7 +78,7 @@ static void orthopus_cmd_init(void)
   );
 }
 
-static void orthopus_cmd_deinit(void)
+void orthopus_cmd_deinit(void)
 {
   terminal_unregister_callback(orthopus_offset_cmd);
   terminal_unregister_callback(orthopus_config_cmd);
@@ -96,7 +96,7 @@ static void orthopus_cmd_deinit(void)
 //void comm_can_send_buffer(uint8_t controller_id, uint8_t *data, unsigned int len, uint8_t send);
 //bool comm_can_ping(uint8_t controller_id, HW_TYPE *hw_type);
 // https://www.vesc-project.com/sites/default/files/imce/u15301/VESC6_CAN_CommandsTelemetry.pdf
-static void orthopus_can_cmd(int argc, const char **argv)
+void orthopus_can_cmd(int argc, const char **argv)
 {
   uint8_t buffer[16] = {0};
   size_t len=0;
@@ -156,7 +156,7 @@ static void orthopus_can_cmd(int argc, const char **argv)
 
 }
 
-static void orthopus_comm_cmd(int argc, const char **argv)
+void orthopus_comm_cmd(int argc, const char **argv)
 {
   if(argc == 1 || !strcmp(argv[1],"print"))
   {
@@ -195,7 +195,7 @@ static void orthopus_comm_cmd(int argc, const char **argv)
   }
 }
 
-static void orthopus_pos_cmd(int argc, const char **argv)
+void orthopus_pos_cmd(int argc, const char **argv)
 {
   (void)argc;(void)argv;
   double ams_v     = encoder_cfg_as504x.state.last_enc_angle;//enc_as504x_read_angle(&encoder_cfg_as504x);
@@ -216,7 +216,7 @@ static void orthopus_pos_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                   OFFSET                                   */
 /* -------------------------------------------------------------------------- */
-static void orthopus_offset_cmd(int argc, const char **argv)
+void orthopus_offset_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
@@ -241,7 +241,7 @@ static void orthopus_offset_cmd(int argc, const char **argv)
   }
 }
 
-static void orthopus_config_cmd(int argc, const char **argv)
+void orthopus_config_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
@@ -293,7 +293,7 @@ static void orthopus_config_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"reset"))
   {
-    orthopus_config_reset(&or_conf);
+    orthopus_config_set(&or_conf, NULL);
     commands_printf("Orthopus config reset to default. Don't forget to save to EEPROM !");
   }
   else if(!strcmp(argv[1],"load"))
@@ -305,7 +305,6 @@ static void orthopus_config_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"save"))
   {
-    or_conf.or_conf_set = true;
     if(orthopus_config_save(&or_conf))
       commands_printf("Orthopus config saved to EEPROM");
     else
@@ -371,7 +370,7 @@ static void orthopus_config_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                   FILTER                                   */
 /* -------------------------------------------------------------------------- */
-static void orthopus_filter_cmd(int argc, const char **argv)
+void orthopus_filter_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
@@ -419,7 +418,7 @@ static void orthopus_filter_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                   LIMITS                                   */
 /* -------------------------------------------------------------------------- */
-static void orthopus_limits_cmd(int argc, const char **argv)
+void orthopus_limits_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
@@ -492,7 +491,7 @@ static void orthopus_limits_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                    PERF                                    */
 /* -------------------------------------------------------------------------- */
-static void orthopus_perf_cmd(int argc, const char **argv)
+void orthopus_perf_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
@@ -528,7 +527,7 @@ static void orthopus_perf_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                   CONTROL                                  */
 /* -------------------------------------------------------------------------- */
-static void orthopus_control_cmd(int argc, const char **argv)
+void orthopus_control_cmd(int argc, const char **argv)
 {
   if(argc == 1)//TODO: print all parameter values
   {

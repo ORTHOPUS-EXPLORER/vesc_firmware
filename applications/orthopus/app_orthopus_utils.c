@@ -1,8 +1,6 @@
 #include "app_orthopus.h"
 
-#define MAX_CONFIG_U32_SIZE 32
-
-static bool orthopus_config_load(orthopus_config_t* cfg)
+bool orthopus_config_load(orthopus_config_t* cfg)
 {
   const uint8_t sz = sizeof(orthopus_config_t)/4;
   commands_printf("Cfg: Loading %d dwords from HW EEPROM",sz);
@@ -15,14 +13,35 @@ static bool orthopus_config_load(orthopus_config_t* cfg)
     if(conf_general_read_eeprom_var_hw(&v,addr))
     {
       uint32_t* raddr = (uint32_t*)((uint8_t*)(cfg)+addr*4);
-      commands_printf("Cfg: Loading data from EEPROM 0x%02X to RAM 0x%08p: '0x%04X/% 5d/% 5.3f'",addr,raddr,v.as_u32,v.as_i32,(double)v.as_float);
+      // FIXME: Remove debug
+      commands_printf("Cfg: Loading data from EEPROM 0x%02X to RAM 0x%08p: '0x%08X/% 11d/% 11.5f'",addr,raddr,v.as_u32,v.as_i32,(double)v.as_float);
       *raddr = v.as_u32;
     }
+  }
+  if(cfg->signature != ORTHOPUS_CONFIG_T_SIGNATURE)
+  {
+    commands_printf("Cfg: Stored signature does not match the one compiled in this firmware: 0x%08X/0x%08X. You may want to start fresh and reset", cfg->signature, ORTHOPUS_CONFIG_T_SIGNATURE);
+    return false;
   }
   return true;
 }
 
-static bool orthopus_config_save(const orthopus_config_t* cfg)
+bool orthopus_config_set(orthopus_config_t* cfg, const uint8_t* buffer)
+{
+  if(buffer)
+  {
+    if(!orthopus_confparser_deserialize_orthopus_config_t(buffer, cfg))
+      return false;
+  }
+  else
+    orthopus_confparser_set_defaults_orthopus_config_t(cfg);
+
+  cfg->or_conf_set = true;
+  cfg->signature = ORTHOPUS_CONFIG_T_SIGNATURE;
+  return true;
+}
+
+bool orthopus_config_save(const orthopus_config_t* cfg)
 {
   const uint8_t sz = sizeof(orthopus_config_t)/4;
   commands_printf("Cfg: Saving %d dwords to HW EEPROM",sz);
@@ -33,46 +52,15 @@ static bool orthopus_config_save(const orthopus_config_t* cfg)
   {
     uint32_t* raddr = (uint32_t*)((uint8_t*)(cfg)+addr*4);
     eeprom_var v; v.as_u32 = *raddr;
+    // FIXME: Remove debug
+    commands_printf("Cfg: Saving data from RAM 0x%08p to EEPROM 0x%02X: '0x%08X/% 11d/% 11.5f'",raddr, addr, v.as_u32, v.as_i32, (double)v.as_float);
     if(!conf_general_store_eeprom_var_hw(&v,addr))
     {
-      commands_printf("Cfg: Failed to save data from RAM 0x%08p to EEPROM 0x%02X: '0x%04X/% 5d/% 5.3f'",raddr,addr,v.as_u32,v.as_i32,(double)v.as_float);
+      commands_printf("Cfg: Failed to save data from RAM 0x%08p to EEPROM 0x%02X: '0x%08X/% 11d/% 11.5f'",raddr, addr, v.as_u32, v.as_i32, (double)v.as_float);
       return false;
     }
   }
   return true;
-}
-
-void orthopus_config_reset(orthopus_config_t* cfg)
-{
-  cfg->encoder_offset                  = 0.0;
-  cfg->encoder_filter_anglestep        = 0.25;
-  cfg->encoder_filter_enable           = true; // keep enabled or move encoder filtered multiturn angle estimation
-  cfg->encoder_filter_plot_enable      = false;
-  cfg->limits_enable                   = false;
-  cfg->or_conf_set             = false;
-  cfg->limits_pos_max                  = 90.0;
-  cfg->limits_pos_min                  = -90.0;
-  cfg->angle_division                  = 700;
-  cfg->limits_reach_angle              = 15;
-  cfg->limits_reach_speed              = 2;
-  cfg->encoder_filter_error_gain       = 1;
-  cfg->perf_rate_hz                         = 2000;
-  cfg->perf_compensateexectime         = true;
-  cfg->ctrl_torquegain                      = 34.8;
-  cfg->limits_kp                       = 0.1;
-  cfg->limits_kd                       = 5.0;
-  cfg->limits_powp                     = 6;
-  cfg->limits_powd                     = 1;
-  cfg->limits_damp_reachangle          = 7;
-  cfg->ctrl_stiffness                  = 0;
-  cfg->ctrl_damping                    = 0;
-  cfg->ctrl_deadzone                        = true;
-  cfg->ctrl_a                               = 1;
-  cfg->torque_filter_const             = 0.1;
-  cfg->ctrl_deadzone                        = true;
-  cfg->ctrl_kd                         = 0;
-  cfg->ctrl_kd_filter                  = 1;
-  cfg->encoder_max_diff                    = 5;
 }
 
 float orthopus_read_encoder(void)

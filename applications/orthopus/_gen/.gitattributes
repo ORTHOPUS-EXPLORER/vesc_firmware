@@ -1,0 +1,4 @@
+orthopus_confparser.c filter=lfs diff=lfs merge=lfs -text
+orthopus_conf_default.h filter=lfs diff=lfs merge=lfs -text
+orthopus_confxml.c filter=lfs diff=lfs merge=lfs -text
+orthopus_confxml.h filter=lfs diff=lfs merge=lfs -text

@@ -5,13 +5,16 @@
 #include "datatypes.h"
 
 // Algo
-static void orthopus_pwm_callback(void);
-static THD_FUNCTION(orthopus_thread, arg);
-static volatile bool orthopus_thread_stop,
+void orthopus_pwm_callback(void);
+THD_FUNCTION(orthopus_thread, arg);
+extern volatile bool orthopus_thread_stop,
                      orthopus_thread_running;
-static THD_FUNCTION(orthopus_comm_thread, arg);
-static volatile bool orthopus_comm_thread_stop,
+THD_FUNCTION(orthopus_comm_thread, arg);
+extern volatile bool orthopus_comm_thread_stop,
                     orthopus_comm_thread_running;
+
+// MAX Number of U32 words to store/load to/from EEPROM fo Config
+#define MAX_CONFIG_U32_SIZE 32
 // Config
 // 1: uint8_t, int8_t, bool
 // 2: uint16_t, int16_t
@@ -24,6 +27,7 @@ typedef struct
   /* 02 - 1 */bool encoder_filter_enable;
   /*    - 1 */bool encoder_filter_plot_enable;
   /*    - 1 */bool limits_enable;
+              // FIXME: Remove this and use signature instead. Should be more robust
   /*    - 1 */bool or_conf_set;
   /* 03 - 4 */float limits_pos_max;
   /* 04 - 4 */float limits_pos_min;
@@ -33,8 +37,8 @@ typedef struct
   /* 08 - 4 */float encoder_filter_error_gain;
   /* 09 - 4 */int perf_rate_hz;
   /* 10 - 1 */bool perf_compensateexectime;
-  /* 10 - 1 */bool ctrl_deadzone;
-  /* 10 - 1 */bool ctrl_sample_adc3;
+  /*    - 1 */bool ctrl_deadzone;
+  /*    - 1 */bool ctrl_sample_adc3;
   /*    - 1 */uint8_t pad[1];
   /* 11 - 4 */float ctrl_torquezero;
   /* 12 - 4 */float ctrl_torquegain;
@@ -51,9 +55,10 @@ typedef struct
   /* 22 - 4 */float ctrl_kd;
   /* 23 - 4 */float ctrl_kd_filter;
   /* 24 - 4 */float encoder_max_diff;
-} orthopus_config_t; //don't forget to add padding bytes uint8_t pad[1--3];
+  /* 25 - 4 */uint32_t signature;
+} orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
-static orthopus_config_t or_conf;
+extern orthopus_config_t or_conf;
 
 //global variables (interfaces with lispBM and terminal)
 typedef struct
@@ -125,31 +130,31 @@ typedef struct
   volatile unsigned int stream_rate_hz;
 } orthopus_comm_t;
 
-static orthopus_comm_t orthopus_comm;
+extern orthopus_comm_t orthopus_comm;
 
 // Utils
-static bool orthopus_config_load(orthopus_config_t* cfg);
-static bool orthopus_config_save(const orthopus_config_t* cfg);
-static void orthopus_config_reset(orthopus_config_t* cfg);
+bool orthopus_config_load(orthopus_config_t* cfg);
+bool orthopus_config_save(const orthopus_config_t* cfg);
+bool orthopus_config_set(orthopus_config_t* cfg, const uint8_t* buffer);
 
-static float orthopus_read_encoder(void);
-static float orthopus_read_encoder_raw(void);
-static float orthopus_set_joint_offset(float v, bool use_v);
-static float orthopus_set_encoder_offset(float v, bool use_v);
+float orthopus_read_encoder(void);
+float orthopus_read_encoder_raw(void);
+float orthopus_set_joint_offset(float v, bool use_v);
+float orthopus_set_encoder_offset(float v, bool use_v);
 
 // cmd
-static void orthopus_cmd_init(void);
-static void orthopus_cmd_deinit(void);
+void orthopus_cmd_init(void);
+void orthopus_cmd_deinit(void);
 // lisp
-static void orthopus_init_lisp(void);
+void orthopus_init_lisp(void);
 
 //algo
-static void orthopus_estop(void);
-static bool orthopus_safety(void);
-static void orthopus_limits(void);
-static void orthopus_plot_encoder_filtering(int ns);
-static void orthopus_plot_cycletime(int ns);
-static void orthopus_plot_impedance(int ns);
+void orthopus_estop(void);
+bool orthopus_safety(void);
+void orthopus_limits(void);
+void orthopus_plot_encoder_filtering(int ns);
+void orthopus_plot_cycletime(int ns);
+void orthopus_plot_impedance(int ns);
 
 /**
  * @brief   System ticks to microseconds.
@@ -164,3 +169,51 @@ static void orthopus_plot_impedance(int ns);
 #define ST2US2(n) (((n) * 1000000UL + 10000UL - 1UL) /           \
                   10000UL)
 //TODO: replace By ST2US after testing
+
+
+// Orthopus RT COMM definitions
+// CAN Interface
+#define CAN_RT_UPSTREAM_INTF   0
+// CAN Endpoints
+#define CAN_RT_DATA_UPSTREAM   179
+#define CAN_RT_DATA_DOWNSTREAM 180
+// Float scaling
+#define ORTHOPUS_COMM_RT_POS_SCALE 1000
+#define ORTHOPUS_COMM_RT_VEL_SCALE 1000
+#define ORTHOPUS_COMM_RT_TRQ_SCALE 1000
+
+// We could remove these if we define the right values in the XML file: _gen/orthopus_settings.xml (using VESC Tool XML Editor)
+#define ORTHOPUS_CFG_DEF_ENCODER_OFFSET             0.0
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ANGLESTEP   0.25
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ENABLE      true // keep enabled or move encoder filtered multiturn angle estimation
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_PLOT_ENABLE false
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ERROR_GAIN  1
+#define ORTHOPUS_CFG_DEF_ENCODER_MAX_DIFF           5.0
+#define ORTHOPUS_CFG_DEF_LIMITS_ENABLE              false
+#define ORTHOPUS_CFG_DEF_LIMITS_POS_MIN             -90.0
+#define ORTHOPUS_CFG_DEF_LIMITS_POS_MAX             90.0
+#define ORTHOPUS_CFG_DEF_LIMITS_KP                  0.1
+#define ORTHOPUS_CFG_DEF_LIMITS_KD                  5.0
+#define ORTHOPUS_CFG_DEF_LIMITS_POWP                6.0
+#define ORTHOPUS_CFG_DEF_LIMITS_POWD                1.0
+#define ORTHOPUS_CFG_DEF_LIMITS_DAMP_REACHANGLE     7.0
+#define ORTHOPUS_CFG_DEF_LIMITS_REACH_ANGLE         15
+#define ORTHOPUS_CFG_DEF_LIMITS_REACH_SPEED         2
+#define ORTHOPUS_CFG_DEF_ANGLE_DIVISION             700
+#define ORTHOPUS_CFG_DEF_PERF_RATE_HZ               2000
+#define ORTHOPUS_CFG_DEF_PERF_COMPENSATEEXECTIME    true
+#define ORTHOPUS_CFG_DEF_CTRL_DEADZONE              true
+#define ORTHOPUS_CFG_DEF_CTRL_SAMPLE_ADC3           false
+#define ORTHOPUS_CFG_DEF_CTRL_STIFFNESS             0.0
+#define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO            0.0
+#define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN            34.8
+#define ORTHOPUS_CFG_DEF_CTRL_DAMPING               0.0
+#define ORTHOPUS_CFG_DEF_CTRL_KP                    0.1
+#define ORTHOPUS_CFG_DEF_CTRL_A                     1.0
+#define ORTHOPUS_CFG_DEF_CTRL_KD                    0.0
+#define ORTHOPUS_CFG_DEF_CTRL_KD_FILTER             1.0
+#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.1
+
+#include "_gen/orthopus_confparser.h"
+#include "_gen/orthopus_confxml.h"
+#include "_gen/orthopus_conf_default.h" // Should not do anything since we just defined the default values above

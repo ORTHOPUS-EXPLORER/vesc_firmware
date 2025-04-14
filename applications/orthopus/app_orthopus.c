@@ -38,6 +38,8 @@
 #include "timeout.h"
 #include "buffer.h"
 
+#include "conf_custom.h" // For conf_custom_add_config, conf_custom_clear_configs
+
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -45,20 +47,19 @@
 #include "app_orthopus.h"
 
 // Threads
-static THD_WORKING_AREA(orthopus_thread_wa, 512);
-static THD_WORKING_AREA(orthopus_comm_thread_wa, 512);
+THD_WORKING_AREA(orthopus_thread_wa, 512);
+THD_WORKING_AREA(orthopus_comm_thread_wa, 512);
 
 // Just make sure to pad to a 32bit aligned size.
 // Eg: if you add an uint8_t param, add 3 bytes of padding after.
 //                   uint16_t param     2
 // uint8_t myparam; uint8_t[3] pad;
-static orthopus_config_t or_conf =
+orthopus_config_t or_conf =
 {
   .encoder_offset = 0.0,
 }; //init values to zero in case flash can't be read
 
-
-static orthopus_comm_t orthopus_comm =
+orthopus_comm_t orthopus_comm =
 {
   .st0 = {},
   .st1 = {},
@@ -74,11 +75,15 @@ static orthopus_comm_t orthopus_comm =
   .stream_rate_hz = 250
 };
 
-static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
-static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len);
+void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
+void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len);
 
-static bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len);
-static bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len);
+bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len);
+bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len);
+
+int app_custom_get_cfg(uint8_t *data, bool is_default);
+bool app_custom_set_cfg(uint8_t *data);
+int app_custom_get_cfg_xml(uint8_t **data);
 
 // Called when the custom application is started. Start our
 // threads here and set up callbacks.
@@ -101,8 +106,14 @@ void app_custom_start(void)
   // if orthopus config not set, set default values
   if (!or_conf.or_conf_set)
   {
-    orthopus_config_reset(&or_conf);
+    orthopus_config_set(&or_conf, NULL);
   }
+
+  //conf_custom_clear_configs():
+  conf_custom_add_config(
+    &app_custom_get_cfg,
+    &app_custom_set_cfg,
+    &app_custom_get_cfg_xml);
 
   // Init AMS sensor
   SENSOR_PORT_3V3();
@@ -164,19 +175,48 @@ void app_custom_stop(void)
 	orthopus_cmd_deinit();
 }
 
-void app_custom_configure(app_configuration *conf) {
+void app_custom_configure(app_configuration *conf) 
+{
 	(void)conf;
 }
 
-#define ORTHOPUS_COMM_RT_POS_SCALE 1000
-#define ORTHOPUS_COMM_RT_VEL_SCALE 1000
-#define ORTHOPUS_COMM_RT_TRQ_SCALE 1000
+int app_custom_get_cfg(uint8_t *data, bool is_default)
+{
+  orthopus_config_t cfg;
+  memcpy(&cfg,&or_conf, sizeof(orthopus_config_t));
+	if (is_default) {
+    orthopus_config_set(&cfg, NULL);
+	}
+	
+	return orthopus_confparser_serialize_orthopus_config_t(data, &cfg);
+}
 
-#define CAN_RT_DATA_UPSTREAM   179
-#define CAN_RT_DATA_DOWNSTREAM 180
-#define CAN_RT_UPSTREAM_INTF   0
+bool app_custom_set_cfg(uint8_t *data)
+{
+	orthopus_config_t cfg;
+	bool res = orthopus_config_set(&cfg, data);
+  if(res)
+  {
+    memcpy(&or_conf,&cfg, sizeof(orthopus_config_t));
+  }
+	
+  // FIXME: uncomment WHEN we decide it's a good idea to save or_conf here
+  //if(res)
+  // res = orthopus_config_save(&or_conf);
+	
+	return res;
+}
 
-static THD_FUNCTION(orthopus_comm_thread, arg) 
+int app_custom_get_cfg_xml(uint8_t **data)
+{
+	*data = data_orthopus_config_t_;
+	return DATA_ORTHOPUS_CONFIG_T__SIZE;
+}
+
+volatile bool orthopus_comm_thread_stop = true;
+volatile bool orthopus_comm_thread_running = false;
+
+THD_FUNCTION(orthopus_comm_thread, arg) 
 {
   (void)arg;
 	chRegSetThreadName("OrthoCommTh");
@@ -228,7 +268,7 @@ static THD_FUNCTION(orthopus_comm_thread, arg)
 }
 //void orthopus_comm_update_state(void);
 
-static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len)
+void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len)
 {
   (void)rx_d; (void)len;
   /*
@@ -270,7 +310,7 @@ static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int l
   */
 }
 
-static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len)
+void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len)
 {
   (void)rx_d; (void)len;
 
@@ -286,7 +326,7 @@ static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int le
 }
 
 
-static bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
+bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
 {
   (void)id; (void)data; (void)len;
   /*
@@ -313,7 +353,7 @@ static bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
   return false;
 }
 
-static bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
+bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
 {
   uint16_t ds_can_id = ((uint16_t)(CAN_RT_DATA_DOWNSTREAM<<8))|(app_get_configuration()->controller_id);
   if(len == 8 && (id&0xFFFF) == ds_can_id)
@@ -333,3 +373,6 @@ static bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
   }
   return false;
 }
+
+#include "_gen/orthopus_confparser.c"
+#include "_gen/orthopus_confxml.c"

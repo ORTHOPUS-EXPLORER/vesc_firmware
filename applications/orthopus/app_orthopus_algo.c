@@ -4,12 +4,12 @@
 #include "encoder/encoder_cfg.h" // For encoder_cfg_***
 //#include <math.h> //for atanf function
 
-static volatile bool orthopus_thread_stop = true;
-static volatile bool orthopus_thread_running = false;
+volatile bool orthopus_thread_stop = true;
+volatile bool orthopus_thread_running = false;
 
 //const int loop_rate = 2000; //loop rate in Hz
 
-extern volatile orthopus_state_t or_state =
+volatile orthopus_state_t or_state =
 {
   .pos_multiturn_now = 0.0,
   .enc_pos_filter = 0.0,
@@ -29,11 +29,11 @@ int last_nb_enc_filter_error = 0;
 unsigned long int nsample = 0;
 float pid_pos_now = 0;
 float pid_pos_last = 0;
-static systime_t time_now, time_last, time_start, time_end;
+systime_t time_now, time_last, time_start, time_end;
 systime_t time_lasterrprint;
 int ninitadc = 0;
 
-static THD_FUNCTION(orthopus_thread, arg) {
+THD_FUNCTION(orthopus_thread, arg) {
 	(void)arg;
 
 	chRegSetThreadName("OrthopusTh");
@@ -329,7 +329,7 @@ static THD_FUNCTION(orthopus_thread, arg) {
 }
 
 // Called in mc_interface.c:1913, in mc_interface_mc_timer_isr()
-static void orthopus_pwm_callback(void)
+void orthopus_pwm_callback(void)
 {
 	// Called for every control iteration in interrupt context.
   //Sample torque sensor ADC at high frequency
@@ -346,7 +346,7 @@ static void orthopus_pwm_callback(void)
  * @return
  * void
  */
-static void orthopus_estop(void)
+void orthopus_estop(void)
 {
   mc_interface_release_motor();   //disable motor
   mc_interface_ignore_input(100);  //disable new inputs for 100 ms
@@ -364,7 +364,7 @@ static void orthopus_estop(void)
  * @return
  * bool (true: ok, false: not OK)
  */
-static bool orthopus_safety(void)
+bool orthopus_safety(void)
 {
   //check indicators
   if (or_state.nid1 > 50 ) {
@@ -396,7 +396,7 @@ static bool orthopus_safety(void)
  * @return
  * void
  */
-static void orthopus_limits(void)
+void orthopus_limits(void)
 {
   //check position limits
   or_state.limit_reaction = 0;
@@ -485,7 +485,7 @@ static void orthopus_limits(void)
  * @return
  * void
  */
-static void orthopus_plot_encoder_filtering(int ns)
+void orthopus_plot_encoder_filtering(int ns)
 {
   bool plot_started=true;
   if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
@@ -519,7 +519,7 @@ static void orthopus_plot_encoder_filtering(int ns)
  * @return
  * void
  */
-static void orthopus_plot_cycletime(int ns)
+void orthopus_plot_cycletime(int ns)
 {
   bool plot_started=true;
   if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
@@ -547,7 +547,7 @@ static void orthopus_plot_cycletime(int ns)
  * @return
  * void
  */
-static void orthopus_plot_impedance(int ns)
+void orthopus_plot_impedance(int ns)
 {
   bool plot_started=true;
   if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
