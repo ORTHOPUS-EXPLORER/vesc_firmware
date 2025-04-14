@@ -2996,8 +2996,7 @@ static THD_FUNCTION(fault_stop_thread, arg) {
 			break;
 
 		case MOTOR_TYPE_FOC:
-			//mcpwm_foc_stop_pwm(fault_data_copy.is_second_motor);
-			mcpwm_foc_set_handbrake(0.1); // brake instead of stopping (replaces the line above)
+			mcpwm_foc_stop_pwm(fault_data_copy.is_second_motor);
 			break;
 
 		default:
