@@ -160,20 +160,38 @@ static void orthopus_comm_cmd(int argc, const char **argv)
 {
   if(argc == 1 || !strcmp(argv[1],"print"))
   {
-    orthopus_comm_control_t* ctrl = orthopus_comm.ctrl;
+    orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
     commands_printf("Last RX:");
-    commands_printf("  Control word: 0x%08X",        ctrl->word);
+    commands_printf("  Control word: 0x%04X",        ctrl->word);
     commands_printf("  Position    :  % 9.5f",(double)ctrl->pos);
     commands_printf("  Velocity    :  % 9.5f",(double)ctrl->vel);
     commands_printf("  Torque      :  % 9.5f",(double)ctrl->trq);
-    orthopus_comm_state_t* st = orthopus_comm.state;
+    commands_printf("Process Ctrl: %s", orthopus_comm.process_ctrl ? "true" : "false");
+    orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
+    commands_printf("Stream Rate: %dHz", orthopus_comm.stream_rate_hz);
     commands_printf("Last TX:");
-    commands_printf("  Status word : 0x%08X",         st->word);
+    commands_printf("  Status word : 0x%04X",         st->word);
     commands_printf("  Position    :  % 9.5f",(double)st->pos );
     commands_printf("  Velocity    :  % 9.5f",(double)st->vel );
     commands_printf("  Torque      :  % 9.5f",(double)st->trq );
-    commands_printf("  Temperature :  % 9.5f",(double)st->temp);
-    commands_printf("  Curent      :  % 9.5f",(double)st->curr);
+    //commands_printf("  Temperature :  % 9.5f",(double)st->temp);
+    //commands_printf("  Current     :  % 9.5f",(double)st->curr);
+  }
+  else if((argc >= 2 && argc <=3) || !strcmp(argv[1],"stream_rate"))
+  {
+    if(argc == 3)
+    {
+      unsigned int v = 0;
+      sscanf(argv[2], "%u", &v);
+      if(v < 1000)
+        orthopus_comm.stream_rate_hz = v;
+    }
+    commands_printf("Stream Rate: %dHz", orthopus_comm.stream_rate_hz);
+  }
+  else if(argc == 2 || !strcmp(argv[1],"process_ctrl"))
+  {
+    orthopus_comm.process_ctrl = !strcmp(argv[2],"on");
+    commands_printf("Process Ctrl: %s", orthopus_comm.process_ctrl ? "true" : "false");
   }
 }
 
