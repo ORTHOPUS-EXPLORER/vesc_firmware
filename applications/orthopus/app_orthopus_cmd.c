@@ -166,6 +166,20 @@ void orthopus_comm_cmd(int argc, const char **argv)
       orthopus_comm.stream_rate_hz = v;
     commands_printf("Stream Rate: %dHz", orthopus_comm.stream_rate_hz);
   }
+  else if(argc == 3 &&!strcmp(argv[1],"set_qd"))
+  {
+    orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+    float v = 0;
+    sscanf(argv[2], "%f", &v);
+    if(v >= -1.57 && v <= 1.57)
+      ctrl->pos = v;
+    commands_printf("New qd: %f", (double)ctrl->pos);
+  }
+  else if(argc == 3 && !strcmp(argv[1],"process_rx"))
+  {
+    orthopus_comm.process_rx = !strcmp(argv[2],"on");
+    commands_printf("Process RX: %s", orthopus_comm.process_rx ? "true" : "false");
+  }
   else if(argc == 3 && !strcmp(argv[1],"process_ctrl"))
   {
     orthopus_comm.process_ctrl = !strcmp(argv[2],"on");
@@ -184,20 +198,22 @@ void orthopus_comm_cmd(int argc, const char **argv)
     commands_printf("  Position    :  % 9.5f",(double)ctrl->pos);
     commands_printf("  Velocity    :  % 9.5f",(double)ctrl->vel);
     commands_printf("  Torque      :  % 9.5f",(double)ctrl->trq);
-    commands_printf("Process Ctrl: %s", orthopus_comm.process_ctrl ? "true" : "false");
+    commands_printf("Process Ctrl  : %s", orthopus_comm.process_ctrl ? "true" : "false");
+    commands_printf("Process RX    : %s", orthopus_comm.process_rx ? "true" : "false");
     orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
-    commands_printf("Stream Rate: %dHz", orthopus_comm.stream_rate_hz);
     commands_printf("Last TX:");
     commands_printf("  Status word : 0x%04X",         st->word);
     commands_printf("  Position    :  % 9.5f",(double)st->pos );
     commands_printf("  Velocity    :  % 9.5f",(double)st->vel );
     commands_printf("  Torque      :  % 9.5f",(double)st->trq );
-    commands_printf("Simu mode: %s", orthopus_comm.simu_mode ? "true" : "false");
+    commands_printf("Stream Rate   : %dHz", orthopus_comm.stream_rate_hz);
+    commands_printf("Simu mode     : %s", orthopus_comm.simu_mode ? "true" : "false");
     //commands_printf("  Temperature :  % 9.5f",(double)st->temp);
     //commands_printf("  Current     :  % 9.5f",(double)st->curr);
   }
   else
-    commands_printf("o_comm <print|stream_rate <0-999(in Hz)>|process_ctrl <on|off>|simu_mode <on|off>");
+    commands_printf("o_comm <print|stream_rate <0-999(in Hz)>|process_ctrl <on|off>|"
+                    "process_rx <on|off>|simu_mode <on|off>|set_qd <-1.57..1.57>>");
 }
 
 void orthopus_pos_cmd(int argc, const char **argv)

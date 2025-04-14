@@ -299,23 +299,24 @@ THD_FUNCTION(orthopus_thread, arg) {
 
 
     // Read control from comm'
-    if(orthopus_comm.process_ctrl)
-    {
-      // Get the current buffer
-      orthopus_comm_control_t* c = (orthopus_comm_control_t*)orthopus_comm.ctrl;
-      // Read some data
-      // FIXME: Do something with the refs ! 
-      (void)c->word;
-      (void)c->pos;
-      (void)c->vel;
-      (void)c->trq;
-    }
-    // Update state for comm'
-    // FIXME !! Get the real values
-    // FIXME: Maybe here's not the place ?
-    // FIXME: Slow it down, only update at twice the comm rate, should be enough
     if(!orthopus_comm.simu_mode)
     {
+      if(orthopus_comm.process_ctrl)
+      {
+        // Get the current buffer
+        orthopus_comm_control_t* c = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+        // Read some data
+        // FIXME: Do something with the refs ! 
+        (void)c->word;
+        (void)c->pos;
+        (void)c->vel;
+        (void)c->trq;
+      }
+      // Update state for comm'
+      // FIXME !! Get the real values
+      // FIXME: Maybe here's not the place ?
+      // FIXME: Slow it down, only update at twice the comm rate, should be enough
+
       // Get the "free" buffer
       orthopus_comm_state_t* st = orthopus_comm.state == &(orthopus_comm.st1)   
                                   ? &(orthopus_comm.st0)   
