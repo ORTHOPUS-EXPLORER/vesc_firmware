@@ -9,6 +9,9 @@ static void orthopus_pwm_callback(void);
 static THD_FUNCTION(orthopus_thread, arg);
 static volatile bool orthopus_thread_stop,
                      orthopus_thread_running;
+static THD_FUNCTION(orthopus_comm_thread, arg);
+static volatile bool orthopus_comm_thread_stop,
+                    orthopus_comm_thread_running;
 // Config
 // 1: uint8_t, int8_t, bool
 // 2: uint16_t, int16_t
@@ -96,7 +99,7 @@ extern volatile orthopus_state_t or_state;
 
 typedef struct 
 {
-  uint32_t  word;
+  uint16_t   word;
   float     pos,
             vel,
             trq;
@@ -104,22 +107,22 @@ typedef struct
 
 typedef struct 
 {
-  uint32_t  word;
+  uint16_t  word;
   float     pos,
             vel,
-            trq,
-            temp,
-            curr;
+            trq;
 } orthopus_comm_state_t;
 
 typedef struct
 {
   orthopus_comm_state_t   st0, 
-                          st1,
-                          *state;
+                          st1;
+  volatile orthopus_comm_state_t *state;
   orthopus_comm_control_t ctrl0, 
-                          ctrl1, 
-                          *ctrl;
+                          ctrl1;
+  volatile orthopus_comm_control_t*ctrl;
+  volatile bool process_ctrl;      
+  volatile unsigned int stream_rate_hz;
 } orthopus_comm_t;
 
 static orthopus_comm_t orthopus_comm;
@@ -147,3 +150,17 @@ static void orthopus_limits(void);
 static void orthopus_plot_encoder_filtering(int ns);
 static void orthopus_plot_cycletime(int ns);
 static void orthopus_plot_impedance(int ns);
+
+/**
+ * @brief   System ticks to microseconds.
+ * @details Converts from system ticks number to microseconds.
+ * @note    The result is rounded up to the next microsecond boundary.
+ *
+ * @param[in] n         number of system ticks
+ * @return              The number of microseconds.
+ *
+ * @api
+ */
+#define ST2US2(n) (((n) * 1000000UL + 10000UL - 1UL) /           \
+                  10000UL)
+//TODO: replace By ST2US after testing

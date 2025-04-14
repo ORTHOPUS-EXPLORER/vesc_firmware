@@ -7,20 +7,6 @@
 static volatile bool orthopus_thread_stop = true;
 static volatile bool orthopus_thread_running = false;
 
-/**
- * @brief   System ticks to microseconds.
- * @details Converts from system ticks number to microseconds.
- * @note    The result is rounded up to the next microsecond boundary.
- *
- * @param[in] n         number of system ticks
- * @return              The number of microseconds.
- *
- * @api
- */
-#define ST2US2(n) (((n) * 1000000UL + 10000UL - 1UL) /           \
-                  10000UL)
-//TODO: replace By ST2US after testing
-
 //const int loop_rate = 2000; //loop rate in Hz
 
 extern volatile orthopus_state_t or_state =
@@ -35,7 +21,6 @@ extern volatile orthopus_state_t or_state =
   .ext_pos_setpoint = 0,
   .encoders_init = false
 };
-
 
 int get_fw_version_cnt;
 float enc_pos_filter_last = 0.0;
@@ -314,9 +299,10 @@ static THD_FUNCTION(orthopus_thread, arg) {
 
 
     // Read control from comm'
+    if(orthopus_comm.process_ctrl)
     {
       // Get the current buffer
-      orthopus_comm_control_t* c = orthopus_comm.ctrl;
+      orthopus_comm_control_t* c = (orthopus_comm_control_t*)orthopus_comm.ctrl;
       // Read some data
       // FIXME: Do something with the refs ! 
       (void)c->word;
@@ -328,14 +314,14 @@ static THD_FUNCTION(orthopus_thread, arg) {
     // FIXME: Slow it down, only update at twice the comm rate, should be enough
     {
       // Get the "free" buffer
-      orthopus_comm_state_t* st = orthopus_comm.state == &(orthopus_comm.st1)   ? &(orthopus_comm.st0)   : &(orthopus_comm.st1);
+      orthopus_comm_state_t* st = orthopus_comm.state == &(orthopus_comm.st1)   
+                                  ? &(orthopus_comm.st0)   
+                                  : &(orthopus_comm.st1);
       // Fill in some data
-      st->word = 0x17921145;
+      st->word = 0x0179;
       st->pos  = 12.34;
       st->vel  =  0.01;
-      st->trq  =  0.00;
-      st->temp =  0.10;
-      st->curr = 17.90;
+      st->trq  =  0.02;
       // Activate
       orthopus_comm.state = st; // Swap !
     }

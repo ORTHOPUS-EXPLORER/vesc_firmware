@@ -26,6 +26,7 @@
 #include "lispbm.h"
 #include "mc_interface.h"
 #include "utils_math.h"
+#include "util/mempools.h"
 #include "encoder/encoder.h"
 #include "encoder/enc_as504x.h"
 #include "encoder/enc_sincos.h"
@@ -44,7 +45,8 @@
 #include "app_orthopus.h"
 
 // Threads
-static THD_WORKING_AREA(orthopus_thread_wa, 1024);
+static THD_WORKING_AREA(orthopus_thread_wa, 512);
+static THD_WORKING_AREA(orthopus_comm_thread_wa, 512);
 
 // Just make sure to pad to a 32bit aligned size.
 // Eg: if you add an uint8_t param, add 3 bytes of padding after.
@@ -62,12 +64,14 @@ static orthopus_comm_t orthopus_comm =
   .st1 = {},
   .state = &orthopus_comm.st0,
   .ctrl0 = { 
-    .word = 0x0
+    .word = 0x0,
   },
   .ctrl1 = { 
-    .word = 0x0
+    .word = 0x0,
   },
-  .ctrl  = &orthopus_comm.ctrl0
+  .ctrl  = &orthopus_comm.ctrl0,
+  .process_ctrl = false,
+  .stream_rate_hz = 250
 };
 
 static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
@@ -81,6 +85,15 @@ static bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len);
 void app_custom_start(void)
 {
   commands_printf("OrthopusAppStart");
+  if(app_get_configuration()->can_baud_rate != CAN_BAUD_1M)
+  {
+    app_configuration *appconf = mempools_alloc_appconf();
+    *appconf = *app_get_configuration();
+    appconf->can_baud_rate = CAN_BAUD_1M;
+    conf_general_store_app_configuration(appconf);
+    app_set_configuration(appconf);
+    mempools_free_appconf(appconf);
+  }
 
   // Load config from EEPROM
   if(!orthopus_config_load(&or_conf))
@@ -124,6 +137,9 @@ void app_custom_start(void)
 	orthopus_thread_stop = false;
 	chThdCreateStatic(orthopus_thread_wa, sizeof(orthopus_thread_wa),
 			NORMALPRIO+40, orthopus_thread, NULL);
+  orthopus_comm_thread_stop = false;
+  chThdCreateStatic(orthopus_comm_thread_wa, sizeof(orthopus_comm_thread_wa),
+      NORMALPRIO, orthopus_comm_thread, NULL);
 }
 
 // Called when the custom application is stopped. Stop our threads
@@ -152,10 +168,71 @@ void app_custom_configure(app_configuration *conf) {
 	(void)conf;
 }
 
-void orthopus_comm_update_state(void);
+#define ORTHOPUS_COMM_RT_POS_SCALE 1000
+#define ORTHOPUS_COMM_RT_VEL_SCALE 1000
+#define ORTHOPUS_COMM_RT_TRQ_SCALE 1000
+
+#define CAN_RT_DATA_UPSTREAM   179
+#define CAN_RT_DATA_DOWNSTREAM 180
+#define CAN_RT_UPSTREAM_INTF   0
+
+static THD_FUNCTION(orthopus_comm_thread, arg) 
+{
+  (void)arg;
+	chRegSetThreadName("OrthoCommTh");
+  //systime_t time_now, time_last, time_start, time_end, exectime;
+
+  orthopus_comm_thread_running = true;
+  for(;;)
+  {
+    //time_start = chVTGetSystemTimeX();
+		// Check if it is time to stop.
+		if (orthopus_comm_thread_stop) {
+			orthopus_comm_thread_running = false;
+			return;
+		}
+
+    // Read RX, done in CAN Callback
+    
+    // Write TX
+    unsigned int rate = orthopus_comm.stream_rate_hz; // Fast copy to avoid locking it before use
+    if(rate > 0)
+    {
+      // TX
+      // Get the current buffer
+      orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
+      // Copy the data to the send buffer
+      unsigned char tx_d[8]; // One CAN Message
+      long int olen=0;
+      buffer_append_float16(tx_d, st->pos, ORTHOPUS_COMM_RT_POS_SCALE,  &olen); // 2
+      buffer_append_float16(tx_d, st->vel, ORTHOPUS_COMM_RT_VEL_SCALE,  &olen); // 4
+      buffer_append_float16(tx_d, st->trq, ORTHOPUS_COMM_RT_TRQ_SCALE,  &olen); // 6
+      buffer_append_uint16 (tx_d, st->word, &olen);                             // 8
+      const uint16_t can_id = ((uint16_t)CAN_RT_DATA_UPSTREAM<<8)|(app_get_configuration()->controller_id);
+      comm_can_transmit_eid_if(can_id, tx_d, olen, CAN_RT_UPSTREAM_INTF);
+
+      chThdSleepMicroseconds(1000000.0*1.0/rate); // FIXME: Thread loop should run faster and this if() {} should only trigger on select intervals, but for now, all this do is stream so let's sleep the whole thread
+    }
+    else
+      chThdSleepMilliseconds(1000); // FIXME: Fallback when rate is zero, wait for update
+    
+    /*time_end = chVTGetSystemTimeX();
+    exectime = time_end - time_start;
+    if (orthopus_config.perf_compensateexectime)
+      chThdSleepMicroseconds(1000000.0*1.0/rate-ST2US2(exectime));
+    else 
+      chThdSleepMicroseconds(1000000.0*1.0/rate);
+    */
+    //time_last = time_now;
+  }
+}
+//void orthopus_comm_update_state(void);
 
 static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len)
 {
+  (void)rx_d; (void)len;
+  /*
+  Moved to CAN with custom IDs for Upstream/Downstream
   // RX
   const size_t isize = sizeof(orthopus_comm_control_t)+2;
   if(len == isize && rx_d[0] == 0x70)
@@ -166,10 +243,10 @@ static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int l
                                   : &(orthopus_comm.ctrl1);
     long int ilen = 2;
     // Fill in some data from the received packet
-    ctrl->word = buffer_get_uint32      (rx_d, &ilen);
-    ctrl->pos  = buffer_get_float32_auto(rx_d, &ilen);
-    ctrl->vel  = buffer_get_float32_auto(rx_d, &ilen);
-    ctrl->trq  = buffer_get_float32_auto(rx_d, &ilen);
+    ctrl->word = buffer_get_uint16      (rx_d, &ilen);
+    ctrl->pos  = buffer_get_float16(rx_d, ORTHOPUS_COMM_POS_SCALE, &ilen);
+    ctrl->vel  = buffer_get_float16(rx_d, ORTHOPUS_COMM_VEL_SCALE, &ilen);
+    ctrl->trq  = buffer_get_float16(rx_d, ORTHOPUS_COMM_TRQ_SCALE, &ilen);
     // Activate
     orthopus_comm.ctrl = ctrl; // Swap !
   }
@@ -182,20 +259,22 @@ static void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int l
   tx_d[1] = 0x45;
   // Get the current buffer
   orthopus_comm_state_t* st = orthopus_comm.state;
-  // Copy the data to te send buffer
-  buffer_append_uint32      (tx_d, st->word, &olen);
-  buffer_append_float32_auto(tx_d, st->pos,  &olen);
-  buffer_append_float32_auto(tx_d, st->vel,  &olen);
-  buffer_append_float32_auto(tx_d, st->trq,  &olen);
-  buffer_append_float32_auto(tx_d, st->temp, &olen);
-  buffer_append_float32_auto(tx_d, st->curr, &olen);
+  // Copy the data to the send buffer
+  buffer_append_uint16      (tx_d, st->word, &olen); // 16
+  buffer_append_float16(tx_d, st->pos, ORTHOPUS_COMM_POS_SCALE,  &olen); // 32
+  buffer_append_float16(tx_d, st->vel, ORTHOPUS_COMM_VEL_SCALE,  &olen); // 48
+  buffer_append_float16(tx_d, st->trq, ORTHOPUS_COMM_TRQ_SCALE,  &olen); // 64
+  //buffer_append_float32_auto(tx_d, st->temp, &olen);
+  //buffer_append_float32_auto(tx_d, st->curr, &olen);
   commands_send_app_data(tx_d, osize);
+  */
 }
 
 static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len)
 {
   (void)rx_d; (void)len;
 
+  /*
   unsigned int olen=0;
   unsigned char tx_d[256];
   tx_d[0] = 0x98;
@@ -203,12 +282,14 @@ static void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int le
   olen = 2;
   if(olen)
     commands_send_hw_data(tx_d, olen);
+  */
 }
 
 
 static bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
 {
   (void)id; (void)data; (void)len;
+  /*
   int32_t send_index = 0;
 	uint8_t buffer[8];
 	buffer_append_uint32(buffer, 0x12345678, &send_index);
@@ -228,11 +309,27 @@ static bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
 	    comm_can_send_buffer(id, buffer, send_index, 0);
     return true;
   }
+  */
   return false;
 }
 
 static bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
 {
-  (void)id; (void)data; (void)len;
+  uint16_t ds_can_id = ((uint16_t)(CAN_RT_DATA_DOWNSTREAM<<8))|(app_get_configuration()->controller_id);
+  if(len == 8 && (id&0xFFFF) == ds_can_id)
+  {
+    // Get the "free" buffer
+    orthopus_comm_control_t* ctrl = orthopus_comm.ctrl  == &(orthopus_comm.ctrl1)
+                                    ? &(orthopus_comm.ctrl0) 
+                                    : &(orthopus_comm.ctrl1);
+    long int ilen = 0;
+    // Fill in some data from the received packet
+    ctrl->pos  = buffer_get_float16(data, ORTHOPUS_COMM_RT_POS_SCALE, &ilen); // 2
+    ctrl->vel  = buffer_get_float16(data, ORTHOPUS_COMM_RT_VEL_SCALE, &ilen); // 4
+    ctrl->trq  = buffer_get_float16(data, ORTHOPUS_COMM_RT_TRQ_SCALE, &ilen); // 6
+    ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
+    // Activate
+    orthopus_comm.ctrl = ctrl; // Swap !
+  }
   return false;
 }
