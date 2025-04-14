@@ -36,7 +36,6 @@ bool orthopus_config_set(orthopus_config_t* cfg, const uint8_t* buffer)
   else
     orthopus_confparser_set_defaults_orthopus_config_t(cfg);
 
-  cfg->or_conf_set = true;
   cfg->signature = ORTHOPUS_CONFIG_T_SIGNATURE;
   return true;
 }
