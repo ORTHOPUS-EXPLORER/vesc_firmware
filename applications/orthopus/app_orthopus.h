@@ -180,7 +180,7 @@ void orthopus_plot_impedance(int ns);
 
 // Float scaling
 #define ORTHOPUS_COMM_RT_POS_SCALE 50
-#define ORTHOPUS_COMM_RT_VEL_SCALE 50
+#define ORTHOPUS_COMM_RT_VEL_SCALE 1
 #define ORTHOPUS_COMM_RT_TRQ_SCALE 50
 
 // We could remove these if we define the right values in the XML file: _gen/orthopus_settings.xml (using VESC Tool XML Editor)
