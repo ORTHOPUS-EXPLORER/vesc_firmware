@@ -33,6 +33,13 @@ systime_t time_now, time_last, time_start, time_end;
 systime_t time_lasterrprint;
 int ninitadc = 0;
 
+#define ORTHOPUS_CTRL_MODE_OFF 0x0000
+#define ORTHOPUS_CTRL_MODE_POS 0x0001
+#define ORTHOPUS_CTRL_MODE_VEL 0x0002
+#define ORTHOPUS_CTRL_MODE_TRQ 0x0004
+#define ORTHOPUS_CTRL_MODE_MSK 0x000F
+#define ORTHOPUS_CTRL_MODE_ERR 0x0010
+
 THD_FUNCTION(orthopus_thread, arg) {
 	(void)arg;
 
@@ -213,6 +220,37 @@ THD_FUNCTION(orthopus_thread, arg) {
 /* -------------------------------------------------------------------------- */
 /*                              Main control loop                             */
 /* -------------------------------------------------------------------------- */
+
+        static int print_counter = 0; //counter to print errors only once over X loops
+        if(orthopus_comm.process_ctrl && !or_conf.simu_mode)
+        {
+          switch(orthopus_comm.ctrl->word & ORTHOPUS_CTRL_MODE_MSK) 
+          {
+            case ORTHOPUS_CTRL_MODE_POS:
+              //TODO: tunable max position error
+              if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) <= 10){ //test angle error
+                mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
+              } else {
+                if (print_counter >= 2 * or_conf.perf_rate_hz){ //print every 2 seconds 
+                  commands_printf("Position difference (%f) exceeds threshold.", fabs(orthopus_comm.ctrl->pos - orthopus_comm.state->pos));
+                  print_counter = 0;
+                } else {
+                  print_counter++;
+                }
+              }
+              break;
+            case ORTHOPUS_CTRL_MODE_VEL:
+              mc_interface_set_pid_speed(orthopus_comm.ctrl->vel);
+              break;
+            default:
+              break;
+          }
+        }
+
+/* -------------------------------------------------------------------------- */
+/*                              Impedance control                             */
+/* -------------------------------------------------------------------------- */
+
         if (or_state.ctrl_enable)
         {
           or_state.stopped = false;
