@@ -171,7 +171,7 @@ void orthopus_comm_cmd(int argc, const char **argv)
     orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
     float v = 0;
     sscanf(argv[2], "%f", &v);
-    if(v >= -1.57 && v <= 1.57)
+    if(v >= -360 && v <= 360)
       ctrl->pos = v;
     commands_printf("New qd: %f", (double)ctrl->pos);
   }
@@ -205,6 +205,14 @@ void orthopus_comm_cmd(int argc, const char **argv)
     commands_printf("Simu mode     : %s", or_conf.simu_mode ? "true" : "false");
     //commands_printf("  Temperature :  % 9.5f",(double)st->temp);
     //commands_printf("  Current     :  % 9.5f",(double)st->curr);
+  }
+  else if(argc == 3 &&!strcmp(argv[1],"set_ctrl"))
+  {
+    orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+    uint16_t v;
+    sscanf(argv[2], "%x", &v);
+    ctrl->word = v;
+    commands_printf("New ctrl_word: 0x%04X", ctrl->word);
   }
   else
     commands_printf("o_comm <print|stream_rate <0-999(in Hz)>|process_ctrl <on|off>|"
