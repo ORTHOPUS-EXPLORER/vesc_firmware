@@ -221,22 +221,17 @@ THD_FUNCTION(orthopus_thread, arg) {
 /*                              Main control loop                             */
 /* -------------------------------------------------------------------------- */
 
-        static int print_counter = 0; //counter to print errors only once over X loops
         if(orthopus_comm.process_ctrl && !or_conf.simu_mode)
         {
           switch(orthopus_comm.ctrl->word & ORTHOPUS_CTRL_MODE_MSK) 
           {
             case ORTHOPUS_CTRL_MODE_POS:
               //TODO: tunable max position error
-              if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) <= 10){ //test angle error
+              if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) <= or_conf.safety_max_q_error){ //test angle error
                 mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
+                orthopus_comm.state->word = 0x0001; //x x err mode
               } else {
-                if (print_counter >= 2 * or_conf.perf_rate_hz){ //print every 2 seconds 
-                  commands_printf("Position difference (%f) exceeds threshold.", fabs(orthopus_comm.ctrl->pos - orthopus_comm.state->pos));
-                  print_counter = 0;
-                } else {
-                  print_counter++;
-                }
+                orthopus_comm.state->word = 0x0011;
               }
               break;
             case ORTHOPUS_CTRL_MODE_VEL:
