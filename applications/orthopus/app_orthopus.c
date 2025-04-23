@@ -286,12 +286,6 @@ THD_FUNCTION(orthopus_comm_thread, arg)
   }
 }
 
-#define ORTHOPUS_CTRL_MODE_OFF 0x0000
-#define ORTHOPUS_CTRL_MODE_POS 0x0001
-#define ORTHOPUS_CTRL_MODE_VEL 0x0002
-#define ORTHOPUS_CTRL_MODE_TRQ 0x0004
-#define ORTHOPUS_CTRL_MODE_MSK 0x000F
-#define ORTHOPUS_CTRL_MODE_ERR 0x0010
 
 bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
 {
@@ -317,21 +311,7 @@ bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       ctrl->trq  = buffer_get_float16(data, ORTHOPUS_COMM_RT_TRQ_SCALE, &ilen); // 6
       ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
       // Activate
-      orthopus_comm.ctrl = ctrl; // Swap !
-      if(orthopus_comm.process_ctrl && !or_conf.simu_mode)
-      {
-        switch(ctrl->word & ORTHOPUS_CTRL_MODE_MSK) 
-        {
-          case ORTHOPUS_CTRL_MODE_POS:
-            mc_interface_set_pid_pos(ctrl->pos);
-            break;
-          case ORTHOPUS_CTRL_MODE_VEL:
-            mc_interface_set_pid_speed(ctrl->vel);
-            break;
-          default:
-            break;
-        }
-      }
+      orthopus_comm.ctrl = ctrl; // Swap ! //TODO: keep or not?
       return true;
     }
     default:
