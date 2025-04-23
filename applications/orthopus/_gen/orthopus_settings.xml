@@ -662,6 +662,28 @@ p, li { white-space: pre-wrap; }
             <suffix></suffix>
             <vTx>9</vTx>
         </torque_filter_const>
+        <safety_max_q_error>
+            <longName>Safety max q error</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Max difference allowed between qd and qmes in degrees&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_SAFETY_MAX_Q_ERROR</cDefine>
+            <editorDecimalsDouble>2</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>361</maxDouble>
+            <minDouble>0</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>1</stepDouble>
+            <valDouble>10</valDouble>
+            <vTxDoubleScale>1</vTxDoubleScale>
+            <suffix>deg</suffix>
+            <vTx>9</vTx>
+        </safety_max_q_error>
     </Params>
     <SerOrder>
         <ser>joint_name</ser>
@@ -697,6 +719,7 @@ p, li { white-space: pre-wrap; }
         <ser>ctrl_kd</ser>
         <ser>ctrl_kd_filter</ser>
         <ser>torque_filter_const</ser>
+        <ser>safety_max_q_error</ser>
     </SerOrder>
     <Grouping>
         <group>
@@ -758,6 +781,12 @@ p, li { white-space: pre-wrap; }
                 <subgroupParams>
                     <param>perf_rate_hz</param>
                     <param>perf_compensateexectime</param>
+                </subgroupParams>
+            </subgroup>
+            <subgroup>
+                <subgroupName>Safety</subgroupName>
+                <subgroupParams>
+                    <param>safety_max_q_error</param>
                 </subgroupParams>
             </subgroup>
         </group>

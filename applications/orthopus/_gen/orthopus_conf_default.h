@@ -168,6 +168,11 @@
 #define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST 0
 #endif
 
+// Safety max q error
+#ifndef ORTHOPUS_CFG_SAFETY_MAX_Q_ERROR
+#define ORTHOPUS_CFG_SAFETY_MAX_Q_ERROR 10
+#endif
+
 // ORTHOPUS_CONF_DEFAULT_H_
 #endif
 

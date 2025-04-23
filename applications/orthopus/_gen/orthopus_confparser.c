@@ -44,6 +44,7 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer_append_float32_auto(buffer, conf->ctrl_kd, &ind);
 	buffer_append_float32_auto(buffer, conf->ctrl_kd_filter, &ind);
 	buffer_append_float32_auto(buffer, conf->torque_filter_const, &ind);
+	buffer_append_float32_auto(buffer, conf->safety_max_q_error, &ind);
 
 	return ind;
 }
@@ -90,6 +91,7 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->ctrl_kd = buffer_get_float32_auto(buffer, &ind);
 	conf->ctrl_kd_filter = buffer_get_float32_auto(buffer, &ind);
 	conf->torque_filter_const = buffer_get_float32_auto(buffer, &ind);
+	conf->safety_max_q_error = buffer_get_float32_auto(buffer, &ind);
 
 	return true;
 }
@@ -128,5 +130,6 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->ctrl_kd = ORTHOPUS_CFG_DEF_CTRL_KD;
 	conf->ctrl_kd_filter = ORTHOPUS_CFG_DEF_CTRL_KD_FILTER;
 	conf->torque_filter_const = ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST;
+	conf->safety_max_q_error = ORTHOPUS_CFG_SAFETY_MAX_Q_ERROR;
 }
 

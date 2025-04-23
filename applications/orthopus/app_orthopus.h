@@ -56,6 +56,7 @@ typedef struct
   /* 24 - 4 */float encoder_max_diff;
   /* 25 - 4 */char joint_name[4];
   /* 26 - 4 */uint32_t signature;
+  /* 27 - 4 */float safety_max_q_error;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
