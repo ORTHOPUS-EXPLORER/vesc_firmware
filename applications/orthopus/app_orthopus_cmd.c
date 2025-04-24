@@ -210,7 +210,7 @@ void orthopus_comm_cmd(int argc, const char **argv)
   {
     orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
     uint16_t v;
-    sscanf(argv[2], "%x", &v);
+    sscanf(argv[2], "%hx", &v);
     ctrl->word = v;
     commands_printf("New ctrl_word: 0x%04X", ctrl->word);
   }

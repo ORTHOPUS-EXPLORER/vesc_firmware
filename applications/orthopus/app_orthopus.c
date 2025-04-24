@@ -37,6 +37,7 @@
 #include "commands.h"
 #include "timeout.h"
 #include "buffer.h"
+#include "driver/pwm_servo.h"
 
 #include "conf_custom.h" // For conf_custom_add_config, conf_custom_clear_configs
 
@@ -286,7 +287,6 @@ THD_FUNCTION(orthopus_comm_thread, arg)
   }
 }
 
-
 bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
 {
   // Do not handle messages that are not for us
@@ -313,6 +313,16 @@ bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       // Activate
       orthopus_comm.ctrl = ctrl; // Swap ! //TODO: keep or not?
       return true;
+    }
+    case CAN_AUX_DATA_DOWNSTREAM:
+    {
+      if(len != 2 || !orthopus_comm.process_rx)
+        break;
+      long int ilen = 0;
+      // Okay let's do it right here for now...
+      float servo_pos  = buffer_get_float16(data, ORTHOPUS_COMM_AUX_SERVO_SCALE, &ilen); // 2
+      if(orthopus_comm.process_ctrl)
+        pwm_servo_set_servo_out(servo_pos);
     }
     default:
       break;
