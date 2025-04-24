@@ -33,14 +33,8 @@ systime_t time_now, time_last, time_start, time_end;
 systime_t time_lasterrprint;
 int ninitadc = 0;
 
-#define ORTHOPUS_CTRL_MODE_OFF 0x0000
-#define ORTHOPUS_CTRL_MODE_POS 0x0001
-#define ORTHOPUS_CTRL_MODE_VEL 0x0002
-#define ORTHOPUS_CTRL_MODE_TRQ 0x0004
-#define ORTHOPUS_CTRL_MODE_MSK 0x000F
-#define ORTHOPUS_CTRL_MODE_ERR 0x0010
-
-THD_FUNCTION(orthopus_thread, arg) {
+THD_FUNCTION(orthopus_thread, arg) 
+{
 	(void)arg;
 
 	chRegSetThreadName("OrthopusTh");
@@ -76,18 +70,20 @@ THD_FUNCTION(orthopus_thread, arg) {
   time_lasterrprint = chVTGetSystemTimeX();
   time_last = time_now;
   //check if torquezero set in config
-  if (or_conf.ctrl_torquezero != 0.0 && or_conf.signature == ORTHOPUS_CONFIG_T_SIGNATURE){
+  if (or_conf.ctrl_torquezero != 0.0 && or_conf.signature == ORTHOPUS_CONFIG_T_SIGNATURE)
+  {
       or_state.adc3_init = true;
       or_state.adc3_zero = or_conf.ctrl_torquezero;
   }
-/* -------------------------------------------------------------------------- */
-/*                                  MAIN LOOP                                 */
-/* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /*                                  MAIN LOOP                                 */
+  /* -------------------------------------------------------------------------- */
 	for(;;)
   {
     time_start = chVTGetSystemTimeX();
 		// Check if it is time to stop.
-		if (orthopus_thread_stop) {
+		if (orthopus_thread_stop) 
+    {
 			orthopus_thread_running = false;
 			return;
 		}
@@ -100,7 +96,7 @@ THD_FUNCTION(orthopus_thread, arg) {
     or_state.enc_pos = orthopus_read_encoder();
     //TODO: take into account current speed to compare raw value with next 
                                       //expected value instead of previous value
-/* ---------------------------- encoder filtering --------------------------- */
+    /* ---------------------------- encoder filtering --------------------------- */
     if (or_conf.encoder_filter_enable)
     {
       last_nb_enc_filter_error = nb_enc_filter_error;
@@ -126,7 +122,7 @@ THD_FUNCTION(orthopus_thread, arg) {
       if (fabsf(or_state.enc_pos - enc_pos_filter_last) > 350.0)
         nb_enc_filter_error = 0;           //reinit filter when passing one turn
       
-/* --------------------------- Plot encoder filter -------------------------- */
+      /* --------------------------- Plot encoder filter -------------------------- */
       if (or_conf.encoder_filter_plot_enable)//debug encoder filter
       {
         ++nsample;                                      //increment plot samples
@@ -139,7 +135,7 @@ THD_FUNCTION(orthopus_thread, arg) {
       nb_enc_filter_error = 0;
     }
 
-/* ------------------------------- Count turns ------------------------------ */
+    /* ------------------------------- Count turns ------------------------------ */
     //Output encoder
     if (or_state.enc_pos_filter - enc_pos_filter_last < -350.0)
       ++or_state.enc_turn;
@@ -164,11 +160,11 @@ THD_FUNCTION(orthopus_thread, arg) {
     pid_pos_last = pid_pos_now;
     or_state.speed_now = mc_interface_get_rpm()/or_conf.angle_division;
 
-/* --------------------------------- Limits --------------------------------- */
+    /* --------------------------------- Limits --------------------------------- */
     if (or_conf.limits_enable)
       orthopus_limits();
 
-/* ---------------------------- Sample adc3 value --------------------------- */
+    /* ---------------------------- Sample adc3 value --------------------------- */
     if (or_conf.ctrl_sample_adc3)
     {
       or_state.adc3_val = or_state.adc3_filt;        //get hi freq sampled value
@@ -178,7 +174,7 @@ THD_FUNCTION(orthopus_thread, arg) {
       or_state.adc3_val = ADC_VOLTS(ADC_IND_EXT3);               //get adc value
     }
 
-/* ---------------------------- Init zero torque ---------------------------- */
+    /* ---------------------------- Init zero torque ---------------------------- */
     if (!or_state.adc3_init) //init ADC Zero
     {
       ++ninitadc;
@@ -193,8 +189,10 @@ THD_FUNCTION(orthopus_thread, arg) {
         commands_printf("save config to store in EEPROM");
         mc_interface_release_motor();
       }
-    } else {
-/* ------------------ Scaling ADC3 (volts) -> Torque (N.m) ------------------ */
+    } 
+    else 
+    {
+      /* ------------------ Scaling ADC3 (volts) -> Torque (N.m) ------------------ */
       if (or_conf.ctrl_sample_adc3)
       {
         or_state.torque_now = or_conf.ctrl_torquegain
@@ -207,45 +205,56 @@ THD_FUNCTION(orthopus_thread, arg) {
                               * (or_state.adc3_val-or_state.adc3_zero);
       }
 
-/* ------------------------------ Control plot ------------------------------ */
+      /* ------------------------------ Control plot ------------------------------ */
       if (or_state.ctrl_plot)
         orthopus_plot_impedance(nsample);
 
-/* ------------------------------ Safety checks ----------------------------- */
+      /* ------------------------------ Safety checks ----------------------------- */
       if (!orthopus_safety())
       {
         orthopus_estop();
-      } else 
+      } 
+      else 
       {
-/* -------------------------------------------------------------------------- */
-/*                              Main control loop                             */
-/* -------------------------------------------------------------------------- */
+        /* -------------------------------------------------------------------------- */
+        /*                              Main control loop                             */
+        /* -------------------------------------------------------------------------- */
 
         if(orthopus_comm.process_ctrl && !or_conf.simu_mode)
         {
+          orthopus_comm.state->word &= ~ORTHOPUS_STATE_MODE_MSK;                       // Clear mode
+          // Modes are currently exclusive. Refactor this switch for mode fine-grained mode control
           switch(orthopus_comm.ctrl->word & ORTHOPUS_CTRL_MODE_MSK) 
           {
             case ORTHOPUS_CTRL_MODE_POS:
-              //TODO: tunable max position error
-              if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) <= or_conf.safety_max_q_error){ //test angle error
-                mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
-                orthopus_comm.state->word = 0x0001; //x x err mode
-              } else {
-                orthopus_comm.state->word = 0x0011;
+            {
+              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_POS; // Set mode 
+
+              // TODO: tunable max position error
+              if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) >= (double)or_conf.safety_max_q_error)
+              {
+                orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_POS_STEP; // Set error flag
+                break;
               }
+
+              mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
+              orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error
               break;
+            }
             case ORTHOPUS_CTRL_MODE_VEL:
+            {
+              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_VEL; // Set mode
               mc_interface_set_pid_speed(orthopus_comm.ctrl->vel);
               break;
+            }
             default:
               break;
           }
         }
 
-/* -------------------------------------------------------------------------- */
-/*                              Impedance control                             */
-/* -------------------------------------------------------------------------- */
-
+        /* -------------------------------------------------------------------------- */
+        /*                              Impedance control                             */
+        /* -------------------------------------------------------------------------- */
         if (or_state.ctrl_enable)
         {
           or_state.stopped = false;
@@ -280,19 +289,21 @@ THD_FUNCTION(orthopus_thread, arg) {
                                     -or_conf.ctrl_kd*or_state.d_torque_err;
           }
 
-/* ------------------------ Compute safety indicators ----------------------- */
+          /* ------------------------ Compute safety indicators ----------------------- */
           if ((or_state.last_ctrl_command == or_state.ctrl_command)
                                              &&
                                              (or_state.ctrl_command!=0.0))
           {
             or_state.nid1 += 1;
-          } else {
+          } 
+          else 
+          {
             or_state.nid1 = 0;
           }
           or_state.last_ctrl_command = or_state.ctrl_command;
-/* -------------------------------------------------------------------------- */
-/*                    Send current setpoint to mc_interface                   */
-/* -------------------------------------------------------------------------- */
+          /* -------------------------------------------------------------------------- */
+          /*                    Send current setpoint to mc_interface                   */
+          /* -------------------------------------------------------------------------- */
           mc_interface_set_current_off_delay(0.1);  //prevent disabling motor if 
                               //torque request is 0 //todo: move somewhere else?
           mc_interface_set_current_rel(or_state.ctrl_command);
@@ -321,47 +332,14 @@ THD_FUNCTION(orthopus_thread, arg) {
       or_state.perf_min_period = or_state.time_diff;
     time_end = chVTGetSystemTimeX();
     or_state.perf_exec_time = time_end - time_start;
-/* ------ Loop time compensation activated - sleep compensated duration ----- */
+    /* ------ Loop time compensation activated - sleep compensated duration ----- */
     if (or_conf.perf_compensateexectime)
       chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz
                                               -ST2US2(or_state.perf_exec_time));
-/* --------------------- Non compensated sleep (1/rate) --------------------- */
+    /* --------------------- Non compensated sleep (1/rate) --------------------- */
     else 
       chThdSleepMicroseconds(1000000.0*1.0/or_conf.perf_rate_hz);
     time_last = time_now;
-
-
-    // Read control from comm'
-    if(!or_conf.simu_mode)
-    {
-      if(orthopus_comm.process_ctrl)
-      {
-        // Get the current buffer
-        orthopus_comm_control_t* c = (orthopus_comm_control_t*)orthopus_comm.ctrl;
-        // Read some data
-        // FIXME: Do something with the refs ! 
-        (void)c->word;
-        (void)c->pos;
-        (void)c->vel;
-        (void)c->trq;
-      }
-      // Update state for comm'
-      // FIXME !! Get the real values
-      // FIXME: Maybe here's not the place ?
-      // FIXME: Slow it down, only update at twice the comm rate, should be enough
-
-      // Get the "free" buffer
-      //orthopus_comm_state_t* st = orthopus_comm.state == &(orthopus_comm.st1)   
-      //                            ? &(orthopus_comm.st0)   
-      //                            : &(orthopus_comm.st1);
-      //
-      //st->word = 0x0179;
-      //st->pos  = 12.34;
-      //st->vel  =  0.01;
-      //st->trq  =  0.02;
-      //// Activate
-      //orthopus_comm.state = st; // Swap !
-    }
 	}
 }
 
@@ -408,7 +386,8 @@ bool orthopus_safety(void)
     commands_printf("estop: too many identical !=0 ctrl_command detected");
     or_state.nid1 = 0;
     return false;
-  } /* else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now) //TODO debug: o_offset encoder causes vesc reboot when activated
+  } 
+  /* else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now) //TODO debug: o_offset encoder causes vesc reboot when activated
                                                      > or_conf.encoder_max_diff)
   {
     if (ST2S(chVTGetSystemTimeX()-time_lasterrprint) > 2) 
@@ -417,9 +396,7 @@ bool orthopus_safety(void)
       commands_printf("estop: Error: unconsistent sincos/encoder position");
     }
     return false;
-  } */ else {
-    return true;
-  }
+  } */ 
   return true;
 }
 
