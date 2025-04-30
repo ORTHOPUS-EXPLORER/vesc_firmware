@@ -88,6 +88,7 @@ typedef struct
   int turn_now;
   float ext_torque_setpoint;
   float ext_pos_setpoint;
+  float ext_vel_setpoint;
   bool ctrl_overwrite;
   float limit_reaction;
   float torque_err;
@@ -191,12 +192,16 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_CTRL_MODE_POS 0x0001
 #define ORTHOPUS_CTRL_MODE_VEL 0x0002
 #define ORTHOPUS_CTRL_MODE_TRQ 0x0004
+#define ORTHOPUS_CTRL_MODE_IMP 0x0005
+#define ORTHOPUS_CTRL_MODE_CST 0x0006
 #define ORTHOPUS_CTRL_MODE_MSK 0x000F
 
 #define ORTHOPUS_STATE_MODE_OFF     ORTHOPUS_CTRL_MODE_OFF
 #define ORTHOPUS_STATE_MODE_POS     ORTHOPUS_CTRL_MODE_POS
 #define ORTHOPUS_STATE_MODE_VEL     ORTHOPUS_CTRL_MODE_VEL
 #define ORTHOPUS_STATE_MODE_TRQ     ORTHOPUS_CTRL_MODE_TRQ
+#define ORTHOPUS_STATE_MODE_IMP     ORTHOPUS_CTRL_MODE_IMP
+#define ORTHOPUS_STATE_MODE_CST     ORTHOPUS_CTRL_MODE_CST
 #define ORTHOPUS_STATE_MODE_MSK     ORTHOPUS_CTRL_MODE_MSK
 #define ORTHOPUS_STATE_ERR_POS_STEP 0x0010
 #define ORTHOPUS_STATE_ERR_VEL_STEP 0x0020

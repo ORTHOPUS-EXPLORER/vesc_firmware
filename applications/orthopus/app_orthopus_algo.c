@@ -247,6 +247,28 @@ THD_FUNCTION(orthopus_thread, arg)
               mc_interface_set_pid_speed(orthopus_comm.ctrl->vel);
               break;
             }
+            case ORTHOPUS_CTRL_MODE_TRQ :
+            {
+              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
+              or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+              break;
+            }
+            case ORTHOPUS_CTRL_MODE_IMP :
+            {
+              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_IMP; // Set mode
+              or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
+              or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
+              or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+              break;
+            }
+            case ORTHOPUS_CTRL_MODE_CST :
+            {
+              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_CST; // Set mode
+              or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
+              or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
+              or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+              break;
+            }
             default:
               break;
           }
