@@ -58,7 +58,7 @@ void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_control",
     "[Orthopus] AMS filter parameters",
-    "[enable/disable/eplot/dplot/kp/zerotorque/loadedzerotorque/torquefilterconst/edeadzone/ddeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/]",
+    "[enable/disable/eplot/dplot/kp/zerotorque/loadedzerotorque/torquefilterconst/edeadzone/ddeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/setzerotorque/readzerotorque/]",
     orthopus_control_cmd
   );
   //TODO: o_perf : print performance stats (actual rate, mean rate, jitter, etc.)
@@ -681,6 +681,15 @@ void orthopus_control_cmd(int argc, const char **argv)
   {
     or_conf.torque_filter_const = v;
     commands_printf("torque_now filter const: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"setzerotorque"))
+  {
+    or_conf.ctrl_torquezero = v;
+    commands_printf("ctrl_torquezero: % 7.3f", (double)v);
+  }
+  else if(!strcmp(argv[1],"readzerotorque"))
+  {
+    commands_printf("adc3_read: % 7.3f", (double)or_state.adc3_val);
   }
   else if(!strcmp(argv[1],"print"))
   {
