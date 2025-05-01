@@ -208,7 +208,7 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_STATE_ERR_MSK      0x0030
 
 // We could remove these if we define the right values in the XML file: _gen/orthopus_settings.xml (using VESC Tool XML Editor)
-#define ORTHOPUS_CFG_DEF_ENCODER_OFFSET             0.1
+#define ORTHOPUS_CFG_DEF_ENCODER_OFFSET             0.0
 #define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ANGLESTEP   0.25
 #define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ENABLE      true // keep enabled or move encoder filtered multiturn angle estimation
 #define ORTHOPUS_CFG_DEF_ENCODER_FILTER_PLOT_ENABLE false
@@ -217,7 +217,7 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_CFG_DEF_LIMITS_ENABLE              false
 #define ORTHOPUS_CFG_DEF_LIMITS_POS_MIN             -90.0
 #define ORTHOPUS_CFG_DEF_LIMITS_POS_MAX             90.0
-#define ORTHOPUS_CFG_DEF_LIMITS_KP                  0.1
+#define ORTHOPUS_CFG_DEF_LIMITS_KP                  0.0
 #define ORTHOPUS_CFG_DEF_LIMITS_KD                  5.0
 #define ORTHOPUS_CFG_DEF_LIMITS_POWP                6.0
 #define ORTHOPUS_CFG_DEF_LIMITS_POWD                1.0
@@ -229,15 +229,15 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_CFG_DEF_PERF_COMPENSATEEXECTIME    false
 #define ORTHOPUS_CFG_DEF_CTRL_DEADZONE              false
 #define ORTHOPUS_CFG_DEF_CTRL_SAMPLE_ADC3           false
-#define ORTHOPUS_CFG_DEF_CTRL_STIFFNESS             0.1
-#define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO            0.1
+#define ORTHOPUS_CFG_DEF_CTRL_STIFFNESS             0.0
+#define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO            0.0
 #define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN            34.8
-#define ORTHOPUS_CFG_DEF_CTRL_DAMPING               0.1
-#define ORTHOPUS_CFG_DEF_CTRL_KP                    0.1
+#define ORTHOPUS_CFG_DEF_CTRL_DAMPING               0.0
+#define ORTHOPUS_CFG_DEF_CTRL_KP                    0.0
 #define ORTHOPUS_CFG_DEF_CTRL_A                     1.0
-#define ORTHOPUS_CFG_DEF_CTRL_KD                    0.1
+#define ORTHOPUS_CFG_DEF_CTRL_KD                    0.0
 #define ORTHOPUS_CFG_DEF_CTRL_KD_FILTER             1.0
-#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.1
+#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.0
 
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"
