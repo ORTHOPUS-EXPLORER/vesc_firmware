@@ -182,11 +182,12 @@ THD_FUNCTION(orthopus_thread, arg)
       if (ninitadc == 500)
       {
         or_state.adc3_init = true;
-        commands_printf("torque zero done: or_state.adc3_zero: % 7.3f", 
-                                                    (double)or_state.adc3_zero);
+        //TODO: understand why the commands_printf induces fail (disconnect from VESC_tool + bricked controller sometimes)
+        /*commands_printf("torque zero done: or_state.adc3_zero: % 7.3f", 
+                                                    (double)or_state.adc3_zero);*/
         ninitadc = 0;
         or_conf.ctrl_torquezero = or_state.adc3_zero;
-        commands_printf("save config to store in EEPROM");
+        //commands_printf("save config to store in EEPROM");
         mc_interface_release_motor();
       }
     } 
