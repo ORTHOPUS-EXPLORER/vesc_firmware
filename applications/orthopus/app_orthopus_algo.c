@@ -196,7 +196,7 @@ THD_FUNCTION(orthopus_thread, arg)
       if (or_conf.ctrl_sample_adc3)
       {
         or_state.torque_now = or_conf.ctrl_torquegain
-                              * (or_state.adc3_val-or_state.adc3_zero); 
+                              * (or_state.adc3_filt-or_state.adc3_zero); 
       } else {
         or_state.torque_now = (1-or_conf.torque_filter_const)
                               * or_state.torque_now
