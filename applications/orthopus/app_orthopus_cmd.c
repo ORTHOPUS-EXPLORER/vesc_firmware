@@ -685,6 +685,7 @@ void orthopus_control_cmd(int argc, const char **argv)
   else if(!strcmp(argv[1],"setzerotorque"))
   {
     or_conf.ctrl_torquezero = v;
+    or_state.adc3_zero = v;
     commands_printf("ctrl_torquezero: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"readzerotorque"))
