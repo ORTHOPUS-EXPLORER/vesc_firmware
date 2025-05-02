@@ -237,7 +237,7 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_CFG_DEF_CTRL_A                     1.0
 #define ORTHOPUS_CFG_DEF_CTRL_KD                    0.0
 #define ORTHOPUS_CFG_DEF_CTRL_KD_FILTER             1.0
-#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.0
+#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        1.0
 
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"
