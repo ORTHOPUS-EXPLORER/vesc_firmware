@@ -72,7 +72,7 @@ orthopus_comm_t orthopus_comm =
     .word = 0x0,
   },
   .ctrl  = &orthopus_comm.ctrl0,
-  .process_ctrl = false,
+  .process_ctrl = true,
   .process_rx = true,
 };
 
