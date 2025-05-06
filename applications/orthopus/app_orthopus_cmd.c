@@ -23,7 +23,7 @@ void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_config",
     "[Orthopus] Load/Save Orthopus config from/to EEPROM",
-    "[print/dprint/load/save/reset/setrate/etimecomp/dtimecomp/settorquegain/encoder_max_diff/esampleadc3/dsampleadc3]",
+    "[print/dprint/load/save/reset/setrate/stiffness/damping/etimecomp/dtimecomp/settorquegain/encoder_max_diff/esampleadc3/dsampleadc3]",
     orthopus_config_cmd
   );
 
@@ -44,21 +44,21 @@ void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_limits",
     "[Orthopus] Actuator limits setting",
-    "[posmax/posmin/enable/disable/reachangle/reachspeed/kp/kd/powp/powd]",
+    "[posmax/posmin/enable/disable/reachangle/reachspeed/kp/kd/powp/powd/damp_reachangle]",
     orthopus_limits_cmd
   );
 
   terminal_register_command_callback(
     "o_perf",
     "[Orthopus] Performance stats",
-    "[void/eplot]",
+    "[-/void/eplot]",
     orthopus_perf_cmd
   );
 
   terminal_register_command_callback(
     "o_control",
     "[Orthopus] AMS filter parameters",
-    "[enable/disable/eplot/dplot/kp/zerotorque/loadedzerotorque/torquefilterconst/edeadzone/ddeadzone/a/demo1/eoverwrite/doverwrite/torquecontrol/setzerotorque/readzerotorque/]",
+    "[print/enable/disable/eplot/dplot/kp/zerotorque/loadedzerotorque/torquefilterconst/edeadzone/ddeadzone/a/demo1/demo2/eoverwrite/doverwrite/torquecontrol/setzerotorque/readzerotorque/]",
     orthopus_control_cmd
   );
   //TODO: o_perf : print performance stats (actual rate, mean rate, jitter, etc.)
@@ -66,14 +66,14 @@ void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_comm",
     "[Orthopus] Debug Comm packets",
-    "",
+    "[stream_rate/set_qd/process_rx/process_ctrl/print/set_ctrl]",
     orthopus_comm_cmd
   );
 
   terminal_register_command_callback(
     "o_can",
     "[Orthopus] CAN debug/test commands",
-    "<send>",
+    "[tx_eid/tx_sid/tx_b]",
     orthopus_can_cmd
   );
 }
