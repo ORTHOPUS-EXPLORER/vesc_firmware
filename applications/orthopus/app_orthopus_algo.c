@@ -252,6 +252,7 @@ THD_FUNCTION(orthopus_thread, arg)
             {
               orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
               or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+              or_state.ctrl_enable = true;
               break;
             }
             case ORTHOPUS_CTRL_MODE_IMP :
