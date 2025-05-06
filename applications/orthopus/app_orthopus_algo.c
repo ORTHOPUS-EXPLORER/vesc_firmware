@@ -207,8 +207,10 @@ THD_FUNCTION(orthopus_thread, arg)
       }
 
       /* ------------------------------ Control plot ------------------------------ */
-      if (or_state.ctrl_plot)
+      if (or_state.ctrl_plot){
+        ++nsample;
         orthopus_plot_impedance(nsample);
+      }
 
       /* ------------------------------ Safety checks ----------------------------- */
       if (!orthopus_safety())
@@ -341,8 +343,10 @@ THD_FUNCTION(orthopus_thread, arg)
 /* -------------------------------------------------------------------------- */
     //compute and control loop time TODO: clean
 /* ---------------------------- Performances plot --------------------------- */
-    if (or_state.perf_plot)
+    if (or_state.perf_plot){
+      ++nsample;
       orthopus_plot_cycletime(nsample);
+    }
     time_now = chVTGetSystemTimeX();
     or_state.time_diff = ST2US2(time_now - time_last);
     or_state.time_diff_filt = 0.99*or_state.time_diff_filt
