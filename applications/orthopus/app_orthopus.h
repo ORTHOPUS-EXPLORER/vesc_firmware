@@ -227,17 +227,17 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_CFG_DEF_ANGLE_DIVISION             700
 #define ORTHOPUS_CFG_DEF_PERF_RATE_HZ               2000
 #define ORTHOPUS_CFG_DEF_PERF_COMPENSATEEXECTIME    false
-#define ORTHOPUS_CFG_DEF_CTRL_DEADZONE              false
-#define ORTHOPUS_CFG_DEF_CTRL_SAMPLE_ADC3           false
+#define ORTHOPUS_CFG_DEF_CTRL_DEADZONE              true
+#define ORTHOPUS_CFG_DEF_CTRL_SAMPLE_ADC3           true
 #define ORTHOPUS_CFG_DEF_CTRL_STIFFNESS             0.0
 #define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO            0.0
 #define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN            34.8
 #define ORTHOPUS_CFG_DEF_CTRL_DAMPING               0.0
-#define ORTHOPUS_CFG_DEF_CTRL_KP                    0.0
+#define ORTHOPUS_CFG_DEF_CTRL_KP                    4.0
 #define ORTHOPUS_CFG_DEF_CTRL_A                     1.0
 #define ORTHOPUS_CFG_DEF_CTRL_KD                    0.0
 #define ORTHOPUS_CFG_DEF_CTRL_KD_FILTER             1.0
-#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        1.0
+#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.01
 
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"
