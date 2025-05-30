@@ -22,10 +22,10 @@ extern volatile bool orthopus_comm_thread_stop,
 typedef struct
 {
   /* EEPROM Addr - Size */
-  /* 00 - 4 */float encoder_offset;
-  /* 01 - 4 */float encoder_filter_anglestep;
-  /* 02 - 1 */bool encoder_filter_enable;
-  /*    - 1 */bool encoder_filter_plot_enable;
+  /* 00 - 4 */float encoder_offset; 
+  /* 01 - 4 */float encoder_filter_anglestep; //TODO remove
+  /* 02 - 1 */bool encoder_filter_enable; //TODO remove
+  /*    - 1 */bool encoder_filter_plot_enable; //TODO remove
   /*    - 1 */bool limits_enable;
   /*    - 1 */uint8_t stream_rate_10;
   /* 03 - 4 */float limits_pos_max;
@@ -33,7 +33,7 @@ typedef struct
   /* 05 - 4 */float angle_division;
   /* 06 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
   /* 07 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
-  /* 08 - 4 */float encoder_filter_error_gain;
+  /* 08 - 4 */float encoder_filter_error_gain; //TODO remove
   /* 09 - 4 */int perf_rate_hz;
   /* 10 - 1 */bool perf_compensateexectime;
   /*    - 1 */bool ctrl_deadzone;
@@ -64,9 +64,8 @@ extern orthopus_config_t or_conf;
 //global variables (interfaces with lispBM and terminal)
 typedef struct
 {
-  float pos_multiturn_now;            //multiturn position based from mc_interface
-  float enc_pos_filter;//encoder position filtered (removed outliers)
-  float enc_pos_filter_multiturn;//encoder position filtred and multiturn
+  float pos_multiturn_now;//multiturn position based from mc_interface
+  float enc_pos_multiturn;//encoder position filtred and multiturn
   int enc_turn; //encoder angle turn count
   float speed_now; //actual speed from mc_interface
   float enc_pos; //raw encoder position

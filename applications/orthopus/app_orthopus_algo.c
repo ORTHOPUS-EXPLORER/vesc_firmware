@@ -12,7 +12,6 @@ volatile bool orthopus_thread_running = false;
 volatile orthopus_state_t or_state =
 {
   .pos_multiturn_now = 0.0,
-  .enc_pos_filter = 0.0,
   .speed_now = 0.0,
   .enc_pos   = 0.0,
   .adc3_zero = 0.0,
@@ -23,9 +22,7 @@ volatile orthopus_state_t or_state =
 };
 
 int get_fw_version_cnt;
-float enc_pos_filter_last = 0.0;
-int nb_enc_filter_error = 0;
-int last_nb_enc_filter_error = 0;
+float enc_pos_last = 0.0;
 unsigned long int nsample = 0;
 float pid_pos_now = 0;
 float pid_pos_last = 0;
@@ -96,55 +93,17 @@ THD_FUNCTION(orthopus_thread, arg)
     or_state.enc_pos = orthopus_read_encoder();
     //TODO: take into account current speed to compare raw value with next 
                                       //expected value instead of previous value
-    /* ---------------------------- encoder filtering --------------------------- */
-    if (or_conf.encoder_filter_enable)
-    {
-      last_nb_enc_filter_error = nb_enc_filter_error;
-      if ( ( (float)fabsf(or_state.enc_pos - enc_pos_filter_last) >
-             ( or_conf.encoder_filter_anglestep *
-               (1 + or_conf.encoder_filter_error_gain*nb_enc_filter_error)
-             )
-           )
-           && (fabsf(or_state.enc_pos - enc_pos_filter_last) < 350.0)
-           && (nb_enc_filter_error < 5)
-                                    //detect outliers values and keep last value
-         )
-      {
-        ++nb_enc_filter_error;
-        or_state.enc_pos_filter = enc_pos_filter_last;
-      }
-      else                                  //keep raw encoder value if coherent
-      {
-        or_state.enc_pos_filter = or_state.enc_pos;
-        nb_enc_filter_error = 0;
-      }
-
-      if (fabsf(or_state.enc_pos - enc_pos_filter_last) > 350.0)
-        nb_enc_filter_error = 0;           //reinit filter when passing one turn
-      
-      /* --------------------------- Plot encoder filter -------------------------- */
-      if (or_conf.encoder_filter_plot_enable)//debug encoder filter
-      {
-        ++nsample;                                      //increment plot samples
-        orthopus_plot_encoder_filtering(nsample);
-      }
-    }
-    else                           //if filtering is disabled -> keep raw values
-    {
-      or_state.enc_pos_filter = or_state.enc_pos;
-      nb_enc_filter_error = 0;
-    }
 
     /* ------------------------------- Count turns ------------------------------ */
     //Output encoder
-    if (or_state.enc_pos_filter - enc_pos_filter_last < -350.0)
+    if (or_state.enc_pos - enc_pos_last < -350.0)
       ++or_state.enc_turn;
-    else if (or_state.enc_pos_filter - enc_pos_filter_last > 350.0)
+    else if (or_state.enc_pos - enc_pos_last > 350.0)
       --or_state.enc_turn;
-    or_state.enc_pos_filter_multiturn = 0.1*(or_state.enc_pos_filter
+    or_state.enc_pos_multiturn = 0.1*(or_state.enc_pos
                                               + 360.0*or_state.enc_turn)
-                                        + 0.9*or_state.enc_pos_filter_multiturn;
-    enc_pos_filter_last = or_state.enc_pos_filter;
+                                        + 0.9*or_state.enc_pos_multiturn;
+    enc_pos_last = or_state.enc_pos;
     //Input encoder
     pid_pos_now = mc_interface_get_pid_pos_now();
     if (!or_state.encoders_init)
@@ -539,19 +498,17 @@ void orthopus_plot_encoder_filtering(int ns)
   if (!plot_started) {
     plot_started = true;
     commands_init_plot("time", "angle");
-    commands_plot_add_graph("enc_pos_filter");
+    commands_plot_add_graph("enc_pos");
     commands_plot_add_graph("enc_pos");
     commands_plot_add_graph("last_nb_enc_filter_error");
-    commands_plot_add_graph("enc_pos_filter_last");
+    commands_plot_add_graph("enc_pos_last");
   }
   commands_plot_set_graph(0);
-  commands_send_plot_points(ns, or_state.enc_pos_filter);
+  commands_send_plot_points(ns, or_state.enc_pos);
   commands_plot_set_graph(1);
   commands_send_plot_points(ns, or_state.enc_pos);
   commands_plot_set_graph(2);
-  commands_send_plot_points(ns, last_nb_enc_filter_error);
-  commands_plot_set_graph(3);
-  commands_send_plot_points(ns, enc_pos_filter_last);
+  commands_send_plot_points(ns, enc_pos_last);
 }
 
 /**
