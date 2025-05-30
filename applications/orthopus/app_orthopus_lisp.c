@@ -90,13 +90,13 @@ lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn)
 lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-	return lbm_enc_float(or_state.enc_pos_filter);
+	return lbm_enc_float(or_state.enc_pos);
 }
 
 lbm_value orthopus_lisp_read_encoder_filtered_multiturn(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-	return lbm_enc_float(or_state.enc_pos_filter_multiturn);
+	return lbm_enc_float(or_state.enc_pos_multiturn);
 }
 
 lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn)
