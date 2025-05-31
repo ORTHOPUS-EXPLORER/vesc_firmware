@@ -2,7 +2,7 @@
 #include "commands.h"
 
 void orthopus_pos_cmd(int argc, const char **argv);
-void orthopus_filter_cmd(int argc, const char **argv);
+//void orthopus_filter_cmd(int argc, const char **argv);
 void orthopus_offset_cmd(int argc, const char **argv);
 void orthopus_config_cmd(int argc, const char **argv);
 void orthopus_limits_cmd(int argc, const char **argv);
@@ -34,12 +34,12 @@ void orthopus_cmd_init(void)
     orthopus_pos_cmd
   );
 
-  terminal_register_command_callback(
+  /*terminal_register_command_callback(
     "o_filter",
     "[Orthopus] AMS filter parameters",
     "[anglestep/enable/disable/eplot/dplot/encerrorgain]",
     orthopus_filter_cmd
-  );
+  );*/
 
   terminal_register_command_callback(
     "o_limits",
@@ -83,7 +83,7 @@ void orthopus_cmd_deinit(void)
   terminal_unregister_callback(orthopus_offset_cmd);
   terminal_unregister_callback(orthopus_config_cmd);
   terminal_unregister_callback(orthopus_pos_cmd);
-  terminal_unregister_callback(orthopus_filter_cmd);
+  //terminal_unregister_callback(orthopus_filter_cmd);
   terminal_unregister_callback(orthopus_limits_cmd);
   terminal_unregister_callback(orthopus_perf_cmd);
   terminal_unregister_callback(orthopus_comm_cmd);
@@ -279,16 +279,16 @@ void orthopus_config_cmd(int argc, const char **argv)
   if(argc == 1 || !strcmp(argv[1],"print"))
   {
     commands_printf("Encoder offset:              % 7.3f",(double)or_conf.encoder_offset                    );
-    commands_printf("Encoder filter anglestep:    % 7.3f",(double)or_conf.encoder_filter_anglestep          );
-    commands_printf("Encoder Filter enabled:      %s", or_conf.encoder_filter_enable ? "true" : "false"     );
-    commands_printf("Encoder Filter plot enabled: %s", or_conf.encoder_filter_plot_enable ? "true" : "false");
+    //commands_printf("Encoder filter anglestep:    % 7.3f",(double)or_conf.encoder_filter_anglestep          );
+    //commands_printf("Encoder Filter enabled:      %s", or_conf.encoder_filter_enable ? "true" : "false"     );
+    //commands_printf("Encoder Filter plot enabled: %s", or_conf.encoder_filter_plot_enable ? "true" : "false");
     commands_printf("Limits enabled:              %s", or_conf.limits_enable ? "true" : "false"             );
     commands_printf("Config set:                  %s", or_conf.signature == ORTHOPUS_CONFIG_T_SIGNATURE ? "true" : "false"       );
     commands_printf("Limits pos max:              % 7.3f",(double)or_conf.limits_pos_max                    );
     commands_printf("Limits pos min:              % 7.3f",(double)or_conf.limits_pos_min                    );
     commands_printf("Limits reach angle:          % 7.3f",(double)or_conf.limits_reach_angle                );
     commands_printf("Limits reach speed:          % 7.3f",(double)or_conf.limits_reach_speed                );
-    commands_printf("Encoder filter error gain:   % 7.3f",(double)or_conf.encoder_filter_error_gain         );
+    //commands_printf("Encoder filter error gain:   % 7.3f",(double)or_conf.encoder_filter_error_gain         );
     commands_printf("Loop rate:                   % 5d",(int)or_conf.perf_rate_hz                                );
     commands_printf("ctrl_torquezero:                  % 7.3f",(double)or_conf.ctrl_torquezero                        );
     commands_printf("ctrl_torquegain:                  % 7.3f",(double)or_conf.ctrl_torquegain                        );
@@ -394,6 +394,7 @@ void orthopus_config_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                   FILTER                                   */
 /* -------------------------------------------------------------------------- */
+/*
 void orthopus_filter_cmd(int argc, const char **argv)
 {
   if(argc == 1)
@@ -438,6 +439,8 @@ void orthopus_filter_cmd(int argc, const char **argv)
     commands_printf("Invalid arguments.");
   }
 }
+
+*/
 
 /* -------------------------------------------------------------------------- */
 /*                                   LIMITS                                   */
