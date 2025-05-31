@@ -15,10 +15,6 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer[ind++] = conf->simu_mode;
 	buffer[ind++] = (uint8_t)conf->stream_rate_10;
 	buffer_append_float32_auto(buffer, conf->encoder_offset, &ind);
-	buffer_append_float32_auto(buffer, conf->encoder_filter_anglestep, &ind);
-	buffer[ind++] = conf->encoder_filter_enable;
-	buffer[ind++] = conf->encoder_filter_plot_enable;
-	buffer_append_float32_auto(buffer, conf->encoder_filter_error_gain, &ind);
 	buffer_append_float32_auto(buffer, conf->encoder_max_diff, &ind);
 	buffer[ind++] = conf->limits_enable;
 	buffer_append_float32_auto(buffer, conf->limits_pos_min, &ind);
@@ -62,10 +58,6 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->simu_mode = buffer[ind++];
 	conf->stream_rate_10 = buffer[ind++];
 	conf->encoder_offset = buffer_get_float32_auto(buffer, &ind);
-	conf->encoder_filter_anglestep = buffer_get_float32_auto(buffer, &ind);
-	conf->encoder_filter_enable = buffer[ind++];
-	conf->encoder_filter_plot_enable = buffer[ind++];
-	conf->encoder_filter_error_gain = buffer_get_float32_auto(buffer, &ind);
 	conf->encoder_max_diff = buffer_get_float32_auto(buffer, &ind);
 	conf->limits_enable = buffer[ind++];
 	conf->limits_pos_min = buffer_get_float32_auto(buffer, &ind);
@@ -101,10 +93,6 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->simu_mode = ORTHOPUS_CFG_DEF_SIMU_MODE;
 	conf->stream_rate_10 = ORTHOPUS_CFG_DEF_STREAM_RATE_10;
 	conf->encoder_offset = ORTHOPUS_CFG_DEF_ENCODER_OFFSET;
-	conf->encoder_filter_anglestep = ORTHOPUS_CFG_DEF_ENCODER_FILTER_ANGLESTEP;
-	conf->encoder_filter_enable = ORTHOPUS_CFG_DEF_ENCODER_FILTER_ENABLE;
-	conf->encoder_filter_plot_enable = ORTHOPUS_CFG_DEF_ENCODER_FILTER_PLOT_ENABLE;
-	conf->encoder_filter_error_gain = ORTHOPUS_CFG_DEF_ENCODER_FILTER_ERROR_GAIN;
 	conf->encoder_max_diff = ORTHOPUS_CFG_DEF_ENCODER_MAX_DIFF;
 	conf->limits_enable = ORTHOPUS_CFG_DEF_LIMITS_ENABLE;
 	conf->limits_pos_min = ORTHOPUS_CFG_DEF_LIMITS_POS_MIN;

@@ -23,9 +23,9 @@ typedef struct
 {
   /* EEPROM Addr - Size */
   /* 00 - 4 */float encoder_offset; 
-  /* 01 - 4 */float encoder_filter_anglestep; //TODO remove
-  /* 02 - 1 */bool encoder_filter_enable; //TODO remove
-  /*    - 1 */bool encoder_filter_plot_enable; //TODO remove
+  /* 01 - 4 */
+  /* 02 - 1 */
+  /*    - 1 */uint8_t pad[2];
   /*    - 1 */bool limits_enable;
   /*    - 1 */uint8_t stream_rate_10;
   /* 03 - 4 */float limits_pos_max;
@@ -33,7 +33,7 @@ typedef struct
   /* 05 - 4 */float angle_division;
   /* 06 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
   /* 07 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
-  /* 08 - 4 */float encoder_filter_error_gain; //TODO remove
+  /* 08 - 4 */
   /* 09 - 4 */int perf_rate_hz;
   /* 10 - 1 */bool perf_compensateexectime;
   /*    - 1 */bool ctrl_deadzone;
@@ -207,11 +207,12 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_STATE_ERR_MSK      0x0030
 
 // We could remove these if we define the right values in the XML file: _gen/orthopus_settings.xml (using VESC Tool XML Editor)
+/*
 #define ORTHOPUS_CFG_DEF_ENCODER_OFFSET             0.0
-#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ANGLESTEP   0.25
-#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ENABLE      true // keep enabled or move encoder filtered multiturn angle estimation
-#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_PLOT_ENABLE false
-#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ERROR_GAIN  1
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ANGLESTEP   0.25 //TODO remove
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ENABLE      true //TODO remove // keep enabled or move encoder filtered multiturn angle estimation
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_PLOT_ENABLE false //TODO remove
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ERROR_GAIN  1 //TODO remove
 #define ORTHOPUS_CFG_DEF_ENCODER_MAX_DIFF           5.0
 #define ORTHOPUS_CFG_DEF_LIMITS_ENABLE              false
 #define ORTHOPUS_CFG_DEF_LIMITS_POS_MIN             -90.0
@@ -236,7 +237,7 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_CFG_DEF_CTRL_A                     1.0
 #define ORTHOPUS_CFG_DEF_CTRL_KD                    0.0
 #define ORTHOPUS_CFG_DEF_CTRL_KD_FILTER             1.0
-#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.01
+#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.01*/
 
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"

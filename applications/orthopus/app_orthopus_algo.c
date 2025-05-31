@@ -117,7 +117,7 @@ THD_FUNCTION(orthopus_thread, arg)
       --or_state.turn_now;
     or_state.pos_multiturn_now = pid_pos_now + 360.0*or_state.turn_now;
     pid_pos_last = pid_pos_now;
-    or_state.speed_now = mc_interface_get_rpm()/or_conf.angle_division;
+    or_state.speed_now = mc_interface_get_rpm()/or_conf.angle_division; //TODO: get angle division
 
     /* --------------------------------- Limits --------------------------------- */
     if (or_conf.limits_enable)
