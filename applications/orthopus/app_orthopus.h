@@ -23,9 +23,8 @@ typedef struct
 {
   /* EEPROM Addr - Size */
   /* 00 - 4 */float encoder_offset; 
-  /* 01 - 4 */
-  /* 02 - 1 */
-  /*    - 1 */uint8_t pad[2];
+  /* 01 - 4 */uint32_t signature;
+  /* 02 - 2 */uint8_t pad[2];
   /*    - 1 */bool limits_enable;
   /*    - 1 */uint8_t stream_rate_10;
   /* 03 - 4 */float limits_pos_max;
@@ -33,7 +32,7 @@ typedef struct
   /* 05 - 4 */float angle_division;
   /* 06 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
   /* 07 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
-  /* 08 - 4 */
+  /* 08 - 4 */char joint_name[4];
   /* 09 - 4 */int perf_rate_hz;
   /* 10 - 1 */bool perf_compensateexectime;
   /*    - 1 */bool ctrl_deadzone;
@@ -54,9 +53,7 @@ typedef struct
   /* 22 - 4 */float ctrl_kd;
   /* 23 - 4 */float ctrl_kd_filter;
   /* 24 - 4 */float encoder_max_diff;
-  /* 25 - 4 */char joint_name[4];
-  /* 26 - 4 */uint32_t signature;
-  /* 27 - 4 */float safety_max_q_error;
+  /* 25 - 4 */float safety_max_q_error;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
@@ -206,39 +203,6 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_STATE_ERR_VEL_STEP 0x0020
 #define ORTHOPUS_STATE_ERR_MSK      0x0030
 
-// We could remove these if we define the right values in the XML file: _gen/orthopus_settings.xml (using VESC Tool XML Editor)
-/*
-#define ORTHOPUS_CFG_DEF_ENCODER_OFFSET             0.0
-#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ANGLESTEP   0.25 //TODO remove
-#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ENABLE      true //TODO remove // keep enabled or move encoder filtered multiturn angle estimation
-#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_PLOT_ENABLE false //TODO remove
-#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_ERROR_GAIN  1 //TODO remove
-#define ORTHOPUS_CFG_DEF_ENCODER_MAX_DIFF           5.0
-#define ORTHOPUS_CFG_DEF_LIMITS_ENABLE              false
-#define ORTHOPUS_CFG_DEF_LIMITS_POS_MIN             -90.0
-#define ORTHOPUS_CFG_DEF_LIMITS_POS_MAX             90.0
-#define ORTHOPUS_CFG_DEF_LIMITS_KP                  0.0
-#define ORTHOPUS_CFG_DEF_LIMITS_KD                  5.0
-#define ORTHOPUS_CFG_DEF_LIMITS_POWP                6.0
-#define ORTHOPUS_CFG_DEF_LIMITS_POWD                1.0
-#define ORTHOPUS_CFG_DEF_LIMITS_DAMP_REACHANGLE     7.0
-#define ORTHOPUS_CFG_DEF_LIMITS_REACH_ANGLE         15
-#define ORTHOPUS_CFG_DEF_LIMITS_REACH_SPEED         2
-#define ORTHOPUS_CFG_DEF_ANGLE_DIVISION             700
-#define ORTHOPUS_CFG_DEF_PERF_RATE_HZ               2000
-#define ORTHOPUS_CFG_DEF_PERF_COMPENSATEEXECTIME    false
-#define ORTHOPUS_CFG_DEF_CTRL_DEADZONE              true
-#define ORTHOPUS_CFG_DEF_CTRL_SAMPLE_ADC3           true
-#define ORTHOPUS_CFG_DEF_CTRL_STIFFNESS             0.0
-#define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO            0.0
-#define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN            34.8
-#define ORTHOPUS_CFG_DEF_CTRL_DAMPING               0.0
-#define ORTHOPUS_CFG_DEF_CTRL_KP                    4.0
-#define ORTHOPUS_CFG_DEF_CTRL_A                     1.0
-#define ORTHOPUS_CFG_DEF_CTRL_KD                    0.0
-#define ORTHOPUS_CFG_DEF_CTRL_KD_FILTER             1.0
-#define ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST        0.01*/
-
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"
-#include "_gen/orthopus_conf_default.h" // Should not do anything since we just defined the default values above
+#include "_gen/orthopus_conf_default.h"
