@@ -202,7 +202,8 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_STATE_MODE_MSK     ORTHOPUS_CTRL_MODE_MSK
 #define ORTHOPUS_STATE_ERR_POS_STEP 0x0010
 #define ORTHOPUS_STATE_ERR_VEL_STEP 0x0020
-#define ORTHOPUS_STATE_ERR_MSK      0x0030
+#define ORTHOPUS_STATE_ERR_TRQ_STEP 0x0040
+#define ORTHOPUS_STATE_ERR_MSK      0x00F0
 
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"

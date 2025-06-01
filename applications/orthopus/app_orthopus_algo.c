@@ -171,7 +171,30 @@ THD_FUNCTION(orthopus_thread, arg)
         orthopus_plot_impedance(nsample);
       }
 
-      /* ------------------------------ Safety checks ----------------------------- */
+      /* ------------------------------ Safety / modes switch --------------------- */
+      //compare orthopus_comm.ctrl_prev and orthopus_comm.ctrl to detect changes in word , pos, trq or vel
+      if (orthopus_comm.ctrl != orthopus_comm.ctrl_prev)
+      {
+        if (orthopus_comm.ctrl->word != orthopus_comm.ctrl_prev->word)
+        {
+          //TODO: manage modes switch
+          //clear error if word goes from anything to 0x0000
+          if (orthopus_comm.ctrl->word == 0x0000)
+          {
+            orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error //TODO: manage error clear
+            if (orthopus_comm.ctrl->trq == 0.0)
+              orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_TRQ_STEP; // Clear error
+            if (orthopus_comm.ctrl->vel == 0.0)
+              orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_VEL_STEP; // Clear error
+          }
+        }
+        if (fabs(orthopus_comm.ctrl->trq - orthopus_comm.ctrl_prev->trq) > 10) //TODO: parametrable max torque command step
+        {
+          orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_TRQ_STEP; // Set error flag
+        }
+        orthopus_comm.ctrl_prev->word = orthopus_comm.ctrl->word; //save previous ctrl word
+      } 
+
       if (!orthopus_safety())
       {
         orthopus_estop();
@@ -199,8 +222,12 @@ THD_FUNCTION(orthopus_thread, arg)
                 break;
               }
 
-              mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
-              orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error
+              if (!((orthopus_comm.state->word & ORTHOPUS_STATE_ERR_POS_STEP) == ORTHOPUS_STATE_ERR_POS_STEP))
+              {
+                mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
+              }
+
+              //orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error
               or_state.ctrl_enable = false; //todo: proper management of modes swhitch
               break;
             }
@@ -213,9 +240,18 @@ THD_FUNCTION(orthopus_thread, arg)
             }
             case ORTHOPUS_CTRL_MODE_TRQ :
             {
-              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
-              or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
-              or_state.ctrl_enable = true;
+              // that state word does not contain ORTHOPUS_STATE_ERR_TRQ_STEP
+              if (orthopus_comm.state->word & ORTHOPUS_STATE_ERR_TRQ_STEP)
+              {
+                or_state.ext_torque_setpoint = 0.0;
+                orthopus_estop();
+              }
+              else
+              {
+                orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
+                or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+                or_state.ctrl_enable = true;
+              }
               break;
             }
             case ORTHOPUS_CTRL_MODE_IMP : //Impedance mode: available for later
