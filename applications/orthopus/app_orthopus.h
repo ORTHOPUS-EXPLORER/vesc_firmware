@@ -123,7 +123,8 @@ typedef struct
   volatile orthopus_comm_state_t *state;
   orthopus_comm_control_t ctrl0, 
                           ctrl1;
-  volatile orthopus_comm_control_t*ctrl;
+  volatile orthopus_comm_control_t *ctrl,
+                                    *ctrl_prev;
   volatile bool process_ctrl,
                 process_rx;
 } orthopus_comm_t;
@@ -184,12 +185,12 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_COMM_RT_TRQ_SCALE 50
 #define ORTHOPUS_COMM_AUX_SERVO_SCALE 1000
 
-#define ORTHOPUS_CTRL_MODE_OFF 0x0000
-#define ORTHOPUS_CTRL_MODE_POS 0x0001
-#define ORTHOPUS_CTRL_MODE_VEL 0x0002
-#define ORTHOPUS_CTRL_MODE_TRQ 0x0004
-#define ORTHOPUS_CTRL_MODE_IMP 0x0005
-#define ORTHOPUS_CTRL_MODE_CST 0x0006
+#define ORTHOPUS_CTRL_MODE_OFF 0x0000 //*0000
+#define ORTHOPUS_CTRL_MODE_POS 0x0001 //*0001
+#define ORTHOPUS_CTRL_MODE_VEL 0x0002 //*0010
+#define ORTHOPUS_CTRL_MODE_TRQ 0x0004 //*0100
+#define ORTHOPUS_CTRL_MODE_IMP 0x0007 //*0111
+#define ORTHOPUS_CTRL_MODE_CST 0x000F //*1111 custom mode
 #define ORTHOPUS_CTRL_MODE_MSK 0x000F
 
 #define ORTHOPUS_STATE_MODE_OFF     ORTHOPUS_CTRL_MODE_OFF
