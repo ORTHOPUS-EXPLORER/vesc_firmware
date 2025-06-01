@@ -463,8 +463,8 @@ void orthopus_limits(void)
                                                 //limit to avoid sticking effect
   {
 /* -------------------- Damping before reaching min limit ------------------- */
-    or_state.limit_reaction += -or_conf.limits_kd
-                               *powf(or_state.speed_now,or_conf.limits_powd);
+    or_state.limit_reaction += or_conf.limits_kd
+                               *powf(fabs(or_state.speed_now),or_conf.limits_powd);
   }
   if ( (or_state.ctrl_enable)
        &&
@@ -477,7 +477,7 @@ void orthopus_limits(void)
   {
 /* -------------------- Damping before reaching min limit ------------------- */
     or_state.limit_reaction += -or_conf.limits_kd
-                               *powf(or_state.speed_now,or_conf.limits_powd);
+                               *powf(fabs(or_state.speed_now),or_conf.limits_powd);
   }
 }
 
