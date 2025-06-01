@@ -218,17 +218,19 @@ THD_FUNCTION(orthopus_thread, arg)
               or_state.ctrl_enable = true;
               break;
             }
-            case ORTHOPUS_CTRL_MODE_IMP :
+            case ORTHOPUS_CTRL_MODE_IMP : //Impedance mode: available for later
             {
               orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_IMP; // Set mode
+              or_state.ctrl_enable = true;
               or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
               or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
               or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
               break;
             }
-            case ORTHOPUS_CTRL_MODE_CST :
+            case ORTHOPUS_CTRL_MODE_CST : //Cusom mode: TOODO
             {
               orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_CST; // Set mode
+              or_state.ctrl_enable = false; //TODO: enable custom control mode
               or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
               or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
               or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;

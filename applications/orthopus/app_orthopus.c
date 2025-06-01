@@ -72,6 +72,7 @@ orthopus_comm_t orthopus_comm =
     .word = 0x0,
   },
   .ctrl  = &orthopus_comm.ctrl0,
+  .ctrl_prev = &orthopus_comm.ctrl0,
   .process_ctrl = true,
   .process_rx = true,
 };
@@ -311,6 +312,7 @@ bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       ctrl->trq  = buffer_get_float16(data, ORTHOPUS_COMM_RT_TRQ_SCALE, &ilen); // 6
       ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
       // Activate
+      orthopus_comm.ctrl_prev = orthopus_comm.ctrl;
       orthopus_comm.ctrl = ctrl; // Swap ! //TODO: keep or not?
       return true;
     }
