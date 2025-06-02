@@ -29,7 +29,7 @@ typedef struct
   /*    - 1 */uint8_t stream_rate_10;
   /* 03 - 4 */float limits_pos_max;
   /* 04 - 4 */float limits_pos_min;
-  /* 05 - 4 */float angle_division;
+  /* 05 - 4 */float angle_division; //TODO: remove, unused
   /* 06 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
   /* 07 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
   /* 08 - 4 */char joint_name[4];
