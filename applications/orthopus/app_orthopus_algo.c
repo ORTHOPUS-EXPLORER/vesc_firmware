@@ -2,6 +2,7 @@
 #include "encoder/enc_as504x.h"
 #include "encoder/enc_sincos.h"
 #include "encoder/encoder_cfg.h" // For encoder_cfg_***
+#include "mc_interface.h"
 //#include <math.h> //for atanf function
 
 volatile bool orthopus_thread_stop = true;
@@ -117,7 +118,9 @@ THD_FUNCTION(orthopus_thread, arg)
       --or_state.turn_now;
     or_state.pos_multiturn_now = pid_pos_now + 360.0*or_state.turn_now;
     pid_pos_last = pid_pos_now;
-    or_state.speed_now = mc_interface_get_rpm()/or_conf.angle_division; //TODO: get angle division
+
+    //TODO: speed now computed at higher freq
+    or_state.speed_now = mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div;
 
     /* --------------------------------- Limits --------------------------------- */
     if (or_conf.limits_enable)
@@ -377,6 +380,8 @@ void orthopus_pwm_callback(void)
   //Sample torque sensor ADC at high frequency
   or_state.adc3_filt = or_conf.torque_filter_const*ADC_VOLTS(ADC_IND_EXT3)
                      + (1-or_conf.torque_filter_const)*or_state.adc3_filt;
+  /*or_state.speed_now = or_conf.speed_filter_const*(mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div)
+                     + (1-or_conf.speed_filter_const)*or_state.speed_now;*/
 }
 
 /**
