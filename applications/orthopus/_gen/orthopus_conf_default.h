@@ -153,6 +153,11 @@
 #define ORTHOPUS_CFG_SAFETY_MAX_Q_ERROR 10
 #endif
 
+// Auto clear errors
+#ifndef ORTHOPUS_CFG_DEF_AUTO_CLEAR_ERRORS
+#define ORTHOPUS_CFG_DEF_AUTO_CLEAR_ERRORS 0
+#endif
+
 // ORTHOPUS_CONF_DEFAULT_H_
 #endif
 

@@ -203,6 +203,7 @@ void orthopus_comm_cmd(int argc, const char **argv)
     commands_printf("  Torque      :  % 9.5f",(double)st->trq );
     commands_printf("Stream Rate   : %dHz", ((uint16_t)or_conf.stream_rate_10)*10);
     commands_printf("Simu mode     : %s", or_conf.simu_mode ? "true" : "false");
+    commands_printf("Auto clear errors: %s", or_conf.auto_clear_errors ? "true" : "false");
     //commands_printf("  Temperature :  % 9.5f",(double)st->temp);
     //commands_printf("  Current     :  % 9.5f",(double)st->curr);
   }
