@@ -181,7 +181,7 @@ void orthopus_plot_impedance(int ns);
 
 // Float scaling
 #define ORTHOPUS_COMM_RT_POS_SCALE 50
-#define ORTHOPUS_COMM_RT_VEL_SCALE 1
+#define ORTHOPUS_COMM_RT_VEL_SCALE 50
 #define ORTHOPUS_COMM_RT_TRQ_SCALE 50
 #define ORTHOPUS_COMM_AUX_SERVO_SCALE 1000
 
