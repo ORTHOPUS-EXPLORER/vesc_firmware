@@ -290,12 +290,12 @@ THD_FUNCTION(orthopus_thread, arg)
           or_state.torque_err = or_state.ext_torque_setpoint
                                 - or_state.torque_now;
           //add stiffness action
-          or_state.torque_err -= or_conf.ctrl_stiffness
+          or_state.torque_err += or_conf.ctrl_stiffness
                         *(or_state.ext_pos_setpoint-or_state.pos_multiturn_now);
           // add damping action
-          or_state.torque_err += or_conf.ctrl_damping*or_state.speed_now;
+          or_state.torque_err -= or_conf.ctrl_damping*or_state.speed_now;
           //add limits action
-          or_state.torque_err -= or_state.limit_reaction;
+          or_state.torque_err += or_state.limit_reaction;
 
           //compute torque error derivative
           or_state.d_torque_err = (or_state.torque_err-or_state.torque_err_last)
@@ -307,14 +307,14 @@ THD_FUNCTION(orthopus_thread, arg)
           or_state.torque_err_last = or_state.torque_err;
           if (or_conf.ctrl_deadzone)
           {
-            or_state.ctrl_command = - or_conf.ctrl_kp * or_state.torque_err
-                                    - or_conf.ctrl_kd * or_state.d_torque_err;
+            or_state.ctrl_command = or_conf.ctrl_kp * or_state.torque_err
+                                  + or_conf.ctrl_kd * or_state.d_torque_err;
             or_state.ctrl_command = or_state.ctrl_command
                                   - atanf(or_state.ctrl_command*or_conf.ctrl_a)
                                     / or_conf.ctrl_a;
           } else {
-            or_state.ctrl_command = -or_conf.ctrl_kp * (or_state.torque_err)
-                                    -or_conf.ctrl_kd*or_state.d_torque_err;
+            or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
+                                  + or_conf.ctrl_kd*or_state.d_torque_err;
           }
 
           /* ------------------------ Compute safety indicators ----------------------- */

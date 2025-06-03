@@ -115,7 +115,7 @@
 
 // Control Torque Gain
 #ifndef ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN
-#define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN 34.8
+#define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN -14.7
 #endif
 
 // Control Damping
