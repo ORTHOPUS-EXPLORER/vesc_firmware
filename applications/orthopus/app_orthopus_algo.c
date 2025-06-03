@@ -225,7 +225,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 break;
               }
 
-              if (!((orthopus_comm.state->word & ORTHOPUS_STATE_ERR_POS_STEP) == ORTHOPUS_STATE_ERR_POS_STEP))
+              if (!((orthopus_comm.state->word & ORTHOPUS_STATE_ERR_POS_STEP) == ORTHOPUS_STATE_ERR_POS_STEP) || or_conf.auto_clear_errors)
               {
                 mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
               }

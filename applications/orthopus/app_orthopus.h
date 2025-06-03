@@ -24,7 +24,8 @@ typedef struct
   /* EEPROM Addr - Size */
   /* 00 - 4 */float encoder_offset; 
   /* 01 - 4 */uint32_t signature;
-  /* 02 - 2 */uint8_t pad[2];
+  /* 02 - 1 */uint8_t pad[1];
+  /* 02 - 1 */bool auto_clear_errors;
   /*    - 1 */bool limits_enable;
   /*    - 1 */uint8_t stream_rate_10;
   /* 03 - 4 */float limits_pos_max;
