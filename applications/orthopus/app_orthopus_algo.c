@@ -230,7 +230,10 @@ THD_FUNCTION(orthopus_thread, arg)
                 mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
               }
 
-              //orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error
+              if (or_conf.auto_clear_errors)
+              {
+                orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error
+              }
               or_state.ctrl_enable = false; //todo: proper management of modes swhitch
               break;
             }
