@@ -251,7 +251,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     {
       orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
       st->pos = mc_interface_get_pid_pos_now();
-      st->vel = mc_interface_get_rpm();
+      st->vel = or_state.speed_now;
       st->trq = or_state.torque_now;
     }
     
