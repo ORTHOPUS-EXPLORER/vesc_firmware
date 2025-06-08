@@ -32,6 +32,8 @@ systime_t time_lasterrprint;
 int ninitadc = 0;
 bool or_active_errors[ERR_COUNT] = { false }; //array tracking all errors state
 bool or_error_triggered[ERR_COUNT]; // true = triggered at least once since startup/reset
+bool hold_initialized = false;
+float hold_position = 0.0;
 
 THD_FUNCTION(orthopus_thread, arg) 
 {
@@ -177,28 +179,6 @@ THD_FUNCTION(orthopus_thread, arg)
       }
 
       /* ------------------------------ Safety / modes switch --------------------- */
-      //compare orthopus_comm.ctrl_prev and orthopus_comm.ctrl to detect changes in word , pos, trq or vel
-      if (orthopus_comm.ctrl != orthopus_comm.ctrl_prev)
-      {
-        if (orthopus_comm.ctrl->word != orthopus_comm.ctrl_prev->word)
-        {
-          //TODO: manage modes switch
-          //clear error if word goes from anything to 0x0000
-          if (orthopus_comm.ctrl->word == 0x0000)
-          {
-            orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error //TODO: manage error clear
-            if (orthopus_comm.ctrl->trq == 0.0)
-              orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_TRQ_STEP; // Clear error
-            if (orthopus_comm.ctrl->vel == 0.0)
-              orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_VEL_STEP; // Clear error
-          }
-        }
-        if (fabs(orthopus_comm.ctrl->trq - orthopus_comm.ctrl_prev->trq) > 10) //TODO: parametrable max torque command step
-        {
-          orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_TRQ_STEP; // Set error flag
-        }
-        orthopus_comm.ctrl_prev->word = orthopus_comm.ctrl->word; //save previous ctrl word
-      } 
 
       if (!orthopus_safety())
       {
@@ -219,10 +199,12 @@ THD_FUNCTION(orthopus_thread, arg)
           {
             case ORTHOPUS_SAFETY_INIT:
             {
+              hold_initialized = false;
               break;
             }
             case ORTHOPUS_SAFETY_IDLE:
             {
+              hold_initialized = false;
               break;
             }
             case ORTHOPUS_SAFETY_ENABLE:
@@ -297,22 +279,49 @@ THD_FUNCTION(orthopus_thread, arg)
                 default:
                   break;
               }
+              hold_initialized = false;
               break;
             }
             case ORTHOPUS_SAFETY_HOLD:
             {
+              // Initialize hold by getting the current position as hold position
+              if (!hold_initialized)
+              {
+                hold_position = orthopus_comm.state->pos;
+                hold_initialized = true;
+              }
+
+              // compute the actual error
+              float error = fabs(fmod((hold_position - orthopus_comm.state->pos + 540), 360) - 180);
+
+              // check the position error
+              if (error >= or_conf.safety_max_q_error)
+              {
+                orthopus_set_safety_mode(ORTHOPUS_SAFETY_BRAKE);
+              }
+              else
+              {
+                mc_interface_set_pid_pos(hold_position);
+              }
+
               break;
             }
             case ORTHOPUS_SAFETY_BRAKE:
             {
+              mc_interface_set_brake_current(3); //brake at 3 amps - TODO: tunable
+              hold_initialized = false;
               break;
             }
             case ORTHOPUS_SAFETY_ESTOP:
             {
+              hold_initialized = false;
               break;
             }
             default:
+            {
+              hold_initialized = false;
               break; // trigger hold if unknown ?
+            }
           }
         }
 
@@ -449,22 +458,53 @@ void orthopus_estop(void)
  */
 bool orthopus_safety(void)
 {
-  //check indicators
-  if (or_state.nid1 > 50 ) {
-    commands_printf("estop: too many identical !=0 ctrl_command detected");
-    or_state.nid1 = 0;
-    return false;
-  } 
-  /* else if (fabsf(or_state.enc_pos_filter_multiturn-or_state.pos_multiturn_now) //TODO debug: o_offset encoder causes vesc reboot when activated
-                                                     > or_conf.encoder_max_diff)
+  // ------------------ new command received: ------------------------//
+
+  //compare orthopus_comm.ctrl_prev and orthopus_comm.ctrl to detect changes in word , pos, trq or vel
+  if (orthopus_comm.ctrl != orthopus_comm.ctrl_prev)
   {
-    if (ST2S(chVTGetSystemTimeX()-time_lasterrprint) > 2) 
-    { //Print an error message every 2 seconds
-      time_lasterrprint = chVTGetSystemTimeX();
-      commands_printf("estop: Error: unconsistent sincos/encoder position");
+    if (orthopus_comm.ctrl->word != orthopus_comm.ctrl_prev->word) //detect change of control word
+    {
+      //TODO: manage modes switch
+      //clear error if word goes from anything to 0x0000
+      if (orthopus_comm.ctrl->word == ORTHOPUS_STATE_MODE_OFF)
+      {
+        clear_error(ERR_POS_STEP); // Clear error //TODO: manage error clear
+        if (orthopus_comm.ctrl->trq == 0.0)
+          clear_error(ERR_TRQ_STEP); // Clear error
+        if (orthopus_comm.ctrl->vel == 0.0)
+          clear_error(ERR_VEL_STEP); // Clear error
+        
+        //setting control word OFF resets the safety mode to ENABLE if not critical
+        if ((orthopus_comm.state->word & ORTHOPUS_SAFETY_MSK) <= ORTHOPUS_SAFETY_HOLD)
+        {
+          orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+        }
+      }
     }
-    return false;
-  } */ 
+    
+    if (fabs(orthopus_comm.ctrl->trq - orthopus_comm.ctrl_prev->trq) > 5) //TODO: parametrable max torque command step
+    {
+      raise_error(ERR_TRQ_STEP); // Set error flag
+    }
+
+    if (fabs(orthopus_comm.ctrl->vel - orthopus_comm.ctrl_prev->vel) > 5)
+    {
+      raise_error(ERR_VEL_STEP); // Set error flag
+    }
+
+    orthopus_comm.ctrl_prev->word = orthopus_comm.ctrl->word; //save previous ctrl word
+  } 
+
+  // ------------- check other indicators ----------------//
+  if (or_state.nid1 > 50 ) {
+    raise_error(ERR_SAME_CTRL_OUT);
+    or_state.nid1 = 0;
+  } 
+
+  // -------------- sync errors in state word ----------------- //
+  orthopus_sync_error_flags();
+
   return true;
 }
 
@@ -658,14 +698,19 @@ void orthopus_plot_impedance(int ns)
 or_error_level_t get_error_severity(or_error_t err) {
   switch (err) {
     case ERR_POS_STEP:
+      return ERR_LEVEL_HOLD;
+    
     case ERR_TRQ_STEP:
       return ERR_LEVEL_HOLD;
 
     case ERR_VEL_STEP:
-      return ERR_LEVEL_BRAKE;
+      return ERR_LEVEL_HOLD;
+
+    case ERR_SAME_CTRL_OUT:
+      return ERR_LEVEL_HOLD;
 
     default:
-      return ERR_LEVEL_WARNING;
+      return ERR_LEVEL_ESTOP;
   }
 }
 
@@ -764,4 +809,43 @@ uint16_t evaluate_safety_state(void) {
   }
 
   return new_safety_state;
+}
+
+/**
+ * @brief Set the current safety mode in the orthopus state word.
+ *
+ * This function clears the existing safety mode bits and sets the new mode
+ * using the defined ORTHOPUS_SAFETY_MSK. It ensures mutually exclusive safety states.
+ *
+ * @param mode  The new safety mode to apply (e.g. ORTHOPUS_SAFETY_ENABLE).
+ */
+void orthopus_set_safety_mode(uint32_t mode)
+{
+  orthopus_comm.state->word &= ~ORTHOPUS_SAFETY_MSK; // Clear current safety bits
+  orthopus_comm.state->word |= mode; // Set new safety mode
+}
+
+/**
+ * @brief Synchronize active error flags with the orthopus state word.
+ *
+ * This function sets or clears error bits in orthopus_comm.state->word
+ * based on the content of or_active_errors[]. It ensures that the state
+ * word reflects the current error status precisely.
+ */
+void orthopus_sync_error_flags(void)
+{
+  // Clear all error bits managed here
+  orthopus_comm.state->word &= ~(ORTHOPUS_STATE_ERR_POS_STEP |
+                                 ORTHOPUS_STATE_ERR_VEL_STEP |
+                                 ORTHOPUS_STATE_ERR_TRQ_STEP);
+
+  // Set error bits based on active error status
+  if (or_active_errors[ERR_POS_STEP])
+    orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_POS_STEP;
+
+  if (or_active_errors[ERR_VEL_STEP])
+    orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_VEL_STEP;
+
+  if (or_active_errors[ERR_TRQ_STEP])
+    orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_TRQ_STEP;
 }

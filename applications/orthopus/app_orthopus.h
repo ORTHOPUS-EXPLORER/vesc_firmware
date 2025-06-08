@@ -147,6 +147,7 @@ typedef enum {
   ERR_POS_STEP,
   ERR_VEL_STEP,
   ERR_TRQ_STEP,
+  ERR_SAME_CTRL_OUT,
 
   // Sensor/Init
   //ORTHOPUS_ERR_ENCODER_TIMEOUT,
@@ -195,6 +196,8 @@ or_error_level_t compute_max_error_level(void);
 void raise_error(or_error_t err);
 void clear_error(or_error_t err);
 uint16_t evaluate_safety_state(void);
+void orthopus_set_safety_mode(uint32_t mode);
+void orthopus_sync_error_flags(void);
 
 /**
  * @brief   System ticks to microseconds.
