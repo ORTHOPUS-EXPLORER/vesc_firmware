@@ -206,6 +206,15 @@ void orthopus_plot_impedance(int ns);
 #define ORTHOPUS_STATE_ERR_TRQ_STEP 0x0040
 #define ORTHOPUS_STATE_ERR_MSK      0x00F0
 
+#define ORTHOPUS_SAFETY_INIT    0x0000
+#define ORTHOPUS_SAFETY_IDLE    0x0100
+#define ORTHOPUS_SAFETY_ENABLE  0x0200
+#define ORTHOPUS_SAFETY_HOLD    0x0300
+#define ORTHOPUS_SAFETY_BRAKE   0x0400
+#define ORTHOPUS_SAFETY_ESTOP   0x0500
+
+#define ORTHOPUS_SAFETY_MSK     0x0F00
+
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"
 #include "_gen/orthopus_conf_default.h"

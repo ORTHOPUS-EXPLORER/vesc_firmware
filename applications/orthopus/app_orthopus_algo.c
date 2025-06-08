@@ -208,74 +208,85 @@ THD_FUNCTION(orthopus_thread, arg)
         /*                              Main control loop                             */
         /* -------------------------------------------------------------------------- */
 
+        //force safety in ENABLE
+        orthopus_comm.state->word = (orthopus_comm.state->word &= ~ORTHOPUS_SAFETY_MSK) | ORTHOPUS_SAFETY_ENABLE;
         if(orthopus_comm.process_ctrl && !or_conf.simu_mode)
         {
-          orthopus_comm.state->word &= ~ORTHOPUS_STATE_MODE_MSK;                       // Clear mode
-          // Modes are currently exclusive. Refactor this switch for mode fine-grained mode control
-          switch(orthopus_comm.ctrl->word & ORTHOPUS_CTRL_MODE_MSK) 
+          switch(orthopus_comm.state->word & ORTHOPUS_SAFETY_MSK)
           {
-            case ORTHOPUS_CTRL_MODE_POS:
+            case ORTHOPUS_SAFETY_ENABLE:
             {
-              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_POS; // Set mode 
+              orthopus_comm.state->word &= ~ORTHOPUS_STATE_MODE_MSK;                       // Clear mode
+              // Modes are currently exclusive. Refactor this switch for mode fine-grained mode control
+              switch(orthopus_comm.ctrl->word & ORTHOPUS_CTRL_MODE_MSK) 
+              {
+                case ORTHOPUS_CTRL_MODE_POS:
+                {
+                  orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_POS; // Set mode 
 
-              // TODO: tunable max position error
-              if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) >= (double)or_conf.safety_max_q_error)
-              {
-                orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_POS_STEP; // Set error flag
-                break;
-              }
+                  // TODO: tunable max position error
+                  if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) >= (double)or_conf.safety_max_q_error)
+                  {
+                    orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_POS_STEP; // Set error flag
+                    break;
+                  }
 
-              if (!((orthopus_comm.state->word & ORTHOPUS_STATE_ERR_POS_STEP) == ORTHOPUS_STATE_ERR_POS_STEP) || or_conf.auto_clear_errors)
-              {
-                mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
-              }
+                  if (!((orthopus_comm.state->word & ORTHOPUS_STATE_ERR_POS_STEP) == ORTHOPUS_STATE_ERR_POS_STEP) || or_conf.auto_clear_errors)
+                  {
+                    mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
+                  }
 
-              if (or_conf.auto_clear_errors)
-              {
-                orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error
+                  if (or_conf.auto_clear_errors)
+                  {
+                    orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error
+                  }
+                  or_state.ctrl_enable = false; //todo: proper management of modes swhitch
+                  break;
+                }
+                case ORTHOPUS_CTRL_MODE_VEL:
+                {
+                  orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_VEL; // Set mode
+                  mc_interface_set_pid_speed(orthopus_comm.ctrl->vel);
+                  or_state.ctrl_enable = false; //todo: proper management of modes swhitch
+                  break;
+                }
+                case ORTHOPUS_CTRL_MODE_TRQ :
+                {
+                  // that state word does not contain ORTHOPUS_STATE_ERR_TRQ_STEP
+                  if (orthopus_comm.state->word & ORTHOPUS_STATE_ERR_TRQ_STEP)
+                  {
+                    or_state.ext_torque_setpoint = 0.0;
+                    orthopus_estop();
+                  }
+                  else
+                  {
+                    orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
+                    or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+                    or_state.ctrl_enable = true;
+                  }
+                  break;
+                }
+                case ORTHOPUS_CTRL_MODE_IMP : //Impedance mode: available for later
+                {
+                  orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_IMP; // Set mode
+                  or_state.ctrl_enable = true;
+                  or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
+                  or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
+                  or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+                  break;
+                }
+                case ORTHOPUS_CTRL_MODE_CST : //Cusom mode: TOODO
+                {
+                  orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_CST; // Set mode
+                  or_state.ctrl_enable = false; //TODO: enable custom control mode
+                  or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
+                  or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
+                  or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+                  break;
+                }
+                default:
+                  break;
               }
-              or_state.ctrl_enable = false; //todo: proper management of modes swhitch
-              break;
-            }
-            case ORTHOPUS_CTRL_MODE_VEL:
-            {
-              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_VEL; // Set mode
-              mc_interface_set_pid_speed(orthopus_comm.ctrl->vel);
-              or_state.ctrl_enable = false; //todo: proper management of modes swhitch
-              break;
-            }
-            case ORTHOPUS_CTRL_MODE_TRQ :
-            {
-              // that state word does not contain ORTHOPUS_STATE_ERR_TRQ_STEP
-              if (orthopus_comm.state->word & ORTHOPUS_STATE_ERR_TRQ_STEP)
-              {
-                or_state.ext_torque_setpoint = 0.0;
-                orthopus_estop();
-              }
-              else
-              {
-                orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
-                or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
-                or_state.ctrl_enable = true;
-              }
-              break;
-            }
-            case ORTHOPUS_CTRL_MODE_IMP : //Impedance mode: available for later
-            {
-              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_IMP; // Set mode
-              or_state.ctrl_enable = true;
-              or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
-              or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
-              or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
-              break;
-            }
-            case ORTHOPUS_CTRL_MODE_CST : //Cusom mode: TOODO
-            {
-              orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_CST; // Set mode
-              or_state.ctrl_enable = false; //TODO: enable custom control mode
-              or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
-              or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
-              or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
               break;
             }
             default:
