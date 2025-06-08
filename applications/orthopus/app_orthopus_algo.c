@@ -256,7 +256,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 case ORTHOPUS_CTRL_MODE_VEL:
                 {
                   orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_VEL; // Set mode
-                  mc_interface_set_pid_speed(orthopus_comm.ctrl->vel);
+                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(orthopus_comm.ctrl->vel)/10); //TODO: check why factor 10
                   or_state.ctrl_enable = false; //todo: proper management of modes swhitch
                   break;
                 }
