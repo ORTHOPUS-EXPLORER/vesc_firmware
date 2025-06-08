@@ -6,10 +6,11 @@ void orthopus_pos_cmd(int argc, const char **argv);
 void orthopus_offset_cmd(int argc, const char **argv);
 void orthopus_config_cmd(int argc, const char **argv);
 void orthopus_limits_cmd(int argc, const char **argv);
-void orthopus_perf_cmd(int argc, const char **argv);
+//void orthopus_perf_cmd(int argc, const char **argv);
 void orthopus_control_cmd(int argc, const char **argv);
 void orthopus_comm_cmd(int argc, const char **argv);
 void orthopus_can_cmd(int argc, const char **argv);
+void orthopus_safety_cmd(int argc, const char **argv);
 
 void orthopus_cmd_init(void)
 {
@@ -48,12 +49,13 @@ void orthopus_cmd_init(void)
     orthopus_limits_cmd
   );
 
+  /*
   terminal_register_command_callback(
     "o_perf",
     "[Orthopus] Performance stats",
     "[-/void/eplot]",
     orthopus_perf_cmd
-  );
+  );*/
 
   terminal_register_command_callback(
     "o_control",
@@ -76,6 +78,13 @@ void orthopus_cmd_init(void)
     "[tx_eid/tx_sid/tx_b]",
     orthopus_can_cmd
   );
+
+  terminal_register_command_callback(
+    "o_safety",
+    "[Orthopus] Safety monitor/debug/test commands",
+    "[errors/]",
+    orthopus_safety_cmd
+  );
 }
 
 void orthopus_cmd_deinit(void)
@@ -85,9 +94,10 @@ void orthopus_cmd_deinit(void)
   terminal_unregister_callback(orthopus_pos_cmd);
   //terminal_unregister_callback(orthopus_filter_cmd);
   terminal_unregister_callback(orthopus_limits_cmd);
-  terminal_unregister_callback(orthopus_perf_cmd);
+  //terminal_unregister_callback(orthopus_perf_cmd);
   terminal_unregister_callback(orthopus_comm_cmd);
   terminal_unregister_callback(orthopus_can_cmd);
+  terminal_unregister_callback(orthopus_safety_cmd);
 }
 
 
@@ -519,6 +529,7 @@ void orthopus_limits_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                    PERF                                    */
 /* -------------------------------------------------------------------------- */
+/*
 void orthopus_perf_cmd(int argc, const char **argv)
 {
   if(argc == 1)
@@ -551,6 +562,7 @@ void orthopus_perf_cmd(int argc, const char **argv)
     }
   }
 }
+*/
 
 /* -------------------------------------------------------------------------- */
 /*                                   CONTROL                                  */
@@ -720,5 +732,57 @@ void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("turn encoder:        % 5d",(int)or_state.enc_turn                   );
   } else {
     commands_printf("Invalid arguments.");
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   SAFETY                                   */
+/* -------------------------------------------------------------------------- */
+void orthopus_safety_cmd(int argc, const char **argv)
+{
+  if(argc == 1)
+  {
+    commands_printf("Safety commands - TODO");
+  } else if (argc == 2){
+    if(!strcmp(argv[1],"errors"))
+    {
+      commands_printf("Active errors:");
+
+      if (or_active_errors[ORTHOPUS_ERR_NONE]) {
+          commands_printf(" - none");
+      }
+      if (or_active_errors[ERR_POS_STEP]) {
+          commands_printf(" - Pos stp");
+      }
+      if (or_active_errors[ERR_VEL_STEP]) {
+          commands_printf(" - Vel stp");
+      }
+      if (or_active_errors[ERR_TRQ_STEP]) {
+          commands_printf(" - Trq stp");
+      }
+      if (or_active_errors[ERR_SAME_CTRL_OUT]) {
+          commands_printf(" - Same ctrlout");
+      }
+      
+      commands_printf("Registered errors since startup:");
+
+      if (or_error_triggered[ORTHOPUS_ERR_NONE]) {
+          commands_printf(" - none");
+      }
+      if (or_error_triggered[ERR_POS_STEP]) {
+          commands_printf(" - Pos stp");
+      }
+      if (or_error_triggered[ERR_VEL_STEP]) {
+          commands_printf(" - Vel stp");
+      }
+      if (or_error_triggered[ERR_TRQ_STEP]) {
+          commands_printf(" - Trq stp");
+      }
+
+
+
+    } else {
+      commands_printf("Invalid arguments.");
+    }
   }
 }

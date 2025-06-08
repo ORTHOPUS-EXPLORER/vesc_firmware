@@ -167,6 +167,7 @@ typedef enum {
 
 extern orthopus_comm_t orthopus_comm;
 extern bool or_active_errors[ERR_COUNT];
+extern bool or_error_triggered[ERR_COUNT];
 
 // Utils
 bool orthopus_config_load(orthopus_config_t* cfg);
