@@ -302,6 +302,17 @@ THD_FUNCTION(orthopus_thread, arg)
               else
               {
                 mc_interface_set_pid_pos(hold_position);
+
+                // if error was previously set and auto_clear is active,
+                // check if current position setpoint error is acceptable
+                float pos_error = fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540), 360) - 180);
+
+                if (or_conf.auto_clear_errors && or_active_errors[ERR_POS_STEP] &&
+                    pos_error < 0.1*or_conf.safety_max_q_error) //reset if auto_reset AND error is less than 10% the max allowed value. TODO: better definition of the treshold?
+                {
+                  clear_error(ERR_POS_STEP);
+                  orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+                }
               }
 
               break;
