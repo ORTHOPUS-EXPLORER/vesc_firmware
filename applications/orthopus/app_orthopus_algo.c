@@ -191,7 +191,7 @@ THD_FUNCTION(orthopus_thread, arg)
         /*                              Main control loop                             */
         /* -------------------------------------------------------------------------- */
 
-        orthopus_comm.state->word = (orthopus_comm.state->word & ~ORTHOPUS_SAFETY_MSK) | evaluate_safety_state();
+        orthopus_set_safety_mode(evaluate_safety_state());
 
         if(orthopus_comm.process_ctrl && !or_conf.simu_mode) //TODO: deal with those cases properly
         {
@@ -276,6 +276,10 @@ THD_FUNCTION(orthopus_thread, arg)
                   or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
                   or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
                   break;
+                }
+                case ORTHOPUS_CTRL_MODE_OFF:
+                {
+                  mc_interface_release_motor();
                 }
                 default:
                   break;
