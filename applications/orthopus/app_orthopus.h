@@ -130,7 +130,42 @@ typedef struct
                 process_rx;
 } orthopus_comm_t;
 
+/** @brief Error severity levels */
+typedef enum {
+  ERR_LEVEL_NONE   = 0,
+  ERR_LEVEL_WARNING,     // Can continue
+  ERR_LEVEL_HOLD,        // Needs HOLD
+  ERR_LEVEL_BRAKE,       // Needs BRAKE
+  ERR_LEVEL_ESTOP,        // Must stop immediately
+} or_error_level_t;
+
+/** @brief Internal error types */
+typedef enum {
+  ORTHOPUS_ERR_NONE = 0,
+
+  // Control-related
+  ERR_POS_STEP,
+  ERR_VEL_STEP,
+  ERR_TRQ_STEP,
+
+  // Sensor/Init
+  //ORTHOPUS_ERR_ENCODER_TIMEOUT,
+  //ORTHOPUS_ERR_ADC_INIT_FAIL,
+
+  // Communication
+  //ORTHOPUS_ERR_COM_LOSS,
+
+  // Safety
+  //ORTHOPUS_ERR_TEMP_OVERHEAT,
+  //ORTHOPUS_ERR_CURRENT_SPIKE,
+
+  // Add others...
+
+  ERR_COUNT // Always last
+} or_error_t;
+
 extern orthopus_comm_t orthopus_comm;
+extern bool or_active_errors[ERR_COUNT];
 
 // Utils
 bool orthopus_config_load(orthopus_config_t* cfg);
@@ -155,6 +190,10 @@ void orthopus_limits(void);
 void orthopus_plot_encoder_filtering(int ns);
 void orthopus_plot_cycletime(int ns);
 void orthopus_plot_impedance(int ns);
+or_error_level_t get_error_severity(or_error_t err);
+or_error_level_t compute_max_error_level(void);
+void raise_error(or_error_t err);
+void clear_error(or_error_t err);
 
 /**
  * @brief   System ticks to microseconds.

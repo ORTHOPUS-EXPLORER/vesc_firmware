@@ -30,6 +30,7 @@ float pid_pos_last = 0;
 systime_t time_now, time_last, time_start, time_end;
 systime_t time_lasterrprint;
 int ninitadc = 0;
+bool or_active_errors[ERR_COUNT] = { false }; //array tracking all errors state
 
 THD_FUNCTION(orthopus_thread, arg) 
 {
@@ -200,7 +201,8 @@ THD_FUNCTION(orthopus_thread, arg)
 
       if (!orthopus_safety())
       {
-        orthopus_estop();
+        //if orthopus_safety failed to handle modes, fallback to ESTOP (should never happend)
+        orthopus_comm.state->word = (orthopus_comm.state->word &= ~ORTHOPUS_SAFETY_MSK) | ORTHOPUS_SAFETY_ESTOP;
       } 
       else 
       {
@@ -442,7 +444,7 @@ void orthopus_estop(void)
  * void
  *
  * @return
- * bool (true: ok, false: not OK)
+ * bool (true: modes set correctly, false: failed to set modes)
  */
 bool orthopus_safety(void)
 {
@@ -644,4 +646,63 @@ void orthopus_plot_impedance(int ns)
   commands_send_plot_points(ns, or_state.torque_now*1.0);
   commands_plot_set_graph(2);
   commands_send_plot_points(ns, or_state.ctrl_command*1.0);
+}
+
+/**
+ * @brief Get the severity level of a specific error.
+ * 
+ * @param err The error identifier.
+ * @return The severity level of the error.
+ */
+or_error_level_t get_error_severity(or_error_t err) {
+  switch (err) {
+    case ERR_POS_STEP:
+    case ERR_TRQ_STEP:
+      return ERR_LEVEL_HOLD;
+
+    case ERR_VEL_STEP:
+      return ERR_LEVEL_BRAKE;
+
+    default:
+      return ERR_LEVEL_WARNING;
+  }
+}
+
+/**
+ * @brief Compute the maximum severity level among all active errors.
+ * 
+ * @return The highest severity level of any currently active error.
+ */
+or_error_level_t compute_max_error_level(void) {
+  or_error_level_t max_level = ERR_LEVEL_NONE;
+
+  for (int i = 0; i < ERR_COUNT; ++i) {
+    if (or_active_errors[i]) {
+      or_error_level_t level = get_error_severity((or_error_t)i);
+      if (level > max_level)
+        max_level = level;
+    }
+  }
+
+  return max_level;
+}
+
+/**
+ * @brief Set an error as active.
+ * 
+ * @param err The error to raise.
+ */
+void raise_error(or_error_t err) {
+  if (err < ERR_COUNT)
+    or_active_errors[err] = true;
+}
+
+/**
+ * @brief Clear an active error.
+ * 
+ * @param err The error to clear.
+ */
+void clear_error(or_error_t err) {
+  if (err < ERR_COUNT)
+    or_active_errors[err] = false;
 }
