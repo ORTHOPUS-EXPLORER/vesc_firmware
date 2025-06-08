@@ -31,7 +31,7 @@ systime_t time_now, time_last, time_start, time_end;
 systime_t time_lasterrprint;
 int ninitadc = 0;
 bool or_active_errors[ERR_COUNT] = { false }; //array tracking all errors state
-bool or_error_triggered[ERR_COUNT]; // true = triggered at least once since startup/reset
+bool or_error_triggered[ERR_COUNT] = { false }; // true = triggered at least once since startup/reset
 bool hold_initialized = false;
 float hold_position = 0.0;
 
