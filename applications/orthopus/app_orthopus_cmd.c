@@ -6,7 +6,7 @@ void orthopus_pos_cmd(int argc, const char **argv);
 void orthopus_offset_cmd(int argc, const char **argv);
 void orthopus_config_cmd(int argc, const char **argv);
 void orthopus_limits_cmd(int argc, const char **argv);
-//void orthopus_perf_cmd(int argc, const char **argv);
+void orthopus_perf_cmd(int argc, const char **argv);
 void orthopus_control_cmd(int argc, const char **argv);
 void orthopus_comm_cmd(int argc, const char **argv);
 void orthopus_can_cmd(int argc, const char **argv);
@@ -49,13 +49,13 @@ void orthopus_cmd_init(void)
     orthopus_limits_cmd
   );
 
-  /*
+  
   terminal_register_command_callback(
     "o_perf",
     "[Orthopus] Performance stats",
     "[-/void/eplot]",
     orthopus_perf_cmd
-  );*/
+  );
 
   terminal_register_command_callback(
     "o_control",
@@ -94,7 +94,7 @@ void orthopus_cmd_deinit(void)
   terminal_unregister_callback(orthopus_pos_cmd);
   //terminal_unregister_callback(orthopus_filter_cmd);
   terminal_unregister_callback(orthopus_limits_cmd);
-  //terminal_unregister_callback(orthopus_perf_cmd);
+  terminal_unregister_callback(orthopus_perf_cmd);
   terminal_unregister_callback(orthopus_comm_cmd);
   terminal_unregister_callback(orthopus_can_cmd);
   terminal_unregister_callback(orthopus_safety_cmd);
@@ -529,7 +529,6 @@ void orthopus_limits_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                    PERF                                    */
 /* -------------------------------------------------------------------------- */
-/*
 void orthopus_perf_cmd(int argc, const char **argv)
 {
   if(argc == 1)
@@ -562,7 +561,7 @@ void orthopus_perf_cmd(int argc, const char **argv)
     }
   }
 }
-*/
+
 
 /* -------------------------------------------------------------------------- */
 /*                                   CONTROL                                  */
@@ -738,51 +737,39 @@ void orthopus_control_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                   SAFETY                                   */
 /* -------------------------------------------------------------------------- */
+
+const char* orthopus_error_messages[ERR_COUNT] = {
+    "none",
+    "Pos stp",
+    "Vel stp",
+    "Trq stp",
+    "Same ctrlout",
+    // Add corresponding error messages here
+};
+
 void orthopus_safety_cmd(int argc, const char **argv)
 {
-  if(argc == 1)
-  {
-    commands_printf("Safety commands - TODO");
-  } else if (argc == 2){
-    if(!strcmp(argv[1],"errors"))
-    {
-      commands_printf("Active errors:");
+    if (argc == 1) {
+        commands_printf("Safety commands - TODO");
+    } else if (argc == 2) {
+        if (!strcmp(argv[1], "errors")) {
+            commands_printf("Active errors:");
 
-      if (or_active_errors[ORTHOPUS_ERR_NONE]) {
-          commands_printf(" - none");
-      }
-      if (or_active_errors[ERR_POS_STEP]) {
-          commands_printf(" - Pos stp");
-      }
-      if (or_active_errors[ERR_VEL_STEP]) {
-          commands_printf(" - Vel stp");
-      }
-      if (or_active_errors[ERR_TRQ_STEP]) {
-          commands_printf(" - Trq stp");
-      }
-      if (or_active_errors[ERR_SAME_CTRL_OUT]) {
-          commands_printf(" - Same ctrlout");
-      }
-      
-      commands_printf("Registered errors since startup:");
+            for (int i = 0; i < ERR_COUNT; i++) {
+                if (or_active_errors[i]) {
+                    commands_printf(" - %s", orthopus_error_messages[i]);
+                }
+            }
 
-      if (or_error_triggered[ORTHOPUS_ERR_NONE]) {
-          commands_printf(" - none");
-      }
-      if (or_error_triggered[ERR_POS_STEP]) {
-          commands_printf(" - Pos stp");
-      }
-      if (or_error_triggered[ERR_VEL_STEP]) {
-          commands_printf(" - Vel stp");
-      }
-      if (or_error_triggered[ERR_TRQ_STEP]) {
-          commands_printf(" - Trq stp");
-      }
+            commands_printf("Registered errors since startup:");
 
-
-
-    } else {
-      commands_printf("Invalid arguments.");
+            for (int i = 0; i < ERR_COUNT; i++) {
+                if (or_error_triggered[i]) {
+                    commands_printf(" - %s", orthopus_error_messages[i]);
+                }
+            }
+        } else {
+            commands_printf("Invalid arguments.");
+        }
     }
-  }
 }
