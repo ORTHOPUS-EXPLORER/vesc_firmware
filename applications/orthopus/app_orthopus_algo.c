@@ -214,6 +214,14 @@ THD_FUNCTION(orthopus_thread, arg)
         {
           switch(orthopus_comm.state->word & ORTHOPUS_SAFETY_MSK)
           {
+            case ORTHOPUS_SAFETY_INIT:
+            {
+              break;
+            }
+            case ORTHOPUS_SAFETY_IDLE:
+            {
+              break;
+            }
             case ORTHOPUS_SAFETY_ENABLE:
             {
               orthopus_comm.state->word &= ~ORTHOPUS_STATE_MODE_MSK;                       // Clear mode
@@ -287,10 +295,21 @@ THD_FUNCTION(orthopus_thread, arg)
                 default:
                   break;
               }
+            }
+            case ORTHOPUS_SAFETY_HOLD:
+            {
+              break;
+            }
+            case ORTHOPUS_SAFETY_BRAKE:
+            {
+              break;
+            }
+            case ORTHOPUS_SAFETY_ESTOP:
+            {
               break;
             }
             default:
-              break;
+              break; // trigger hold if unknown ?
           }
         }
 
