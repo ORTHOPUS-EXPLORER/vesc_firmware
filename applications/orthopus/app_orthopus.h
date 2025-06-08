@@ -194,6 +194,7 @@ or_error_level_t get_error_severity(or_error_t err);
 or_error_level_t compute_max_error_level(void);
 void raise_error(or_error_t err);
 void clear_error(or_error_t err);
+uint16_t evaluate_safety_state(void);
 
 /**
  * @brief   System ticks to microseconds.

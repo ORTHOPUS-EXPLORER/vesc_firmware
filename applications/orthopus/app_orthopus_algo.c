@@ -31,6 +31,7 @@ systime_t time_now, time_last, time_start, time_end;
 systime_t time_lasterrprint;
 int ninitadc = 0;
 bool or_active_errors[ERR_COUNT] = { false }; //array tracking all errors state
+bool or_error_triggered[ERR_COUNT]; // true = triggered at least once since startup/reset
 
 THD_FUNCTION(orthopus_thread, arg) 
 {
@@ -210,9 +211,9 @@ THD_FUNCTION(orthopus_thread, arg)
         /*                              Main control loop                             */
         /* -------------------------------------------------------------------------- */
 
-        //force safety in ENABLE
-        orthopus_comm.state->word = (orthopus_comm.state->word &= ~ORTHOPUS_SAFETY_MSK) | ORTHOPUS_SAFETY_ENABLE;
-        if(orthopus_comm.process_ctrl && !or_conf.simu_mode)
+        orthopus_comm.state->word = (orthopus_comm.state->word & ~ORTHOPUS_SAFETY_MSK) | evaluate_safety_state();
+
+        if(orthopus_comm.process_ctrl && !or_conf.simu_mode) //TODO: deal with those cases properly
         {
           switch(orthopus_comm.state->word & ORTHOPUS_SAFETY_MSK)
           {
@@ -297,6 +298,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 default:
                   break;
               }
+              break;
             }
             case ORTHOPUS_SAFETY_HOLD:
             {
@@ -694,7 +696,10 @@ or_error_level_t compute_max_error_level(void) {
  */
 void raise_error(or_error_t err) {
   if (err < ERR_COUNT)
-    or_active_errors[err] = true;
+    {
+      or_active_errors[err] = true;
+      or_error_triggered[err] = true; // permanent trace
+    }
 }
 
 /**
@@ -705,4 +710,59 @@ void raise_error(or_error_t err) {
 void clear_error(or_error_t err) {
   if (err < ERR_COUNT)
     or_active_errors[err] = false;
+}
+
+
+/**
+ * @brief Evaluates the appropriate safety level based on current errors.
+ *        Only escalation is allowed (no automatic downgrade).
+ * 
+ * @return The new safety state (e.g. ORTHOPUS_SAFETY_HOLD)
+ */
+uint16_t evaluate_safety_state(void) {
+  uint16_t current_safety_state = orthopus_comm.state->word & ORTHOPUS_SAFETY_MSK;
+
+  // Automatic INIT → IDLE
+  if (current_safety_state == ORTHOPUS_SAFETY_INIT) {
+    if (or_state.encoders_init /* && other init flags */) {
+      return ORTHOPUS_SAFETY_IDLE;
+    }
+    return ORTHOPUS_SAFETY_INIT;
+  }
+
+  // Automatic IDLE → ENABLE only if no active errors
+  if (current_safety_state == ORTHOPUS_SAFETY_IDLE) {
+    if (compute_max_error_level() == ERR_LEVEL_NONE) {
+      return ORTHOPUS_SAFETY_ENABLE;
+    }
+    return ORTHOPUS_SAFETY_IDLE;
+  }
+
+  // Escalation from ENABLE → HOLD → BRAKE → ESTOP
+  
+  or_error_level_t severity = compute_max_error_level(); 
+  uint16_t new_safety_state = current_safety_state; //new safety state starts as-is and will be changed if needed
+  
+  switch (severity)
+  {
+    case ERR_LEVEL_ESTOP:
+      new_safety_state = ORTHOPUS_SAFETY_ESTOP;
+      break;
+    case ERR_LEVEL_BRAKE:
+      if (current_safety_state < ORTHOPUS_SAFETY_BRAKE) { //only escalate
+        new_safety_state = ORTHOPUS_SAFETY_BRAKE;
+      }
+      break;
+    case ERR_LEVEL_HOLD:
+      if (current_safety_state < ORTHOPUS_SAFETY_HOLD) { //only escalate
+        new_safety_state = ORTHOPUS_SAFETY_HOLD;
+      } //TODO: allow returning to ENABLE / Position control?
+      break;
+    case ERR_LEVEL_WARNING: //do not change safety state
+      break;
+    case ERR_LEVEL_NONE: //do not change safety state
+      break;
+  }
+
+  return new_safety_state;
 }
