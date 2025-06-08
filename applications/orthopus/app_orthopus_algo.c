@@ -238,20 +238,19 @@ THD_FUNCTION(orthopus_thread, arg)
                   // TODO: tunable max position error
                   if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) >= (double)or_conf.safety_max_q_error)
                   {
-                    orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_POS_STEP; // Set error flag
-                    break;
-                  }
+                    raise_error(ERR_POS_STEP); // Set error flag
+                  } else {
+                    if (!or_active_errors[ERR_POS_STEP] || or_conf.auto_clear_errors) //if 
+                    {
+                      mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
+                    }
 
-                  if (!((orthopus_comm.state->word & ORTHOPUS_STATE_ERR_POS_STEP) == ORTHOPUS_STATE_ERR_POS_STEP) || or_conf.auto_clear_errors)
-                  {
-                    mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
+                    if (or_conf.auto_clear_errors)
+                    {
+                      clear_error(ERR_POS_STEP); // Clear error
+                    }
+                    or_state.ctrl_enable = false; //todo: proper management of modes swhitch
                   }
-
-                  if (or_conf.auto_clear_errors)
-                  {
-                    orthopus_comm.state->word &= ~ORTHOPUS_STATE_ERR_POS_STEP; // Clear error
-                  }
-                  or_state.ctrl_enable = false; //todo: proper management of modes swhitch
                   break;
                 }
                 case ORTHOPUS_CTRL_MODE_VEL:
