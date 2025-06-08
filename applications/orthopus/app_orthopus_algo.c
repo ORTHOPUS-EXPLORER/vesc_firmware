@@ -204,6 +204,7 @@ THD_FUNCTION(orthopus_thread, arg)
             }
             case ORTHOPUS_SAFETY_IDLE:
             {
+              mc_interface_release_motor();
               hold_initialized = false;
               break;
             }
@@ -325,11 +326,13 @@ THD_FUNCTION(orthopus_thread, arg)
             }
             case ORTHOPUS_SAFETY_ESTOP:
             {
+              orthopus_estop();
               hold_initialized = false;
               break;
             }
             default:
             {
+              orthopus_estop();
               hold_initialized = false;
               break; // trigger hold if unknown ?
             }
@@ -719,6 +722,18 @@ or_error_level_t get_error_severity(or_error_t err) {
 
     case ERR_SAME_CTRL_OUT:
       return ERR_LEVEL_HOLD;
+
+    case ERR_TST_WARNING:
+      return ERR_LEVEL_WARNING;
+
+    case ERR_TST_HOLD:
+      return ERR_LEVEL_HOLD;
+
+    case ERR_TST_BRAKE:
+      return ERR_LEVEL_BRAKE;
+
+    case ERR_TST_ESTOP:
+      return ERR_LEVEL_ESTOP;
 
     default:
       return ERR_LEVEL_ESTOP;

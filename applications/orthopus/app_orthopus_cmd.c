@@ -82,7 +82,7 @@ void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_safety",
     "[Orthopus] Safety monitor/debug/test commands",
-    "[errors/]",
+    "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init]",
     orthopus_safety_cmd
   );
 }
@@ -744,7 +744,20 @@ const char* orthopus_error_messages[ERR_COUNT] = {
     "Vel stp",
     "Trq stp",
     "Same ctrlout",
+    "Test warning",
+    "Test hold",
+    "Test brake",
+    "Test estop",
     // Add corresponding error messages here
+};
+
+const char* orthopus_error_level_txt[ERR_COUNT] = {
+    "none",
+    "warning",
+    "hold",
+    "brake",
+    "estop",
+    // Add corresponding error levels here
 };
 
 void orthopus_safety_cmd(int argc, const char **argv)
@@ -757,7 +770,7 @@ void orthopus_safety_cmd(int argc, const char **argv)
 
             for (int i = 0; i < ERR_COUNT; i++) {
                 if (or_active_errors[i]) {
-                    commands_printf(" - %s", orthopus_error_messages[i]);
+                    commands_printf(" - %s (%s)", orthopus_error_messages[i], orthopus_error_level_txt[get_error_severity(i)]);
                 }
             }
 
@@ -765,9 +778,45 @@ void orthopus_safety_cmd(int argc, const char **argv)
 
             for (int i = 0; i < ERR_COUNT; i++) {
                 if (or_error_triggered[i]) {
-                    commands_printf(" - %s", orthopus_error_messages[i]);
+                    commands_printf(" - %s (%s)", orthopus_error_messages[i], orthopus_error_level_txt[get_error_severity(i)]);
                 }
             }
+        } else if (!strcmp(argv[1], "set_err_warn"))
+        {
+          raise_error(ERR_TST_WARNING);
+        } else if (!strcmp(argv[1], "set_err_hold"))
+        {
+          raise_error(ERR_TST_HOLD);
+        } else if (!strcmp(argv[1], "set_err_brake"))
+        {
+          raise_error(ERR_TST_BRAKE);
+        } else if (!strcmp(argv[1], "set_err_estop"))
+        {
+          raise_error(ERR_TST_ESTOP);
+        } else if (!strcmp(argv[1], "clear_test_err"))
+        {
+          clear_error(ERR_TST_WARNING);
+          clear_error(ERR_TST_HOLD);
+          clear_error(ERR_TST_BRAKE);
+          clear_error(ERR_TST_ESTOP);
+        } else if (!strcmp(argv[1], "set_enable"))
+        {
+          orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+        } else if (!strcmp(argv[1], "set_idle"))
+        {
+          orthopus_set_safety_mode(ORTHOPUS_SAFETY_IDLE);
+        } else if (!strcmp(argv[1], "set_hold"))
+        {
+          orthopus_set_safety_mode(ORTHOPUS_SAFETY_HOLD);
+        } else if (!strcmp(argv[1], "set_estop"))
+        {
+          orthopus_set_safety_mode(ORTHOPUS_SAFETY_ESTOP);
+        } else if (!strcmp(argv[1], "set_init"))
+        {
+          orthopus_set_safety_mode(ORTHOPUS_SAFETY_INIT);
+        } else if (!strcmp(argv[1], "set_brake"))
+        {
+          orthopus_set_safety_mode(ORTHOPUS_SAFETY_BRAKE);
         } else {
             commands_printf("Invalid arguments.");
         }

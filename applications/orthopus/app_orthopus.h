@@ -160,6 +160,12 @@ typedef enum {
   //ORTHOPUS_ERR_TEMP_OVERHEAT,
   //ORTHOPUS_ERR_CURRENT_SPIKE,
 
+  //Test errors:
+  ERR_TST_WARNING,
+  ERR_TST_HOLD,
+  ERR_TST_BRAKE,
+  ERR_TST_ESTOP,
+
   // Add others...
 
   ERR_COUNT // Always last
