@@ -744,6 +744,8 @@ const char* orthopus_error_messages[ERR_COUNT] = {
     "Vel stp",
     "Trq stp",
     "Same ctrlout",
+    "Limit endstop",
+    "max speed toward endstop"
     "Test warning",
     "Test hold",
     "Test brake",
