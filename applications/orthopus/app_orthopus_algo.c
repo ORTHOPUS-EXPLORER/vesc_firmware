@@ -549,9 +549,9 @@ void orthopus_limits(void)
   //check position limits
   or_state.limit_reaction = 0;
   if (   (or_state.pos_multiturn_now > or_conf.limits_pos_max)
-      || (or_state.pos_multiturn_now < or_conf.limits_pos_min))
+      || (or_state.pos_multiturn_now < or_conf.limits_pos_min)) //out of limits
   {
-    orthopus_estop();
+    raise_error(ERR_POS_LIMIT);
     or_state.ctrl_enable = false;
   }
   else if ( (
@@ -566,9 +566,10 @@ void orthopus_limits(void)
             )
             )
             && (!or_state.ctrl_enable)
-          )
+          ) //reaching limit too fast
   {
-    orthopus_estop();
+    raise_error(ERR_SPEED_LIMIT);
+    or_state.ctrl_enable = false;
   }
   if ( (or_state.ctrl_enable)
        &&
@@ -746,6 +747,12 @@ or_error_level_t get_error_severity(or_error_t err) {
 
     case ERR_TST_ESTOP:
       return ERR_LEVEL_ESTOP;
+    
+    case ERR_POS_LIMIT:
+      return ERR_LEVEL_ESTOP;
+
+    case ERR_SPEED_LIMIT:
+      return ERR_LEVEL_BRAKE;
 
     default:
       return ERR_LEVEL_ESTOP;
