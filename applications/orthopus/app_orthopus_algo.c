@@ -200,11 +200,13 @@ THD_FUNCTION(orthopus_thread, arg)
             case ORTHOPUS_SAFETY_INIT:
             {
               hold_initialized = false;
+              or_state.ctrl_enable = false;
               break;
             }
             case ORTHOPUS_SAFETY_IDLE:
             {
               mc_interface_release_motor();
+              or_state.ctrl_enable = false;
               hold_initialized = false;
               break;
             }
@@ -249,7 +251,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   if (orthopus_comm.state->word & ORTHOPUS_STATE_ERR_TRQ_STEP)
                   {
                     or_state.ext_torque_setpoint = 0.0;
-                    orthopus_estop();
+                    //orthopus_estop(); //TODO remove - handled by state machine
                   }
                   else
                   {
@@ -280,6 +282,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 case ORTHOPUS_CTRL_MODE_OFF:
                 {
                   //mc_interface_release_motor(); //safer but prevents any control from vesc_tool / lisp 
+                  or_state.ctrl_enable = false;
                   break;
                 }
                 default:
@@ -321,23 +324,27 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
               }
 
+              or_state.ctrl_enable = false;
               break;
             }
             case ORTHOPUS_SAFETY_BRAKE:
             {
               mc_interface_set_brake_current(3); //brake at 3 amps - TODO: tunable
+              or_state.ctrl_enable = false;
               hold_initialized = false;
               break;
             }
             case ORTHOPUS_SAFETY_ESTOP:
             {
               orthopus_estop();
+              or_state.ctrl_enable = false;
               hold_initialized = false;
               break;
             }
             default:
             {
               orthopus_estop();
+              or_state.ctrl_enable = false;
               hold_initialized = false;
               break; // trigger hold if unknown ?
             }
