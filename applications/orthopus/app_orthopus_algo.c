@@ -24,12 +24,11 @@ volatile orthopus_state_t or_state =
 
 int get_fw_version_cnt;
 float enc_pos_last = 0.0;
-unsigned long int nsample = 0;
+unsigned long int nsample = 0; //sample number - used in plots
 float pid_pos_now = 0;
 float pid_pos_last = 0;
 systime_t time_now, time_last, time_start, time_end;
-systime_t time_lasterrprint;
-int ninitadc = 0;
+int ninitadc = 0; //number of ADC samples used to compute torque zero
 bool or_active_errors[ERR_COUNT] = { false }; //array tracking all errors state
 bool or_error_triggered[ERR_COUNT] = { false }; // true = triggered at least once since startup/reset
 bool hold_initialized = false;
@@ -69,7 +68,6 @@ THD_FUNCTION(orthopus_thread, arg)
   or_state.perf_min_period = -1; //init min period
   orthopus_thread_running = true;
   time_now = chVTGetSystemTimeX();
-  time_lasterrprint = chVTGetSystemTimeX();
   time_last = time_now;
   //check if torquezero set in config
   if (or_conf.ctrl_torquezero != 0.0 && or_conf.signature == ORTHOPUS_CONFIG_T_SIGNATURE)
@@ -130,7 +128,7 @@ THD_FUNCTION(orthopus_thread, arg)
     if (or_conf.limits_enable)
       orthopus_limits();
 
-    /* ---------------------------- Sample adc3 value --------------------------- */
+    /* ---------------------------- Sample adc3 value --------------------------- */ //TODO: always sample at high freq
     if (or_conf.ctrl_sample_adc3)
     {
       or_state.adc3_val = or_state.adc3_filt;        //get hi freq sampled value
