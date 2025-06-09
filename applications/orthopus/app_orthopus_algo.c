@@ -279,7 +279,8 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case ORTHOPUS_CTRL_MODE_OFF:
                 {
-                  mc_interface_release_motor();
+                  //mc_interface_release_motor(); //safer but prevents any control from vesc_tool / lisp 
+                  break;
                 }
                 default:
                   break;
@@ -498,6 +499,8 @@ bool orthopus_safety(void)
         {
           orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
         }
+
+        mc_interface_release_motor(); //release motor last command -> allows control from VESC
       }
     }
     
