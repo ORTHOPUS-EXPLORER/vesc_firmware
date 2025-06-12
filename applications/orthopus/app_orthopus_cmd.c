@@ -82,7 +82,7 @@ void orthopus_cmd_init(void)
   terminal_register_command_callback(
     "o_safety",
     "[Orthopus] Safety monitor/debug/test commands",
-    "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init]",
+    "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init/clear_all/clear_history]",
     orthopus_safety_cmd
   );
 }
@@ -822,6 +822,18 @@ void orthopus_safety_cmd(int argc, const char **argv)
         } else if (!strcmp(argv[1], "set_brake"))
         {
           orthopus_set_safety_mode(ORTHOPUS_SAFETY_BRAKE);
+        } else if (!strcmp(argv[1], "clear_all"))
+        {
+          for (int i = 0; i < ERR_COUNT; ++i)
+          {
+            or_active_errors[i] = false;
+          }
+        } else if (!strcmp(argv[1], "clear_history"))
+        {
+          for (int i = 0; i < ERR_COUNT; ++i)
+          {
+            or_error_triggered[i] = false;
+          }
         } else {
             commands_printf("Invalid arguments.");
         }
