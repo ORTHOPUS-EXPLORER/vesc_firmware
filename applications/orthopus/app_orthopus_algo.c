@@ -716,35 +716,24 @@ void or_plot_impedance(int ns)
  */
 or_error_level_t or_get_error_severity(or_error_t err) {
   switch (err) {
-    case ERR_POS_STEP:
-      return ERR_LEVEL_HOLD;
-    
-    case ERR_TRQ_STEP:
-      return ERR_LEVEL_HOLD;
-
-    case ERR_VEL_STEP:
-      return ERR_LEVEL_HOLD;
-
-    case ERR_SAME_CTRL_OUT:
-      return ERR_LEVEL_HOLD;
 
     case ERR_TST_WARNING:
       return ERR_LEVEL_WARNING;
 
+    case ERR_POS_STEP:
+    case ERR_TRQ_STEP:
+    case ERR_VEL_STEP:
+    case ERR_SAME_CTRL_OUT:
     case ERR_TST_HOLD:
       return ERR_LEVEL_HOLD;
 
     case ERR_TST_BRAKE:
+    case ERR_SPEED_LIMIT:
       return ERR_LEVEL_BRAKE;
 
     case ERR_TST_ESTOP:
-      return ERR_LEVEL_ESTOP;
-    
     case ERR_POS_LIMIT:
       return ERR_LEVEL_ESTOP;
-
-    case ERR_SPEED_LIMIT:
-      return ERR_LEVEL_BRAKE;
 
     default:
       return ERR_LEVEL_ESTOP;
