@@ -579,12 +579,13 @@ void orthopus_control_cmd(int argc, const char **argv)
 
   if(!strcmp(argv[1],"enable"))
   {
-    or_state.ctrl_enable = true;
+    orthopus_set_control_mode(ORTHOPUS_STATE_MODE_TRQ);
+    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
     commands_printf("Control Enabled");
   }
   else if(!strcmp(argv[1],"disable"))
   {
-    or_state.ctrl_enable = false;
+    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ESTOP);
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //todo set zero torque and/or estop
@@ -636,9 +637,10 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.ctrl_a= 1;
     or_conf.ctrl_deadzone = true;
     or_conf.torque_filter_const = 0.1;
-    or_state.ctrl_enable = true;
     or_conf.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 1: kp4 a1 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
+    orthopus_set_control_mode(ORTHOPUS_STATE_MODE_TRQ);
+    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
   }
   else if(!strcmp(argv[1],"demo2"))
   {
@@ -648,16 +650,18 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.ctrl_a= 3;
     or_conf.ctrl_deadzone = true;
     or_conf.torque_filter_const = 0.1;
-    or_state.ctrl_enable = true;
     or_conf.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 2: kp4 a 3 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
+    orthopus_set_control_mode(ORTHOPUS_STATE_MODE_TRQ);
+    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
   }
   else if(!strcmp(argv[1],"torquecontrol"))
   {
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
-    or_state.ctrl_enable = true;
     or_state.ctrl_overwrite = true;
+    orthopus_set_control_mode(ORTHOPUS_STATE_MODE_TRQ);
+    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
     commands_printf("Overwriting current setpoints into torque setpoint");
   }
   else if(!strcmp(argv[1],"kp"))
@@ -709,7 +713,6 @@ void orthopus_control_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"print"))
   {
-    commands_printf("Control enabled:     %s", or_state.ctrl_enable   ? "true" : "false" );
     commands_printf("Plot enabled:        %s", or_state.ctrl_plot     ? "true" : "false" );
     commands_printf("Deadzone enabled:    %s", or_conf.ctrl_deadzone     ? "true" : "false" );
     commands_printf("torque_now filter const: % 7.3f", (double)or_conf.torque_filter_const );
