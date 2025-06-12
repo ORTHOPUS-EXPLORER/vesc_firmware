@@ -198,13 +198,11 @@ THD_FUNCTION(orthopus_thread, arg)
             case ORTHOPUS_SAFETY_INIT:
             {
               hold_initialized = false;
-              or_state.ctrl_enable = false;
               break;
             }
             case ORTHOPUS_SAFETY_IDLE:
             {
               mc_interface_release_motor();
-              or_state.ctrl_enable = false;
               hold_initialized = false;
               break;
             }
@@ -232,7 +230,6 @@ THD_FUNCTION(orthopus_thread, arg)
                     {
                       clear_error(ERR_POS_STEP); // Clear error
                     }
-                    or_state.ctrl_enable = false; //todo: proper management of modes swhitch
                   }
                   break;
                 }
@@ -240,7 +237,6 @@ THD_FUNCTION(orthopus_thread, arg)
                 {
                   orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_VEL; // Set mode
                   mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(orthopus_comm.ctrl->vel)/10); //TODO: check why factor 10
-                  or_state.ctrl_enable = false; //todo: proper management of modes swhitch
                   break;
                 }
                 case ORTHOPUS_CTRL_MODE_TRQ :
@@ -255,14 +251,13 @@ THD_FUNCTION(orthopus_thread, arg)
                   {
                     orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
                     or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
-                    or_state.ctrl_enable = true;
+                    or_interface_torquecontrol();
                   }
                   break;
                 }
                 case ORTHOPUS_CTRL_MODE_IMP : //Impedance mode: available for later
                 {
                   orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_IMP; // Set mode
-                  or_state.ctrl_enable = true;
                   or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
                   or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
                   or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
@@ -271,7 +266,6 @@ THD_FUNCTION(orthopus_thread, arg)
                 case ORTHOPUS_CTRL_MODE_CST : //Cusom mode: TOODO
                 {
                   orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_CST; // Set mode
-                  or_state.ctrl_enable = false; //TODO: enable custom control mode
                   or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
                   or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
                   or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
@@ -280,7 +274,6 @@ THD_FUNCTION(orthopus_thread, arg)
                 case ORTHOPUS_CTRL_MODE_OFF:
                 {
                   //mc_interface_release_motor(); //safer but prevents any control from vesc_tool / lisp 
-                  or_state.ctrl_enable = false;
                   break;
                 }
                 default:
@@ -322,90 +315,28 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
               }
 
-              or_state.ctrl_enable = false;
               break;
             }
             case ORTHOPUS_SAFETY_BRAKE:
             {
               mc_interface_set_brake_current(3); //brake at 3 amps - TODO: tunable
-              or_state.ctrl_enable = false;
               hold_initialized = false;
               break;
             }
             case ORTHOPUS_SAFETY_ESTOP:
             {
               orthopus_estop();
-              or_state.ctrl_enable = false;
               hold_initialized = false;
               break;
             }
             default:
             {
               orthopus_estop();
-              or_state.ctrl_enable = false;
               hold_initialized = false;
               break; // trigger hold if unknown ?
             }
           }
         }
-
-        /* -------------------------------------------------------------------------- */
-        /*                              Impedance control                             */
-        /* -------------------------------------------------------------------------- */
-        if (or_state.ctrl_enable)
-        {
-          or_state.stopped = false;
-          //TODO write clear control law bloc diagram
-          or_state.torque_err = or_state.ext_torque_setpoint
-                                - or_state.torque_now;
-          //add stiffness action
-          or_state.torque_err += or_conf.ctrl_stiffness
-                        *(or_state.ext_pos_setpoint-or_state.pos_multiturn_now);
-          // add damping action
-          or_state.torque_err -= or_conf.ctrl_damping*or_state.speed_now;
-          //add limits action
-          or_state.torque_err += or_state.limit_reaction;
-
-          //compute torque error derivative
-          or_state.d_torque_err = (or_state.torque_err-or_state.torque_err_last)
-                                  / (1.0/or_conf.perf_rate_hz);
-          or_state.d_torque_err_filt = or_conf.ctrl_kd_filter
-                                       * or_state.d_torque_err
-                                     + (1-or_conf.ctrl_kd_filter)
-                                       * or_state.d_torque_err_filt;
-          or_state.torque_err_last = or_state.torque_err;
-          if (or_conf.ctrl_deadzone)
-          {
-            or_state.ctrl_command = or_conf.ctrl_kp * or_state.torque_err
-                                  + or_conf.ctrl_kd * or_state.d_torque_err;
-            or_state.ctrl_command = or_state.ctrl_command
-                                  - atanf(or_state.ctrl_command*or_conf.ctrl_a)
-                                    / or_conf.ctrl_a;
-          } else {
-            or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
-                                  + or_conf.ctrl_kd*or_state.d_torque_err;
-          }
-
-          /* ------------------------ Compute safety indicators ----------------------- */
-          if ((or_state.last_ctrl_command == or_state.ctrl_command)
-                                             &&
-                                             (or_state.ctrl_command!=0.0))
-          {
-            or_state.nid1 += 1;
-          } 
-          else 
-          {
-            or_state.nid1 = 0;
-          }
-          or_state.last_ctrl_command = or_state.ctrl_command;
-          /* -------------------------------------------------------------------------- */
-          /*                    Send current setpoint to mc_interface                   */
-          /* -------------------------------------------------------------------------- */
-          mc_interface_set_current_off_delay(0.1);  //prevent disabling motor if 
-                              //torque request is 0 //todo: move somewhere else?
-          mc_interface_set_current_rel(or_state.ctrl_command);
-        }    //TODO: check limits after last ctrl_command computation and set to
-                                                        //zero if out of limits?
       }
     }
     
@@ -451,6 +382,75 @@ void orthopus_pwm_callback(void)
                      + (1-or_conf.torque_filter_const)*or_state.adc3_filt;
   /*or_state.speed_now = or_conf.speed_filter_const*(mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div)
                      + (1-or_conf.speed_filter_const)*or_state.speed_now;*/
+}
+
+/**
+ * Torque / impedance control
+ *
+ * @param
+ * void
+ *
+ * @return
+ * void
+ */
+void or_interface_torquecontrol(void)
+{
+/* -------------------------------------------------------------------------- */
+/*                              Impedance control                             */
+/* -------------------------------------------------------------------------- */
+
+  or_state.stopped = false;
+  //TODO write clear control law bloc diagram
+  or_state.torque_err = or_state.ext_torque_setpoint
+                        - or_state.torque_now;
+  //add stiffness action
+  or_state.torque_err += or_conf.ctrl_stiffness
+                *(or_state.ext_pos_setpoint-or_state.pos_multiturn_now);
+  // add damping action
+  or_state.torque_err -= or_conf.ctrl_damping*or_state.speed_now;
+  //add limits action
+  or_state.torque_err += or_state.limit_reaction;
+
+  //compute torque error derivative
+  or_state.d_torque_err = (or_state.torque_err-or_state.torque_err_last)
+                          / (1.0/or_conf.perf_rate_hz);
+  or_state.d_torque_err_filt = or_conf.ctrl_kd_filter
+                                * or_state.d_torque_err
+                              + (1-or_conf.ctrl_kd_filter)
+                                * or_state.d_torque_err_filt;
+  or_state.torque_err_last = or_state.torque_err;
+  if (or_conf.ctrl_deadzone)
+  {
+    or_state.ctrl_command = or_conf.ctrl_kp * or_state.torque_err
+                          + or_conf.ctrl_kd * or_state.d_torque_err;
+    or_state.ctrl_command = or_state.ctrl_command
+                          - atanf(or_state.ctrl_command*or_conf.ctrl_a)
+                            / or_conf.ctrl_a;
+  } else {
+    or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
+                          + or_conf.ctrl_kd*or_state.d_torque_err;
+  }
+
+  /* ------------------------ Compute safety indicators ----------------------- */
+  if ((or_state.last_ctrl_command == or_state.ctrl_command)
+                                      &&
+                                      (or_state.ctrl_command!=0.0))
+  {
+    or_state.nid1 += 1;
+  } 
+  else 
+  {
+    or_state.nid1 = 0;
+  }
+  or_state.last_ctrl_command = or_state.ctrl_command;
+  /* -------------------------------------------------------------------------- */
+  /*                    Send current setpoint to mc_interface                   */
+  /* -------------------------------------------------------------------------- */
+  mc_interface_set_current_off_delay(0.1);  //prevent disabling motor if 
+                      //torque request is 0 //todo: move somewhere else?
+  mc_interface_set_current_rel(or_state.ctrl_command);
+  //}    //TODO: check limits after last ctrl_command computation and set to
+                                                  //zero if out of limits?
 }
 
 /**
@@ -552,7 +552,6 @@ void orthopus_limits(void)
       || (or_state.pos_multiturn_now < or_conf.limits_pos_min)) //out of limits
   {
     raise_error(ERR_POS_LIMIT);
-    or_state.ctrl_enable = false;
   }
   else if ( (
             (or_state.speed_now > or_conf.limits_reach_speed
@@ -565,11 +564,9 @@ void orthopus_limits(void)
                   < or_conf.limits_pos_min + or_conf.limits_reach_angle)
             )
             )
-            && (!or_state.ctrl_enable)
           ) //reaching limit too fast
   {
     raise_error(ERR_SPEED_LIMIT);
-    or_state.ctrl_enable = false;
   }
   if ( (or_state.ctrl_enable)
        &&
@@ -868,6 +865,20 @@ void orthopus_set_safety_mode(uint32_t mode)
 {
   orthopus_comm.state->word &= ~ORTHOPUS_SAFETY_MSK; // Clear current safety bits
   orthopus_comm.state->word |= mode; // Set new safety mode
+}
+
+/**
+ * @brief Set the current control mode in the orthopus control word.
+ *
+ * This function clears the existing control mode bits and sets the new mode
+ * using the defined ORTHOPUS_CTRL_MODE_MSK. It sets only one control mode at a time.
+ *
+ * @param mode  The new control mode to apply (e.g. ORTHOPUS_CTRL_MODE_POS).
+ */
+void orthopus_set_control_mode(uint32_t mode)
+{
+  orthopus_comm.ctrl->word &= ~ORTHOPUS_CTRL_MODE_MSK; // Clear current control bits
+  orthopus_comm.ctrl->word |= mode; // Set new control mode
 }
 
 /**

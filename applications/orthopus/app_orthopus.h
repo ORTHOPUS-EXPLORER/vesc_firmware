@@ -79,7 +79,7 @@ typedef struct
   float adc3_zero;
   float torque_now;
   float adc3_init;
-  bool ctrl_enable;
+  bool ctrl_enable; //TODO: remove
   bool ctrl_plot;
   float ctrl_command;
   int turn_now;
@@ -209,6 +209,8 @@ void clear_error(or_error_t err);
 uint16_t evaluate_safety_state(void);
 void orthopus_set_safety_mode(uint32_t mode);
 void orthopus_sync_error_flags(void);
+void or_interface_torquecontrol(void);
+void orthopus_set_control_mode(uint32_t mode);
 
 /**
  * @brief   System ticks to microseconds.
