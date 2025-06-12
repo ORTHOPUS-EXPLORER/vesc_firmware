@@ -247,7 +247,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   {
                     orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
                     or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
-                    if (or_conf.limits_enable_reaction)
+                    if (or_conf.limits_enable_reaction && or_conf.limits_enable)
                       orthopus_limits_reaction();
                     or_interface_torquecontrol();
                   }

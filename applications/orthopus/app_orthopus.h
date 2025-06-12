@@ -78,7 +78,6 @@ typedef struct
   float adc3_zero;
   float torque_now;
   float adc3_init;
-  bool ctrl_enable; //TODO: remove
   bool ctrl_plot;
   float ctrl_command;
   int turn_now;
