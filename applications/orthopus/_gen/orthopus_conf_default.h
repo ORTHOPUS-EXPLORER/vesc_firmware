@@ -50,7 +50,7 @@
 
 // Limits Kp
 #ifndef ORTHOPUS_CFG_DEF_LIMITS_KP
-#define ORTHOPUS_CFG_DEF_LIMITS_KP 0
+#define ORTHOPUS_CFG_DEF_LIMITS_KP 1
 #endif
 
 // Limits Kd
