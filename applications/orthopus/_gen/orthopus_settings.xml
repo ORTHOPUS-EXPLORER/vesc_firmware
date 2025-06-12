@@ -201,7 +201,7 @@ p, li { white-space: pre-wrap; }
             <minDouble>-1000</minDouble>
             <showDisplay>0</showDisplay>
             <stepDouble>1</stepDouble>
-            <valDouble>0</valDouble>
+            <valDouble>1</valDouble>
             <vTxDoubleScale>1</vTxDoubleScale>
             <suffix></suffix>
             <vTx>9</vTx>
