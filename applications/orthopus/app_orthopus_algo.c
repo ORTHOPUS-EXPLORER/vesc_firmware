@@ -10,7 +10,7 @@ volatile bool orthopus_thread_running = false;
 
 //const int loop_rate = 2000; //loop rate in Hz
 
-volatile orthopus_state_t or_state =
+volatile or_state_t or_state =
 {
   .pos_multiturn_now = 0.0,
   .speed_now = 0.0,
@@ -50,7 +50,7 @@ THD_FUNCTION(orthopus_thread, arg)
   } while(!encoder_cfg_as504x.state.sensor_diag.is_connected);
 
   float v = 0;
-  orthopus_set_joint_offset(v, false);
+  or_set_joint_offset(v, false);
 
   pid_pos_now = mc_interface_get_pid_pos_now();
   pid_pos_last = pid_pos_now;
@@ -59,7 +59,7 @@ THD_FUNCTION(orthopus_thread, arg)
     or_state.turn_now = -1;
   }
 
-  if (orthopus_read_encoder() > 180.0)
+  if (or_read_encoder() > 180.0)
   {
     or_state.enc_turn = -1;
   }
@@ -93,7 +93,7 @@ THD_FUNCTION(orthopus_thread, arg)
     // Read AMS
     enc_as504x_routine(&encoder_cfg_as504x);
 
-    or_state.enc_pos = orthopus_read_encoder();
+    or_state.enc_pos = or_read_encoder();
     //TODO: take into account current speed to compare raw value with next 
                                       //expected value instead of previous value
 
@@ -169,15 +169,15 @@ THD_FUNCTION(orthopus_thread, arg)
       /* ------------------------------ Control plot ------------------------------ */
       if (or_state.ctrl_plot){
         ++nsample;
-        orthopus_plot_impedance(nsample);
+        or_plot_impedance(nsample);
       }
 
       /* ------------------------------ Safety / modes switch --------------------- */
 
-      if (!orthopus_safety())
+      if (!or_safety())
       {
         //if orthopus_safety failed to handle modes, fallback to ESTOP (should never happend)
-        orthopus_comm.state->word = (orthopus_comm.state->word &= ~ORTHOPUS_SAFETY_MSK) | ORTHOPUS_SAFETY_ESTOP;
+        or_comm.state->word = (or_comm.state->word &= ~OR_SAFETY_MSK) | OR_SAFETY_ESTOP;
       } 
       else 
       {
@@ -185,91 +185,91 @@ THD_FUNCTION(orthopus_thread, arg)
         /*                              Main control loop                             */
         /* -------------------------------------------------------------------------- */
 
-        orthopus_set_safety_mode(evaluate_safety_state());
+        or_set_safety_mode(or_evaluate_safety_state());
 
-        if(orthopus_comm.process_ctrl && !or_conf.simu_mode) //TODO: deal with those cases properly
+        if(or_comm.process_ctrl && !or_conf.simu_mode) //TODO: deal with those cases properly
         {
-          switch(orthopus_comm.state->word & ORTHOPUS_SAFETY_MSK)
+          switch(or_comm.state->word & OR_SAFETY_MSK)
           {
-            case ORTHOPUS_SAFETY_INIT:
+            case OR_SAFETY_INIT:
             {
               hold_initialized = false;
               break;
             }
-            case ORTHOPUS_SAFETY_IDLE:
+            case OR_SAFETY_IDLE:
             {
               mc_interface_release_motor();
               hold_initialized = false;
               break;
             }
-            case ORTHOPUS_SAFETY_ENABLE:
+            case OR_SAFETY_ENABLE:
             {
-              orthopus_comm.state->word &= ~ORTHOPUS_STATE_MODE_MSK;                       // Clear mode
+              or_comm.state->word &= ~OR_STATE_MODE_MSK;                       // Clear mode
               // Modes are currently exclusive. Refactor this switch for mode fine-grained mode control
-              switch(orthopus_comm.ctrl->word & ORTHOPUS_CTRL_MODE_MSK) 
+              switch(or_comm.ctrl->word & OR_CTRL_MODE_MSK) 
               {
-                case ORTHOPUS_CTRL_MODE_POS:
+                case OR_CTRL_MODE_POS:
                 {
-                  orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_POS; // Set mode 
+                  or_comm.state->word |= OR_STATE_MODE_POS; // Set mode 
 
                   // TODO: tunable max position error
-                  if (fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540),360) - 180) >= (double)or_conf.safety_max_q_error)
+                  if (fabs(fmod((or_comm.ctrl->pos - or_comm.state->pos + 540),360) - 180) >= (double)or_conf.safety_max_q_error)
                   {
-                    raise_error(ERR_POS_STEP); // Set error flag
+                    or_raise_error(ERR_POS_STEP); // Set error flag
                   } else {
                     if (!or_active_errors[ERR_POS_STEP] || or_conf.auto_clear_errors) //if 
                     {
-                      mc_interface_set_pid_pos(orthopus_comm.ctrl->pos);
+                      mc_interface_set_pid_pos(or_comm.ctrl->pos);
                     }
 
                     if (or_conf.auto_clear_errors)
                     {
-                      clear_error(ERR_POS_STEP); // Clear error
+                      or_clear_error(ERR_POS_STEP); // Clear error
                     }
                   }
                   break;
                 }
-                case ORTHOPUS_CTRL_MODE_VEL:
+                case OR_CTRL_MODE_VEL:
                 {
-                  orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_VEL; // Set mode
-                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(orthopus_comm.ctrl->vel)/10); //TODO: check why factor 10
+                  or_comm.state->word |= OR_STATE_MODE_VEL; // Set mode
+                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(or_comm.ctrl->vel)/10); //TODO: check why factor 10
                   break;
                 }
-                case ORTHOPUS_CTRL_MODE_TRQ :
+                case OR_CTRL_MODE_TRQ :
                 {
-                  // that state word does not contain ORTHOPUS_STATE_ERR_TRQ_STEP
-                  if (orthopus_comm.state->word & ORTHOPUS_STATE_ERR_TRQ_STEP)
+                  // that state word does not contain OR_STATE_ERR_TRQ_STEP
+                  if (or_comm.state->word & OR_STATE_ERR_TRQ_STEP)
                   {
                     or_state.ext_torque_setpoint = 0.0;
-                    //orthopus_estop(); //TODO remove - handled by state machine
+                    //or_estop(); //TODO remove - handled by state machine
                   }
                   else
                   {
-                    orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
-                    or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+                    or_comm.state->word |= OR_STATE_MODE_TRQ; // Set mode
+                    or_state.ext_torque_setpoint = or_comm.ctrl->trq;
                     if (or_conf.limits_enable_reaction && or_conf.limits_enable)
-                      orthopus_limits_reaction();
+                      or_limits_reaction();
                     or_interface_torquecontrol();
                   }
                   break;
                 }
-                case ORTHOPUS_CTRL_MODE_IMP : //Impedance mode: available for later
+                case OR_CTRL_MODE_IMP : //Impedance mode: available for later
                 {
-                  orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_IMP; // Set mode
-                  or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
-                  or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
-                  or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+                  or_comm.state->word |= OR_STATE_MODE_IMP; // Set mode
+                  or_state.ext_pos_setpoint = or_comm.ctrl->pos;
+                  or_state.ext_vel_setpoint = or_comm.ctrl->vel;
+                  or_state.ext_torque_setpoint = or_comm.ctrl->trq;
                   break;
                 }
-                case ORTHOPUS_CTRL_MODE_CST : //Cusom mode: TOODO
+                case OR_CTRL_MODE_CST : //Cusom mode: TOODO
                 {
-                  orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_CST; // Set mode
-                  or_state.ext_pos_setpoint = orthopus_comm.ctrl->pos;
-                  or_state.ext_vel_setpoint = orthopus_comm.ctrl->vel;
-                  or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+                  or_comm.state->word |= OR_STATE_MODE_CST; // Set mode
+                  or_state.ext_pos_setpoint = or_comm.ctrl->pos;
+                  or_state.ext_vel_setpoint = or_comm.ctrl->vel;
+                  or_state.ext_torque_setpoint = or_comm.ctrl->trq;
                   break;
                 }
-                case ORTHOPUS_CTRL_MODE_OFF:
+                case OR_CTRL_MODE_OFF:
                 {
                   //mc_interface_release_motor(); //safer but prevents any control from vesc_tool / lisp 
                   break;
@@ -280,22 +280,22 @@ THD_FUNCTION(orthopus_thread, arg)
               hold_initialized = false;
               break;
             }
-            case ORTHOPUS_SAFETY_HOLD:
+            case OR_SAFETY_HOLD:
             {
               // Initialize hold by getting the current position as hold position
               if (!hold_initialized)
               {
-                hold_position = orthopus_comm.state->pos;
+                hold_position = or_comm.state->pos;
                 hold_initialized = true;
               }
 
               // compute the actual error
-              float error = fabs(fmod((hold_position - orthopus_comm.state->pos + 540), 360) - 180);
+              float error = fabs(fmod((hold_position - or_comm.state->pos + 540), 360) - 180);
 
               // check the position error
               if (error >= or_conf.safety_max_q_error)
               {
-                orthopus_set_safety_mode(ORTHOPUS_SAFETY_BRAKE);
+                or_set_safety_mode(OR_SAFETY_BRAKE);
               }
               else
               {
@@ -303,33 +303,33 @@ THD_FUNCTION(orthopus_thread, arg)
 
                 // if error was previously set and auto_clear is active,
                 // check if current position setpoint error is acceptable
-                float pos_error = fabs(fmod((orthopus_comm.ctrl->pos - orthopus_comm.state->pos + 540), 360) - 180);
+                float pos_error = fabs(fmod((or_comm.ctrl->pos - or_comm.state->pos + 540), 360) - 180);
 
                 if (or_conf.auto_clear_errors && or_active_errors[ERR_POS_STEP] &&
-                    pos_error < 0.1*or_conf.safety_max_q_error && (orthopus_comm.ctrl->word & ORTHOPUS_CTRL_MODE_MSK) == ORTHOPUS_CTRL_MODE_POS) //reset if auto_reset AND error is less than 10% the max allowed value. TODO: better definition of the treshold?
+                    pos_error < 0.1*or_conf.safety_max_q_error && (or_comm.ctrl->word & OR_CTRL_MODE_MSK) == OR_CTRL_MODE_POS) //reset if auto_reset AND error is less than 10% the max allowed value. TODO: better definition of the treshold?
                 {
-                  clear_error(ERR_POS_STEP);
-                  orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+                  or_clear_error(ERR_POS_STEP);
+                  or_set_safety_mode(OR_SAFETY_ENABLE);
                 }
               }
 
               break;
             }
-            case ORTHOPUS_SAFETY_BRAKE:
+            case OR_SAFETY_BRAKE:
             {
               mc_interface_set_brake_current(3); //brake at 3 amps - TODO: tunable
               hold_initialized = false;
               break;
             }
-            case ORTHOPUS_SAFETY_ESTOP:
+            case OR_SAFETY_ESTOP:
             {
-              orthopus_estop();
+              or_estop();
               hold_initialized = false;
               break;
             }
             default:
             {
-              orthopus_estop();
+              or_estop();
               hold_initialized = false;
               break; // trigger hold if unknown ?
             }
@@ -345,7 +345,7 @@ THD_FUNCTION(orthopus_thread, arg)
 /* ---------------------------- Performances plot --------------------------- */
     if (or_state.perf_plot){
       ++nsample;
-      orthopus_plot_cycletime(nsample);
+      or_plot_cycletime(nsample);
     }
     time_now = chVTGetSystemTimeX();
     or_state.time_diff = ST2US2(time_now - time_last);
@@ -372,7 +372,7 @@ THD_FUNCTION(orthopus_thread, arg)
 }
 
 // Called in mc_interface.c:1913, in mc_interface_mc_timer_isr()
-void orthopus_pwm_callback(void)
+void or_pwm_callback(void)
 {
 	// Called for every control iteration in interrupt context.
   //Sample torque sensor ADC at high frequency
@@ -460,7 +460,7 @@ void or_interface_torquecontrol(void)
  * @return
  * void
  */
-void orthopus_estop(void)
+void or_estop(void)
 {
   mc_interface_release_motor();   //disable motor
   mc_interface_ignore_input(100);  //disable new inputs for 100 ms
@@ -478,51 +478,51 @@ void orthopus_estop(void)
  * @return
  * bool (true: modes set correctly, false: failed to set modes)
  */
-bool orthopus_safety(void)
+bool or_safety(void)
 {
   // ------------------ new command received: ------------------------//
 
-  //compare orthopus_comm.ctrl_prev and orthopus_comm.ctrl to detect changes in word , pos, trq or vel
-  if (orthopus_comm.ctrl != orthopus_comm.ctrl_prev)
+  //compare or_comm.ctrl_prev and or_comm.ctrl to detect changes in word , pos, trq or vel
+  if (or_comm.ctrl != or_comm.ctrl_prev)
   {
-    if (orthopus_comm.ctrl->word != orthopus_comm.ctrl_prev->word) //detect change of control word
+    if (or_comm.ctrl->word != or_comm.ctrl_prev->word) //detect change of control word
     {
       //TODO: manage modes switch
       //clear error if word goes from anything to 0x0000
-      if (orthopus_comm.ctrl->word == ORTHOPUS_STATE_MODE_OFF)
+      if (or_comm.ctrl->word == OR_STATE_MODE_OFF)
       {
-        clear_error(ERR_POS_STEP); // Clear error //TODO: manage error clear
-        if (orthopus_comm.ctrl->trq == 0.0)
-          clear_error(ERR_TRQ_STEP); // Clear error
-        if (orthopus_comm.ctrl->vel == 0.0)
-          clear_error(ERR_VEL_STEP); // Clear error
+        or_clear_error(ERR_POS_STEP); // Clear error //TODO: manage error clear
+        if (or_comm.ctrl->trq == 0.0)
+          or_clear_error(ERR_TRQ_STEP); // Clear error
+        if (or_comm.ctrl->vel == 0.0)
+          or_clear_error(ERR_VEL_STEP); // Clear error
         
         //setting control word OFF resets the safety mode to ENABLE if not critical
-        if ((orthopus_comm.state->word & ORTHOPUS_SAFETY_MSK) <= ORTHOPUS_SAFETY_HOLD)
+        if ((or_comm.state->word & OR_SAFETY_MSK) <= OR_SAFETY_HOLD)
         {
-          orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+          or_set_safety_mode(OR_SAFETY_ENABLE);
         }
 
         mc_interface_release_motor(); //release motor last command -> allows control from VESC
       }
     }
     
-    if (fabs(orthopus_comm.ctrl->trq - orthopus_comm.ctrl_prev->trq) > 5) //TODO: parametrable max torque command step
+    if (fabs(or_comm.ctrl->trq - or_comm.ctrl_prev->trq) > 5) //TODO: parametrable max torque command step
     {
-      raise_error(ERR_TRQ_STEP); // Set error flag
+      or_raise_error(ERR_TRQ_STEP); // Set error flag
     }
 
-    if (fabs(orthopus_comm.ctrl->vel - orthopus_comm.ctrl_prev->vel) > 5)
+    if (fabs(or_comm.ctrl->vel - or_comm.ctrl_prev->vel) > 5)
     {
-      raise_error(ERR_VEL_STEP); // Set error flag
+      or_raise_error(ERR_VEL_STEP); // Set error flag
     }
 
-    orthopus_comm.ctrl_prev->word = orthopus_comm.ctrl->word; //save previous ctrl word
+    or_comm.ctrl_prev->word = or_comm.ctrl->word; //save previous ctrl word
   } 
 
   // ------------- check other indicators ----------------//
   if (or_state.nid1 > 50 ) {
-    raise_error(ERR_SAME_CTRL_OUT);
+    or_raise_error(ERR_SAME_CTRL_OUT);
     or_state.nid1 = 0;
   } 
 
@@ -532,7 +532,7 @@ bool orthopus_safety(void)
     if (   (or_state.pos_multiturn_now > or_conf.limits_pos_max)
         || (or_state.pos_multiturn_now < or_conf.limits_pos_min)) //out of limits
     {
-      raise_error(ERR_POS_LIMIT);
+      or_raise_error(ERR_POS_LIMIT);
     }
     else if ( (
               (or_state.speed_now > or_conf.limits_reach_speed
@@ -547,12 +547,12 @@ bool orthopus_safety(void)
               )
             ) //reaching limit too fast
     {
-      raise_error(ERR_SPEED_LIMIT);
+      or_raise_error(ERR_SPEED_LIMIT);
     }
   }
 
   // -------------- sync errors in state word ----------------- //
-  orthopus_sync_error_flags();
+  or_sync_error_flags();
 
   return true;
 }
@@ -567,7 +567,7 @@ bool orthopus_safety(void)
  * @return
  * void
  */
-void orthopus_limits_reaction(void)
+void or_limits_reaction(void)
 {
   //check position limits
   or_state.limit_reaction = 0;
@@ -626,7 +626,7 @@ void orthopus_limits_reaction(void)
  * @return
  * void
  */
-void orthopus_plot_encoder_filtering(int ns)
+void or_plot_encoder_filtering(int ns)
 {
   bool plot_started=true;
   if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
@@ -658,7 +658,7 @@ void orthopus_plot_encoder_filtering(int ns)
  * @return
  * void
  */
-void orthopus_plot_cycletime(int ns)
+void or_plot_cycletime(int ns)
 {
   bool plot_started=true;
   if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
@@ -686,7 +686,7 @@ void orthopus_plot_cycletime(int ns)
  * @return
  * void
  */
-void orthopus_plot_impedance(int ns)
+void or_plot_impedance(int ns)
 {
   bool plot_started=true;
   if (commands_get_fw_version_sent_cnt() != get_fw_version_cnt) {
@@ -714,7 +714,7 @@ void orthopus_plot_impedance(int ns)
  * @param err The error identifier.
  * @return The severity level of the error.
  */
-or_error_level_t get_error_severity(or_error_t err) {
+or_error_level_t or_get_error_severity(or_error_t err) {
   switch (err) {
     case ERR_POS_STEP:
       return ERR_LEVEL_HOLD;
@@ -756,12 +756,12 @@ or_error_level_t get_error_severity(or_error_t err) {
  * 
  * @return The highest severity level of any currently active error.
  */
-or_error_level_t compute_max_error_level(void) {
+or_error_level_t or_compute_max_error_level(void) {
   or_error_level_t max_level = ERR_LEVEL_NONE;
 
   for (int i = 0; i < ERR_COUNT; ++i) {
     if (or_active_errors[i]) {
-      or_error_level_t level = get_error_severity((or_error_t)i);
+      or_error_level_t level = or_get_error_severity((or_error_t)i);
       if (level > max_level)
         max_level = level;
     }
@@ -775,7 +775,7 @@ or_error_level_t compute_max_error_level(void) {
  * 
  * @param err The error to raise.
  */
-void raise_error(or_error_t err) {
+void or_raise_error(or_error_t err) {
   if (err < ERR_COUNT)
     {
       or_active_errors[err] = true;
@@ -788,7 +788,7 @@ void raise_error(or_error_t err) {
  * 
  * @param err The error to clear.
  */
-void clear_error(or_error_t err) {
+void or_clear_error(or_error_t err) {
   if (err < ERR_COUNT)
     or_active_errors[err] = false;
 }
@@ -798,45 +798,45 @@ void clear_error(or_error_t err) {
  * @brief Evaluates the appropriate safety level based on current errors.
  *        Only escalation is allowed (no automatic downgrade).
  * 
- * @return The new safety state (e.g. ORTHOPUS_SAFETY_HOLD)
+ * @return The new safety state (e.g. OR_SAFETY_HOLD)
  */
-uint16_t evaluate_safety_state(void) {
-  uint16_t current_safety_state = orthopus_comm.state->word & ORTHOPUS_SAFETY_MSK;
+uint16_t or_evaluate_safety_state(void) {
+  uint16_t current_safety_state = or_comm.state->word & OR_SAFETY_MSK;
 
   // Automatic INIT → IDLE
-  if (current_safety_state == ORTHOPUS_SAFETY_INIT) {
+  if (current_safety_state == OR_SAFETY_INIT) {
     if (or_state.encoders_init /* && other init flags */) {
-      return ORTHOPUS_SAFETY_IDLE;
+      return OR_SAFETY_IDLE;
     }
-    return ORTHOPUS_SAFETY_INIT;
+    return OR_SAFETY_INIT;
   }
 
   // Automatic IDLE → ENABLE only if no active errors
-  if (current_safety_state == ORTHOPUS_SAFETY_IDLE) {
-    if (compute_max_error_level() == ERR_LEVEL_NONE) {
-      return ORTHOPUS_SAFETY_ENABLE;
+  if (current_safety_state == OR_SAFETY_IDLE) {
+    if (or_compute_max_error_level() == ERR_LEVEL_NONE) {
+      return OR_SAFETY_ENABLE;
     }
-    return ORTHOPUS_SAFETY_IDLE;
+    return OR_SAFETY_IDLE;
   }
 
   // Escalation from ENABLE → HOLD → BRAKE → ESTOP
   
-  or_error_level_t severity = compute_max_error_level(); 
+  or_error_level_t severity = or_compute_max_error_level(); 
   uint16_t new_safety_state = current_safety_state; //new safety state starts as-is and will be changed if needed
   
   switch (severity)
   {
     case ERR_LEVEL_ESTOP:
-      new_safety_state = ORTHOPUS_SAFETY_ESTOP;
+      new_safety_state = OR_SAFETY_ESTOP;
       break;
     case ERR_LEVEL_BRAKE:
-      if (current_safety_state < ORTHOPUS_SAFETY_BRAKE) { //only escalate
-        new_safety_state = ORTHOPUS_SAFETY_BRAKE;
+      if (current_safety_state < OR_SAFETY_BRAKE) { //only escalate
+        new_safety_state = OR_SAFETY_BRAKE;
       }
       break;
     case ERR_LEVEL_HOLD:
-      if (current_safety_state < ORTHOPUS_SAFETY_HOLD) { //only escalate
-        new_safety_state = ORTHOPUS_SAFETY_HOLD;
+      if (current_safety_state < OR_SAFETY_HOLD) { //only escalate
+        new_safety_state = OR_SAFETY_HOLD;
       } //TODO: allow returning to ENABLE / Position control?
       break;
     case ERR_LEVEL_WARNING: //do not change safety state
@@ -852,51 +852,51 @@ uint16_t evaluate_safety_state(void) {
  * @brief Set the current safety mode in the orthopus state word.
  *
  * This function clears the existing safety mode bits and sets the new mode
- * using the defined ORTHOPUS_SAFETY_MSK. It ensures mutually exclusive safety states.
+ * using the defined OR_SAFETY_MSK. It ensures mutually exclusive safety states.
  *
- * @param mode  The new safety mode to apply (e.g. ORTHOPUS_SAFETY_ENABLE).
+ * @param mode  The new safety mode to apply (e.g. OR_SAFETY_ENABLE).
  */
-void orthopus_set_safety_mode(uint32_t mode)
+void or_set_safety_mode(uint32_t mode)
 {
-  orthopus_comm.state->word &= ~ORTHOPUS_SAFETY_MSK; // Clear current safety bits
-  orthopus_comm.state->word |= mode; // Set new safety mode
+  or_comm.state->word &= ~OR_SAFETY_MSK; // Clear current safety bits
+  or_comm.state->word |= mode; // Set new safety mode
 }
 
 /**
  * @brief Set the current control mode in the orthopus control word.
  *
  * This function clears the existing control mode bits and sets the new mode
- * using the defined ORTHOPUS_CTRL_MODE_MSK. It sets only one control mode at a time.
+ * using the defined OR_CTRL_MODE_MSK. It sets only one control mode at a time.
  *
- * @param mode  The new control mode to apply (e.g. ORTHOPUS_CTRL_MODE_POS).
+ * @param mode  The new control mode to apply (e.g. OR_CTRL_MODE_POS).
  */
-void orthopus_set_control_mode(uint32_t mode)
+void or_set_control_mode(uint32_t mode)
 {
-  orthopus_comm.ctrl->word &= ~ORTHOPUS_CTRL_MODE_MSK; // Clear current control bits
-  orthopus_comm.ctrl->word |= mode; // Set new control mode
+  or_comm.ctrl->word &= ~OR_CTRL_MODE_MSK; // Clear current control bits
+  or_comm.ctrl->word |= mode; // Set new control mode
 }
 
 /**
  * @brief Synchronize active error flags with the orthopus state word.
  *
- * This function sets or clears error bits in orthopus_comm.state->word
+ * This function sets or clears error bits in or_comm.state->word
  * based on the content of or_active_errors[]. It ensures that the state
  * word reflects the current error status precisely.
  */
-void orthopus_sync_error_flags(void)
+void or_sync_error_flags(void)
 {
   // Clear all error bits managed here
-  orthopus_comm.state->word &= ~(ORTHOPUS_STATE_ERR_POS_STEP |
-                                 ORTHOPUS_STATE_ERR_VEL_STEP |
-                                 ORTHOPUS_STATE_ERR_TRQ_STEP);
+  or_comm.state->word &= ~(OR_STATE_ERR_POS_STEP |
+                                 OR_STATE_ERR_VEL_STEP |
+                                 OR_STATE_ERR_TRQ_STEP);
 
   // Set error bits based on active error status
   if (or_active_errors[ERR_POS_STEP])
-    orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_POS_STEP;
+    or_comm.state->word |= OR_STATE_ERR_POS_STEP;
 
   if (or_active_errors[ERR_VEL_STEP])
-    orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_VEL_STEP;
+    or_comm.state->word |= OR_STATE_ERR_VEL_STEP;
 
   if (or_active_errors[ERR_TRQ_STEP])
-    orthopus_comm.state->word |= ORTHOPUS_STATE_ERR_TRQ_STEP;
+    or_comm.state->word |= OR_STATE_ERR_TRQ_STEP;
 }

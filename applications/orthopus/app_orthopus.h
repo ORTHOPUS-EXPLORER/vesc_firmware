@@ -5,7 +5,6 @@
 #include "datatypes.h"
 
 // Algo
-void orthopus_pwm_callback(void);
 THD_FUNCTION(orthopus_thread, arg);
 extern volatile bool orthopus_thread_stop,
                      orthopus_thread_running;
@@ -95,9 +94,9 @@ typedef struct
   float d_torque_err;
   float d_torque_err_filt;
   bool encoders_init;
-} orthopus_state_t;
+} or_state_t;
 
-extern volatile orthopus_state_t or_state;
+extern volatile or_state_t or_state;
 
 typedef struct 
 {
@@ -105,7 +104,7 @@ typedef struct
   float     pos,
             vel,
             trq;
-} orthopus_comm_control_t;
+} or_comm_control_t;
 
 typedef struct 
 {
@@ -113,20 +112,20 @@ typedef struct
   float     pos,
             vel,
             trq;
-} orthopus_comm_state_t;
+} or_comm_state_t;
 
 typedef struct
 {
-  orthopus_comm_state_t   st0, 
+  or_comm_state_t   st0, 
                           st1;
-  volatile orthopus_comm_state_t *state;
-  orthopus_comm_control_t ctrl0, 
+  volatile or_comm_state_t *state;
+  or_comm_control_t ctrl0, 
                           ctrl1;
-  volatile orthopus_comm_control_t *ctrl,
+  volatile or_comm_control_t *ctrl,
                                     *ctrl_prev;
   volatile bool process_ctrl,
                 process_rx;
-} orthopus_comm_t;
+} or_comm_t;
 
 /** @brief Error severity levels */
 typedef enum {
@@ -139,24 +138,13 @@ typedef enum {
 
 /** @brief Internal error types */
 typedef enum {
-  ORTHOPUS_ERR_NONE = 0,
+  ERR_NONE = 0,
 
   // Control-related
   ERR_POS_STEP,
   ERR_VEL_STEP,
   ERR_TRQ_STEP,
   ERR_SAME_CTRL_OUT,
-
-  // Sensor/Init
-  //ORTHOPUS_ERR_ENCODER_TIMEOUT,
-  //ORTHOPUS_ERR_ADC_INIT_FAIL,
-
-  // Communication
-  //ORTHOPUS_ERR_COM_LOSS,
-
-  // Safety
-  //ORTHOPUS_ERR_TEMP_OVERHEAT,
-  //ORTHOPUS_ERR_CURRENT_SPIKE,
 
   //Limits:
   ERR_POS_LIMIT,
@@ -173,42 +161,43 @@ typedef enum {
   ERR_COUNT // Always last
 } or_error_t;
 
-extern orthopus_comm_t orthopus_comm;
+extern or_comm_t or_comm;
 extern bool or_active_errors[ERR_COUNT];
 extern bool or_error_triggered[ERR_COUNT];
 
 // Utils
-bool orthopus_config_load(orthopus_config_t* cfg);
-bool orthopus_config_save(const orthopus_config_t* cfg);
-bool orthopus_config_set(orthopus_config_t* cfg, const uint8_t* buffer);
+bool or_config_load(orthopus_config_t* cfg);
+bool or_config_save(const orthopus_config_t* cfg);
+bool or_config_set(orthopus_config_t* cfg, const uint8_t* buffer);
 
-float orthopus_read_encoder(void);
-float orthopus_read_encoder_raw(void);
-float orthopus_set_joint_offset(float v, bool use_v);
-float orthopus_set_encoder_offset(float v, bool use_v);
+float or_read_encoder(void);
+float or_read_encoder_raw(void);
+float or_set_joint_offset(float v, bool use_v);
+float or_set_encoder_offset(float v, bool use_v);
 
 // cmd
-void orthopus_cmd_init(void);
-void orthopus_cmd_deinit(void);
+void or_cmd_init(void);
+void or_cmd_deinit(void);
 // lisp
-void orthopus_init_lisp(void);
+void or_init_lisp(void);
 
 //algo
-void orthopus_estop(void);
-bool orthopus_safety(void);
-void orthopus_limits_reaction(void);
-void orthopus_plot_encoder_filtering(int ns);
-void orthopus_plot_cycletime(int ns);
-void orthopus_plot_impedance(int ns);
-or_error_level_t get_error_severity(or_error_t err);
-or_error_level_t compute_max_error_level(void);
-void raise_error(or_error_t err);
-void clear_error(or_error_t err);
-uint16_t evaluate_safety_state(void);
-void orthopus_set_safety_mode(uint32_t mode);
-void orthopus_sync_error_flags(void);
+void or_pwm_callback(void);
+void or_estop(void);
+bool or_safety(void);
+void or_limits_reaction(void);
+void or_plot_encoder_filtering(int ns);
+void or_plot_cycletime(int ns);
+void or_plot_impedance(int ns);
+or_error_level_t or_get_error_severity(or_error_t err);
+or_error_level_t or_compute_max_error_level(void);
+void or_raise_error(or_error_t err);
+void or_clear_error(or_error_t err);
+uint16_t or_evaluate_safety_state(void);
+void or_set_safety_mode(uint32_t mode);
+void or_sync_error_flags(void);
 void or_interface_torquecontrol(void);
-void orthopus_set_control_mode(uint32_t mode);
+void or_set_control_mode(uint32_t mode);
 
 /**
  * @brief   System ticks to microseconds.
@@ -235,39 +224,39 @@ void orthopus_set_control_mode(uint32_t mode);
 #define CAN_AUX_DATA_DOWNSTREAM 182
 
 // Float scaling
-#define ORTHOPUS_COMM_RT_POS_SCALE 90  // 0->360 deg
-#define ORTHOPUS_COMM_RT_VEL_SCALE 600 // -50->50 rpm
-#define ORTHOPUS_COMM_RT_TRQ_SCALE 600 // -50->50 Nm
-#define ORTHOPUS_COMM_AUX_SERVO_SCALE 1000
+#define OR_COMM_RT_POS_SCALE 90  // 0->360 deg
+#define OR_COMM_RT_VEL_SCALE 600 // -50->50 rpm
+#define OR_COMM_RT_TRQ_SCALE 600 // -50->50 Nm
+#define OR_COMM_AUX_SERVO_SCALE 1000
 
-#define ORTHOPUS_CTRL_MODE_OFF 0x0000 //*0000
-#define ORTHOPUS_CTRL_MODE_POS 0x0001 //*0001
-#define ORTHOPUS_CTRL_MODE_VEL 0x0002 //*0010
-#define ORTHOPUS_CTRL_MODE_TRQ 0x0004 //*0100
-#define ORTHOPUS_CTRL_MODE_IMP 0x0007 //*0111
-#define ORTHOPUS_CTRL_MODE_CST 0x000F //*1111 custom mode
-#define ORTHOPUS_CTRL_MODE_MSK 0x000F
+#define OR_CTRL_MODE_OFF 0x0000 //*0000
+#define OR_CTRL_MODE_POS 0x0001 //*0001
+#define OR_CTRL_MODE_VEL 0x0002 //*0010
+#define OR_CTRL_MODE_TRQ 0x0004 //*0100
+#define OR_CTRL_MODE_IMP 0x0007 //*0111
+#define OR_CTRL_MODE_CST 0x000F //*1111 custom mode
+#define OR_CTRL_MODE_MSK 0x000F
 
-#define ORTHOPUS_STATE_MODE_OFF     ORTHOPUS_CTRL_MODE_OFF
-#define ORTHOPUS_STATE_MODE_POS     ORTHOPUS_CTRL_MODE_POS
-#define ORTHOPUS_STATE_MODE_VEL     ORTHOPUS_CTRL_MODE_VEL
-#define ORTHOPUS_STATE_MODE_TRQ     ORTHOPUS_CTRL_MODE_TRQ
-#define ORTHOPUS_STATE_MODE_IMP     ORTHOPUS_CTRL_MODE_IMP
-#define ORTHOPUS_STATE_MODE_CST     ORTHOPUS_CTRL_MODE_CST
-#define ORTHOPUS_STATE_MODE_MSK     ORTHOPUS_CTRL_MODE_MSK
-#define ORTHOPUS_STATE_ERR_POS_STEP 0x0010
-#define ORTHOPUS_STATE_ERR_VEL_STEP 0x0020
-#define ORTHOPUS_STATE_ERR_TRQ_STEP 0x0040
-#define ORTHOPUS_STATE_ERR_MSK      0x00F0
+#define OR_STATE_MODE_OFF     OR_CTRL_MODE_OFF
+#define OR_STATE_MODE_POS     OR_CTRL_MODE_POS
+#define OR_STATE_MODE_VEL     OR_CTRL_MODE_VEL
+#define OR_STATE_MODE_TRQ     OR_CTRL_MODE_TRQ
+#define OR_STATE_MODE_IMP     OR_CTRL_MODE_IMP
+#define OR_STATE_MODE_CST     OR_CTRL_MODE_CST
+#define OR_STATE_MODE_MSK     OR_CTRL_MODE_MSK
+#define OR_STATE_ERR_POS_STEP 0x0010
+#define OR_STATE_ERR_VEL_STEP 0x0020
+#define OR_STATE_ERR_TRQ_STEP 0x0040
+#define OR_STATE_ERR_MSK      0x00F0
 
-#define ORTHOPUS_SAFETY_INIT    0x0000
-#define ORTHOPUS_SAFETY_IDLE    0x0100
-#define ORTHOPUS_SAFETY_ENABLE  0x0200
-#define ORTHOPUS_SAFETY_HOLD    0x0300
-#define ORTHOPUS_SAFETY_BRAKE   0x0400
-#define ORTHOPUS_SAFETY_ESTOP   0x0500
+#define OR_SAFETY_INIT    0x0000
+#define OR_SAFETY_IDLE    0x0100
+#define OR_SAFETY_ENABLE  0x0200
+#define OR_SAFETY_HOLD    0x0300
+#define OR_SAFETY_BRAKE   0x0400
+#define OR_SAFETY_ESTOP   0x0500
 
-#define ORTHOPUS_SAFETY_MSK     0x0F00
+#define OR_SAFETY_MSK     0x0F00
 
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"
