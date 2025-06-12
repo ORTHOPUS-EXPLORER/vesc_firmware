@@ -741,7 +741,7 @@ void orthopus_control_cmd(int argc, const char **argv)
 /*                                   SAFETY                                   */
 /* -------------------------------------------------------------------------- */
 
-const char* orthopus_error_messages[ERR_COUNT] = {
+const char* or_error_messages[ERR_COUNT] = {
     "none",
     "Pos stp",
     "Vel stp",
@@ -756,7 +756,7 @@ const char* orthopus_error_messages[ERR_COUNT] = {
     // Add corresponding error messages here
 };
 
-const char* orthopus_error_level_txt[ERR_COUNT] = {
+const char* or_error_level_txt[ERR_COUNT] = {
     "none",
     "warning",
     "hold",
@@ -775,7 +775,7 @@ void OR_SAFETY_cmd(int argc, const char **argv)
 
             for (int i = 0; i < ERR_COUNT; i++) {
                 if (or_active_errors[i]) {
-                    commands_printf(" - %s (%s)", orthopus_error_messages[i], orthopus_error_level_txt[or_get_error_severity(i)]);
+                    commands_printf(" - %s (%s)", or_error_messages[i], or_error_level_txt[or_get_error_severity(i)]);
                 }
             }
 
@@ -783,7 +783,7 @@ void OR_SAFETY_cmd(int argc, const char **argv)
 
             for (int i = 0; i < ERR_COUNT; i++) {
                 if (or_error_triggered[i]) {
-                    commands_printf(" - %s (%s)", orthopus_error_messages[i], orthopus_error_level_txt[or_get_error_severity(i)]);
+                    commands_printf(" - %s (%s)", or_error_messages[i], or_error_level_txt[or_get_error_severity(i)]);
                 }
             }
         } else if (!strcmp(argv[1], "set_err_warn"))
