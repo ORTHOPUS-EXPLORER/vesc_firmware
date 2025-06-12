@@ -17,6 +17,7 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer_append_float32_auto(buffer, conf->encoder_offset, &ind);
 	buffer_append_float32_auto(buffer, conf->encoder_max_diff, &ind);
 	buffer[ind++] = conf->limits_enable;
+	buffer[ind++] = conf->limits_enable_reaction;
 	buffer_append_float32_auto(buffer, conf->limits_pos_min, &ind);
 	buffer_append_float32_auto(buffer, conf->limits_pos_max, &ind);
 	buffer_append_float32_auto(buffer, conf->limits_kp, &ind);
@@ -26,7 +27,6 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer_append_int32(buffer, conf->limits_damp_reachangle, &ind);
 	buffer_append_float32_auto(buffer, conf->limits_reach_angle, &ind);
 	buffer_append_float32_auto(buffer, conf->limits_reach_speed, &ind);
-	buffer_append_float32_auto(buffer, conf->angle_division, &ind);
 	buffer_append_int32(buffer, conf->perf_rate_hz, &ind);
 	buffer[ind++] = conf->perf_compensateexectime;
 	buffer[ind++] = conf->ctrl_deadzone;
@@ -61,6 +61,7 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->encoder_offset = buffer_get_float32_auto(buffer, &ind);
 	conf->encoder_max_diff = buffer_get_float32_auto(buffer, &ind);
 	conf->limits_enable = buffer[ind++];
+	conf->limits_enable_reaction = buffer[ind++];
 	conf->limits_pos_min = buffer_get_float32_auto(buffer, &ind);
 	conf->limits_pos_max = buffer_get_float32_auto(buffer, &ind);
 	conf->limits_kp = buffer_get_float32_auto(buffer, &ind);
@@ -70,7 +71,6 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->limits_damp_reachangle = buffer_get_int32(buffer, &ind);
 	conf->limits_reach_angle = buffer_get_float32_auto(buffer, &ind);
 	conf->limits_reach_speed = buffer_get_float32_auto(buffer, &ind);
-	conf->angle_division = buffer_get_float32_auto(buffer, &ind);
 	conf->perf_rate_hz = buffer_get_int32(buffer, &ind);
 	conf->perf_compensateexectime = buffer[ind++];
 	conf->ctrl_deadzone = buffer[ind++];
@@ -97,6 +97,7 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->encoder_offset = ORTHOPUS_CFG_DEF_ENCODER_OFFSET;
 	conf->encoder_max_diff = ORTHOPUS_CFG_DEF_ENCODER_MAX_DIFF;
 	conf->limits_enable = ORTHOPUS_CFG_DEF_LIMITS_ENABLE;
+	conf->limits_enable_reaction = ORTHOPUS_CFG_DEF_LIMITS_ENABLE_REACTION;
 	conf->limits_pos_min = ORTHOPUS_CFG_DEF_LIMITS_POS_MIN;
 	conf->limits_pos_max = ORTHOPUS_CFG_DEF_LIMITS_POS_MAX;
 	conf->limits_kp = ORTHOPUS_CFG_DEF_LIMITS_KP;
@@ -106,7 +107,6 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->limits_damp_reachangle = ORTHOPUS_CFG_DEF_LIMITS_DAMP_REACHANGLE;
 	conf->limits_reach_angle = ORTHOPUS_CFG_DEF_LIMITS_REACH_ANGLE;
 	conf->limits_reach_speed = ORTHOPUS_CFG_DEF_LIMITS_REACH_SPEED;
-	conf->angle_division = ORTHOPUS_CFG_DEF_ANGLE_DIVISION;
 	conf->perf_rate_hz = ORTHOPUS_CFG_DEF_PERF_RATE_HZ;
 	conf->perf_compensateexectime = ORTHOPUS_CFG_DEF_PERF_COMPENSATEEXECTIME;
 	conf->ctrl_deadzone = ORTHOPUS_CFG_DEF_CTRL_DEADZONE;
