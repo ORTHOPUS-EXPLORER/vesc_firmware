@@ -1,6 +1,6 @@
 #include "app_orthopus.h"
 
-bool orthopus_config_load(orthopus_config_t* cfg)
+bool or_config_load(orthopus_config_t* cfg)
 {
   const uint8_t sz = sizeof(orthopus_config_t)/4;
   commands_printf("Cfg: Loading %d dwords from HW EEPROM",sz);
@@ -26,7 +26,7 @@ bool orthopus_config_load(orthopus_config_t* cfg)
   return true;
 }
 
-bool orthopus_config_set(orthopus_config_t* cfg, const uint8_t* buffer)
+bool or_config_set(orthopus_config_t* cfg, const uint8_t* buffer)
 {
   if(buffer)
   {
@@ -40,7 +40,7 @@ bool orthopus_config_set(orthopus_config_t* cfg, const uint8_t* buffer)
   return true;
 }
 
-bool orthopus_config_save(const orthopus_config_t* cfg)
+bool or_config_save(const orthopus_config_t* cfg)
 {
   const uint8_t sz = sizeof(orthopus_config_t)/4;
   commands_printf("Cfg: Saving %d dwords to HW EEPROM",sz);
@@ -62,19 +62,19 @@ bool orthopus_config_save(const orthopus_config_t* cfg)
   return true;
 }
 
-float orthopus_read_encoder(void)
+float or_read_encoder(void)
 {
-  return orthopus_read_encoder_raw()-or_conf.encoder_offset;
+  return or_read_encoder_raw()-or_conf.encoder_offset;
 }
 
-float orthopus_read_encoder_raw(void)
+float or_read_encoder_raw(void)
 {
   if(!orthopus_thread_running)
     enc_as504x_routine(&encoder_cfg_as504x);
   return encoder_cfg_as504x.state.last_enc_angle;
 }
 
-float orthopus_set_joint_offset(float v, bool use_v)
+float or_set_joint_offset(float v, bool use_v)
 {
   if(!use_v)
   {
@@ -83,7 +83,7 @@ float orthopus_set_joint_offset(float v, bool use_v)
     for(i=0;i<3;i++)
     {
       chThdSleepMilliseconds(1);
-      v += orthopus_read_encoder()/3;
+      v += or_read_encoder()/3;
     }
   }
 
@@ -91,14 +91,14 @@ float orthopus_set_joint_offset(float v, bool use_v)
   return v;
 }
 
-float orthopus_set_encoder_offset(float v, bool use_v)
+float or_set_encoder_offset(float v, bool use_v)
 {
   if(!use_v)
-    v = orthopus_read_encoder_raw();
+    v = or_read_encoder_raw();
   or_state.turn_now = 0;
   or_state.enc_turn = 0;
   or_conf.encoder_offset = v;
-  orthopus_set_joint_offset(0,false);
+  or_set_joint_offset(0,false);
   if ( mc_interface_get_pid_pos_now() > 180)
   {
     or_state.turn_now = -1;

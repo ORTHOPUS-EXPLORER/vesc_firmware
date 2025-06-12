@@ -60,28 +60,28 @@ orthopus_config_t or_conf =
   .encoder_offset = 0.0,
 }; //init values to zero in case flash can't be read
 
-orthopus_comm_t orthopus_comm =
+or_comm_t or_comm =
 {
   .st0 = {},
   .st1 = {},
-  .state = &orthopus_comm.st0,
+  .state = &or_comm.st0,
   .ctrl0 = { 
     .word = 0x0,
   },
   .ctrl1 = { 
     .word = 0x0,
   },
-  .ctrl  = &orthopus_comm.ctrl0,
-  .ctrl_prev = &orthopus_comm.ctrl0,
+  .ctrl  = &or_comm.ctrl0,
+  .ctrl_prev = &or_comm.ctrl0,
   .process_ctrl = true,
   .process_rx = true,
 };
 
-void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
-void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len);
+void or_process_custom_app_data(unsigned char *rx_d, unsigned int len);
+void or_process_custom_hw_data(unsigned char *rx_d, unsigned int len);
 
-bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len);
-bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len);
+bool or_process_can_sid(uint32_t id, uint8_t *data, uint8_t len);
+bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len);
 
 int app_custom_get_cfg(uint8_t *data, bool is_default);
 bool app_custom_set_cfg(uint8_t *data);
@@ -103,12 +103,12 @@ void app_custom_start(void)
   }
 
   // Load config from EEPROM
-  if(!orthopus_config_load(&or_conf))
+  if(!or_config_load(&or_conf))
      commands_printf("Orthopus_config_load failed");
   // if orthopus config not set, set default values
   if (or_conf.signature != ORTHOPUS_CONFIG_T_SIGNATURE)
   {
-    orthopus_config_set(&or_conf, NULL);
+    or_config_set(&or_conf, NULL);
   }
 
   //conf_custom_clear_configs():
@@ -130,21 +130,21 @@ void app_custom_start(void)
 	palSetPadMode(GPIOB, 10, PAL_MODE_INPUT);
 
   // Add shell commands
-  orthopus_cmd_init();
+  or_cmd_init();
 
   // Add LISP commands/symbols
-  lispif_add_ext_load_callback(&orthopus_init_lisp);
+  lispif_add_ext_load_callback(&or_init_lisp);
 
   // Custom Packets Handlers
-  commands_set_app_data_handler(orthopus_process_custom_app_data);
-  commands_set_hw_data_handler(orthopus_process_custom_hw_data);
+  commands_set_app_data_handler(or_process_custom_app_data);
+  commands_set_hw_data_handler(or_process_custom_hw_data);
 
   // Custom CAN handlers
-  comm_can_set_sid_rx_callback(orthopus_process_can_sid);
-  comm_can_set_eid_rx_callback(orthopus_process_can_eid);
+  comm_can_set_sid_rx_callback(or_process_can_sid);
+  comm_can_set_eid_rx_callback(or_process_can_eid);
 
  // Hard-RT context
-	mc_interface_set_pwm_callback(orthopus_pwm_callback);
+	mc_interface_set_pwm_callback(or_pwm_callback);
 
   // Custom thread
 	orthopus_thread_stop = false;
@@ -172,7 +172,7 @@ void app_custom_stop(void)
   comm_can_set_eid_rx_callback(0);
 
   // Commands
-	orthopus_cmd_deinit();
+	or_cmd_deinit();
 }
 
 void app_custom_configure(app_configuration *conf) 
@@ -185,7 +185,7 @@ int app_custom_get_cfg(uint8_t *data, bool is_default)
   orthopus_config_t cfg;
   memcpy(&cfg,&or_conf, sizeof(orthopus_config_t));
 	if (is_default) {
-    orthopus_config_set(&cfg, NULL);
+    or_config_set(&cfg, NULL);
 	}
 	
 	return orthopus_confparser_serialize_orthopus_config_t(data, &cfg);
@@ -194,7 +194,7 @@ int app_custom_get_cfg(uint8_t *data, bool is_default)
 bool app_custom_set_cfg(uint8_t *data)
 {
 	orthopus_config_t cfg;
-	bool res = orthopus_config_set(&cfg, data);
+	bool res = or_config_set(&cfg, data);
   if(res)
   {
     memcpy(&or_conf,&cfg, sizeof(orthopus_config_t));
@@ -202,7 +202,7 @@ bool app_custom_set_cfg(uint8_t *data)
 	
   // FIXME: uncomment WHEN we decide it's a good idea to save or_conf here
   //if(res)
-  // res = orthopus_config_save(&or_conf);
+  // res = or_config_save(&or_conf);
 	
 	return res;
 }
@@ -237,11 +237,11 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     // Read RX, done in CAN Callback
     if(or_conf.simu_mode)
     {
-      orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
-      if(orthopus_comm.process_ctrl)
+      or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
+      if(or_comm.process_ctrl)
       {
         // Get the current Refs and refs
-        const orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+        const or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
         st->pos += SIMU_LP_ALPHA*(ctrl->pos - st->pos);
         st->vel += SIMU_LP_ALPHA*(ctrl->vel - st->vel);
         st->trq += SIMU_LP_ALPHA*(ctrl->trq - st->trq);
@@ -249,7 +249,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     }
     else
     {
-      orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
+      or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
       st->pos = mc_interface_get_pid_pos_now();
       st->vel = or_state.speed_now;
       st->trq = or_state.torque_now;
@@ -261,13 +261,13 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     {
       // TX
       // Get the current buffer
-      orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
+      or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
       // Copy the data to the send buffer
       unsigned char tx_d[8]; // One CAN Message
       long int olen=0;
-      buffer_append_float16(tx_d, st->pos, ORTHOPUS_COMM_RT_POS_SCALE,  &olen); // 2
-      buffer_append_float16(tx_d, st->vel, ORTHOPUS_COMM_RT_VEL_SCALE,  &olen); // 4
-      buffer_append_float16(tx_d, st->trq, ORTHOPUS_COMM_RT_TRQ_SCALE,  &olen); // 6
+      buffer_append_float16(tx_d, st->pos, OR_COMM_RT_POS_SCALE,  &olen); // 2
+      buffer_append_float16(tx_d, st->vel, OR_COMM_RT_VEL_SCALE,  &olen); // 4
+      buffer_append_float16(tx_d, st->trq, OR_COMM_RT_TRQ_SCALE,  &olen); // 6
       buffer_append_uint16 (tx_d, st->word, &olen);                             // 8
       const uint16_t can_id = ((uint16_t)CAN_RT_DATA_UPSTREAM<<8)|(app_get_configuration()->controller_id);
       comm_can_transmit_eid_if(can_id, tx_d, olen, CAN_RT_UPSTREAM_INTF);
@@ -288,7 +288,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
   }
 }
 
-bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
+bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
 {
   // Do not handle messages that are not for us
   if((id&0x00FF) != app_get_configuration()->controller_id)
@@ -298,32 +298,32 @@ bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
   {
     case CAN_RT_DATA_DOWNSTREAM:
     {
-      if(len != 8 || !orthopus_comm.process_rx)
+      if(len != 8 || !or_comm.process_rx)
         break;
 
       // Get the "free" buffer
-      orthopus_comm_control_t* ctrl = orthopus_comm.ctrl  == &(orthopus_comm.ctrl1)
-                                      ? &(orthopus_comm.ctrl0) 
-                                      : &(orthopus_comm.ctrl1);
+      or_comm_control_t* ctrl = or_comm.ctrl  == &(or_comm.ctrl1)
+                                      ? &(or_comm.ctrl0) 
+                                      : &(or_comm.ctrl1);
       long int ilen = 0;
       // Fill in some data from the received packet
-      ctrl->pos  = buffer_get_float16(data, ORTHOPUS_COMM_RT_POS_SCALE, &ilen); // 2
-      ctrl->vel  = buffer_get_float16(data, ORTHOPUS_COMM_RT_VEL_SCALE, &ilen); // 4
-      ctrl->trq  = buffer_get_float16(data, ORTHOPUS_COMM_RT_TRQ_SCALE, &ilen); // 6
+      ctrl->pos  = buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
+      ctrl->vel  = buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
+      ctrl->trq  = buffer_get_float16(data, OR_COMM_RT_TRQ_SCALE, &ilen); // 6
       ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
       // Activate
-      orthopus_comm.ctrl_prev = orthopus_comm.ctrl;
-      orthopus_comm.ctrl = ctrl; // Swap ! //TODO: keep or not?
+      or_comm.ctrl_prev = or_comm.ctrl;
+      or_comm.ctrl = ctrl; // Swap ! //TODO: keep or not?
       return true;
     }
     case CAN_AUX_DATA_DOWNSTREAM:
     {
-      if(len != 2 || !orthopus_comm.process_rx)
+      if(len != 2 || !or_comm.process_rx)
         break;
       long int ilen = 0;
       // Okay let's do it right here for now...
-      float servo_pos  = buffer_get_float16(data, ORTHOPUS_COMM_AUX_SERVO_SCALE, &ilen); // 2
-      if(orthopus_comm.process_ctrl)
+      float servo_pos  = buffer_get_float16(data, OR_COMM_AUX_SERVO_SCALE, &ilen); // 2
+      if(or_comm.process_ctrl)
         pwm_servo_set_servo_out(servo_pos);
     }
     default:
@@ -332,49 +332,49 @@ bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
   return false;
 }
 
-void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len)
+void or_process_custom_app_data(unsigned char *rx_d, unsigned int len)
 {
   (void)rx_d; (void)len;
   /*
   Moved to CAN with custom IDs for Upstream/Downstream
   // RX
-  const size_t isize = sizeof(orthopus_comm_control_t)+2;
+  const size_t isize = sizeof(or_comm_control_t)+2;
   if(len == isize && rx_d[0] == 0x70)
   {
     // Get the "free" buffer
-    orthopus_comm_control_t* ctrl = orthopus_comm.ctrl  = orthopus_comm.ctrl  == &(orthopus_comm.ctrl1)
-                                  ? &(orthopus_comm.ctrl0) 
-                                  : &(orthopus_comm.ctrl1);
+    or_comm_control_t* ctrl = or_comm.ctrl  = or_comm.ctrl  == &(or_comm.ctrl1)
+                                  ? &(or_comm.ctrl0) 
+                                  : &(or_comm.ctrl1);
     long int ilen = 2;
     // Fill in some data from the received packet
     ctrl->word = buffer_get_uint16      (rx_d, &ilen);
-    ctrl->pos  = buffer_get_float16(rx_d, ORTHOPUS_COMM_POS_SCALE, &ilen);
-    ctrl->vel  = buffer_get_float16(rx_d, ORTHOPUS_COMM_VEL_SCALE, &ilen);
-    ctrl->trq  = buffer_get_float16(rx_d, ORTHOPUS_COMM_TRQ_SCALE, &ilen);
+    ctrl->pos  = buffer_get_float16(rx_d, OR_COMM_POS_SCALE, &ilen);
+    ctrl->vel  = buffer_get_float16(rx_d, OR_COMM_VEL_SCALE, &ilen);
+    ctrl->trq  = buffer_get_float16(rx_d, OR_COMM_TRQ_SCALE, &ilen);
     // Activate
-    orthopus_comm.ctrl = ctrl; // Swap !
+    or_comm.ctrl = ctrl; // Swap !
   }
 
   // TX
-  const size_t osize = sizeof(orthopus_comm_state_t)+2; 
+  const size_t osize = sizeof(or_comm_state_t)+2; 
   unsigned char tx_d[osize];
   long int olen=2;
   tx_d[0] = 0x12;
   tx_d[1] = 0x45;
   // Get the current buffer
-  orthopus_comm_state_t* st = orthopus_comm.state;
+  or_comm_state_t* st = or_comm.state;
   // Copy the data to the send buffer
   buffer_append_uint16      (tx_d, st->word, &olen); // 16
-  buffer_append_float16(tx_d, st->pos, ORTHOPUS_COMM_POS_SCALE,  &olen); // 32
-  buffer_append_float16(tx_d, st->vel, ORTHOPUS_COMM_VEL_SCALE,  &olen); // 48
-  buffer_append_float16(tx_d, st->trq, ORTHOPUS_COMM_TRQ_SCALE,  &olen); // 64
+  buffer_append_float16(tx_d, st->pos, OR_COMM_POS_SCALE,  &olen); // 32
+  buffer_append_float16(tx_d, st->vel, OR_COMM_VEL_SCALE,  &olen); // 48
+  buffer_append_float16(tx_d, st->trq, OR_COMM_TRQ_SCALE,  &olen); // 64
   //buffer_append_float32_auto(tx_d, st->temp, &olen);
   //buffer_append_float32_auto(tx_d, st->curr, &olen);
   commands_send_app_data(tx_d, osize);
   */
 }
 
-void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len)
+void or_process_custom_hw_data(unsigned char *rx_d, unsigned int len)
 {
   (void)rx_d; (void)len;
 
@@ -390,7 +390,7 @@ void orthopus_process_custom_hw_data(unsigned char *rx_d, unsigned int len)
 }
 
 
-bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
+bool or_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
 {
   (void)id; (void)data; (void)len;
   /*

@@ -21,7 +21,7 @@ lbm_uint orthopus_fv_sym,orthopus_fc_sym;
 // BMi,2024107, Broken since rebase on 6.05
 //lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn);
 
-void orthopus_init_lisp(void)
+void or_init_lisp(void)
 {
     // in REPL, test with: (orthopus-test-syms 'orthopus0)    => ok
     //                     (orthopus-test-syms 'orthopus1)    => ok
@@ -78,13 +78,13 @@ void orthopus_init_lisp(void)
 lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-	return lbm_enc_float(orthopus_read_encoder());
+	return lbm_enc_float(or_read_encoder());
 }
 
 lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
-	return lbm_enc_float(orthopus_read_encoder_raw());
+	return lbm_enc_float(or_read_encoder_raw());
 }
 
 /*lbm_value orthopus_lisp_read_encoder_filtered(lbm_value *args, lbm_uint argn)
@@ -138,12 +138,12 @@ lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn)
   const char* s = lbm_dec_str(args[0]);
   if(!strcmp(s,"joint"))
   {
-    v = orthopus_set_joint_offset(v, argn == 2);
+    v = or_set_joint_offset(v, argn == 2);
     commands_printf_lisp("Init Joint (ie. PosPID) offset: % 5.3f", (double)v);
   }
   else if(!strcmp(s,"encoder"))
   {
-    v = orthopus_set_encoder_offset(v, argn == 2);
+    v = or_set_encoder_offset(v, argn == 2);
     commands_printf_lisp("Init Encoder offset: % 5.3f", (double)v);
   }
 
@@ -166,14 +166,14 @@ lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn)
   }
   else if(!strcmp(s,"load"))
   {
-    if(orthopus_config_load(&or_conf))
+    if(or_config_load(&or_conf))
       commands_printf_lisp("Orthopus config loaded from EEPROM");
     else
       commands_printf_lisp("Orthopus config load failed =/");
   }
   else if(!strcmp(s,"save"))
   {
-    if(orthopus_config_save(&or_conf))
+    if(or_config_save(&or_conf))
       commands_printf("Orthopus config saved to EEPROM");
     else
       commands_printf("Orthopus config save failed =/");

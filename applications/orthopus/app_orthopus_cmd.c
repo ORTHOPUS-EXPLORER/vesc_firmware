@@ -10,9 +10,9 @@ void orthopus_perf_cmd(int argc, const char **argv);
 void orthopus_control_cmd(int argc, const char **argv);
 void orthopus_comm_cmd(int argc, const char **argv);
 void orthopus_can_cmd(int argc, const char **argv);
-void orthopus_safety_cmd(int argc, const char **argv);
+void OR_SAFETY_cmd(int argc, const char **argv);
 
-void orthopus_cmd_init(void)
+void or_cmd_init(void)
 {
    terminal_register_command_callback(
     "o_offset",
@@ -83,11 +83,11 @@ void orthopus_cmd_init(void)
     "o_safety",
     "[Orthopus] Safety monitor/debug/test commands",
     "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init/clear_all/clear_history]",
-    orthopus_safety_cmd
+    OR_SAFETY_cmd
   );
 }
 
-void orthopus_cmd_deinit(void)
+void or_cmd_deinit(void)
 {
   terminal_unregister_callback(orthopus_offset_cmd);
   terminal_unregister_callback(orthopus_config_cmd);
@@ -97,7 +97,7 @@ void orthopus_cmd_deinit(void)
   terminal_unregister_callback(orthopus_perf_cmd);
   terminal_unregister_callback(orthopus_comm_cmd);
   terminal_unregister_callback(orthopus_can_cmd);
-  terminal_unregister_callback(orthopus_safety_cmd);
+  terminal_unregister_callback(OR_SAFETY_cmd);
 }
 
 
@@ -178,7 +178,7 @@ void orthopus_comm_cmd(int argc, const char **argv)
   }
   else if(argc == 3 &&!strcmp(argv[1],"set_qd"))
   {
-    orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+    or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
     float v = 0;
     sscanf(argv[2], "%f", &v);
     if(v >= -360 && v <= 360)
@@ -187,25 +187,25 @@ void orthopus_comm_cmd(int argc, const char **argv)
   }
   else if(argc == 3 && !strcmp(argv[1],"process_rx"))
   {
-    orthopus_comm.process_rx = !strcmp(argv[2],"on");
-    commands_printf("Process RX: %s", orthopus_comm.process_rx ? "true" : "false");
+    or_comm.process_rx = !strcmp(argv[2],"on");
+    commands_printf("Process RX: %s", or_comm.process_rx ? "true" : "false");
   }
   else if(argc == 3 && !strcmp(argv[1],"process_ctrl"))
   {
-    orthopus_comm.process_ctrl = !strcmp(argv[2],"on");
-    commands_printf("Process Ctrl: %s", orthopus_comm.process_ctrl ? "true" : "false");
+    or_comm.process_ctrl = !strcmp(argv[2],"on");
+    commands_printf("Process Ctrl: %s", or_comm.process_ctrl ? "true" : "false");
   }
   else if(argc == 2  && !strcmp(argv[1],"print"))
   {
-    orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+    or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
     commands_printf("Last RX:");
     commands_printf("  Control word: 0x%04X",        ctrl->word);
     commands_printf("  Position    :  % 9.5f",(double)ctrl->pos);
     commands_printf("  Velocity    :  % 9.5f",(double)ctrl->vel);
     commands_printf("  Torque      :  % 9.5f",(double)ctrl->trq);
-    commands_printf("Process Ctrl  : %s", orthopus_comm.process_ctrl ? "true" : "false");
-    commands_printf("Process RX    : %s", orthopus_comm.process_rx ? "true" : "false");
-    orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
+    commands_printf("Process Ctrl  : %s", or_comm.process_ctrl ? "true" : "false");
+    commands_printf("Process RX    : %s", or_comm.process_rx ? "true" : "false");
+    or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
     commands_printf("Last TX:");
     commands_printf("  Status word : 0x%04X",         st->word);
     commands_printf("  Position    :  % 9.5f",(double)st->pos );
@@ -219,7 +219,7 @@ void orthopus_comm_cmd(int argc, const char **argv)
   }
   else if(argc == 3 &&!strcmp(argv[1],"set_ctrl"))
   {
-    orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+    or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
     uint16_t v;
     sscanf(argv[2], "%hx", &v);
     ctrl->word = v;
@@ -235,7 +235,7 @@ void orthopus_pos_cmd(int argc, const char **argv)
   (void)argc;(void)argv;
   double ams_v     = encoder_cfg_as504x.state.last_enc_angle;//enc_as504x_read_angle(&encoder_cfg_as504x);
   double sincos_v  = enc_sincos_read_deg(&encoder_cfg_sincos);
-  double orthop_v  = orthopus_read_encoder();
+  double orthop_v  = or_read_encoder();
   double pid_v     = mc_interface_get_pid_pos_now();
   double pid_o     = mc_interface_get_configuration()->p_pid_offset;
 
@@ -243,7 +243,7 @@ void orthopus_pos_cmd(int argc, const char **argv)
   commands_printf("PID_pos offset                 : % 7.3f", pid_o                                    );
   commands_printf("AMS_pos                        : % 7.3f", ams_v                                    );
   commands_printf("SINCOS_pos                     : % 7.3f", sincos_v                                 );
-  commands_printf("orthopus_read_encoder()        : % 7.3f", orthop_v                                 );
+  commands_printf("or_read_encoder()        : % 7.3f", orthop_v                                 );
   commands_printf("PID_pos_now                    : % 7.3f", pid_v                                    );
   commands_printf("pos_multiturn_now              : % 7.3f", (double)or_state.pos_multiturn_now );
 }
@@ -264,12 +264,12 @@ void orthopus_offset_cmd(int argc, const char **argv)
 
   if(!strcmp(argv[1],"joint"))
   {
-    v = orthopus_set_joint_offset(v, argc == 3);
+    v = or_set_joint_offset(v, argc == 3);
     commands_printf("Init Joint (ie: PosPID) offset: % 7.3f", (double)v);
   }
   else if(!strcmp(argv[1],"encoder"))
   {
-    v = orthopus_set_encoder_offset(v,argc == 3);
+    v = or_set_encoder_offset(v,argc == 3);
     commands_printf("Init encoder offset: % 7.3f", (double)or_conf.encoder_offset);
   } else {
     commands_printf("Invalid arguments.");
@@ -328,19 +328,19 @@ void orthopus_config_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"reset"))
   {
-    orthopus_config_set(&or_conf, NULL);
+    or_config_set(&or_conf, NULL);
     commands_printf("Orthopus config reset to default. Don't forget to save to EEPROM !");
   }
   else if(!strcmp(argv[1],"load"))
   {
-    if(orthopus_config_load(&or_conf))
+    if(or_config_load(&or_conf))
       commands_printf("Orthopus config loaded from EEPROM");
     else
       commands_printf("Orthopus config load failed =/");
   }
   else if(!strcmp(argv[1],"save"))
   {
-    if(orthopus_config_save(&or_conf))
+    if(or_config_save(&or_conf))
       commands_printf("Orthopus config saved to EEPROM");
     else
       commands_printf("Orthopus config save failed =/");
@@ -579,13 +579,13 @@ void orthopus_control_cmd(int argc, const char **argv)
 
   if(!strcmp(argv[1],"enable"))
   {
-    orthopus_set_control_mode(ORTHOPUS_STATE_MODE_TRQ);
-    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+    or_set_control_mode(OR_STATE_MODE_TRQ);
+    or_set_safety_mode(OR_SAFETY_ENABLE);
     commands_printf("Control Enabled");
   }
   else if(!strcmp(argv[1],"disable"))
   {
-    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ESTOP);
+    or_set_safety_mode(OR_SAFETY_ESTOP);
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //todo set zero torque and/or estop
@@ -639,8 +639,8 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.torque_filter_const = 0.1;
     or_conf.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 1: kp4 a1 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
-    orthopus_set_control_mode(ORTHOPUS_STATE_MODE_TRQ);
-    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+    or_set_control_mode(OR_STATE_MODE_TRQ);
+    or_set_safety_mode(OR_SAFETY_ENABLE);
   }
   else if(!strcmp(argv[1],"demo2"))
   {
@@ -652,16 +652,16 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.torque_filter_const = 0.1;
     or_conf.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 2: kp4 a 3 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
-    orthopus_set_control_mode(ORTHOPUS_STATE_MODE_TRQ);
-    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+    or_set_control_mode(OR_STATE_MODE_TRQ);
+    or_set_safety_mode(OR_SAFETY_ENABLE);
   }
   else if(!strcmp(argv[1],"torquecontrol"))
   {
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
     or_state.ctrl_overwrite = true;
-    orthopus_set_control_mode(ORTHOPUS_STATE_MODE_TRQ);
-    orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+    or_set_control_mode(OR_STATE_MODE_TRQ);
+    or_set_safety_mode(OR_SAFETY_ENABLE);
     commands_printf("Overwriting current setpoints into torque setpoint");
   }
   else if(!strcmp(argv[1],"kp"))
@@ -765,7 +765,7 @@ const char* orthopus_error_level_txt[ERR_COUNT] = {
     // Add corresponding error levels here
 };
 
-void orthopus_safety_cmd(int argc, const char **argv)
+void OR_SAFETY_cmd(int argc, const char **argv)
 {
     if (argc == 1) {
         commands_printf("Safety commands - TODO");
@@ -775,7 +775,7 @@ void orthopus_safety_cmd(int argc, const char **argv)
 
             for (int i = 0; i < ERR_COUNT; i++) {
                 if (or_active_errors[i]) {
-                    commands_printf(" - %s (%s)", orthopus_error_messages[i], orthopus_error_level_txt[get_error_severity(i)]);
+                    commands_printf(" - %s (%s)", orthopus_error_messages[i], orthopus_error_level_txt[or_get_error_severity(i)]);
                 }
             }
 
@@ -783,45 +783,45 @@ void orthopus_safety_cmd(int argc, const char **argv)
 
             for (int i = 0; i < ERR_COUNT; i++) {
                 if (or_error_triggered[i]) {
-                    commands_printf(" - %s (%s)", orthopus_error_messages[i], orthopus_error_level_txt[get_error_severity(i)]);
+                    commands_printf(" - %s (%s)", orthopus_error_messages[i], orthopus_error_level_txt[or_get_error_severity(i)]);
                 }
             }
         } else if (!strcmp(argv[1], "set_err_warn"))
         {
-          raise_error(ERR_TST_WARNING);
+          or_raise_error(ERR_TST_WARNING);
         } else if (!strcmp(argv[1], "set_err_hold"))
         {
-          raise_error(ERR_TST_HOLD);
+          or_raise_error(ERR_TST_HOLD);
         } else if (!strcmp(argv[1], "set_err_brake"))
         {
-          raise_error(ERR_TST_BRAKE);
+          or_raise_error(ERR_TST_BRAKE);
         } else if (!strcmp(argv[1], "set_err_estop"))
         {
-          raise_error(ERR_TST_ESTOP);
+          or_raise_error(ERR_TST_ESTOP);
         } else if (!strcmp(argv[1], "clear_test_err"))
         {
-          clear_error(ERR_TST_WARNING);
-          clear_error(ERR_TST_HOLD);
-          clear_error(ERR_TST_BRAKE);
-          clear_error(ERR_TST_ESTOP);
+          or_clear_error(ERR_TST_WARNING);
+          or_clear_error(ERR_TST_HOLD);
+          or_clear_error(ERR_TST_BRAKE);
+          or_clear_error(ERR_TST_ESTOP);
         } else if (!strcmp(argv[1], "set_enable"))
         {
-          orthopus_set_safety_mode(ORTHOPUS_SAFETY_ENABLE);
+          or_set_safety_mode(OR_SAFETY_ENABLE);
         } else if (!strcmp(argv[1], "set_idle"))
         {
-          orthopus_set_safety_mode(ORTHOPUS_SAFETY_IDLE);
+          or_set_safety_mode(OR_SAFETY_IDLE);
         } else if (!strcmp(argv[1], "set_hold"))
         {
-          orthopus_set_safety_mode(ORTHOPUS_SAFETY_HOLD);
+          or_set_safety_mode(OR_SAFETY_HOLD);
         } else if (!strcmp(argv[1], "set_estop"))
         {
-          orthopus_set_safety_mode(ORTHOPUS_SAFETY_ESTOP);
+          or_set_safety_mode(OR_SAFETY_ESTOP);
         } else if (!strcmp(argv[1], "set_init"))
         {
-          orthopus_set_safety_mode(ORTHOPUS_SAFETY_INIT);
+          or_set_safety_mode(OR_SAFETY_INIT);
         } else if (!strcmp(argv[1], "set_brake"))
         {
-          orthopus_set_safety_mode(ORTHOPUS_SAFETY_BRAKE);
+          or_set_safety_mode(OR_SAFETY_BRAKE);
         } else if (!strcmp(argv[1], "clear_all"))
         {
           for (int i = 0; i < ERR_COUNT; ++i)
