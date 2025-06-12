@@ -33,6 +33,11 @@
 #define ORTHOPUS_CFG_DEF_LIMITS_ENABLE 0
 #endif
 
+// Limits Enable Reaction
+#ifndef ORTHOPUS_CFG_DEF_LIMITS_ENABLE_REACTION
+#define ORTHOPUS_CFG_DEF_LIMITS_ENABLE_REACTION 0
+#endif
+
 // Min position
 #ifndef ORTHOPUS_CFG_DEF_LIMITS_POS_MIN
 #define ORTHOPUS_CFG_DEF_LIMITS_POS_MIN -90
@@ -76,11 +81,6 @@
 // Limits ReachSpeed
 #ifndef ORTHOPUS_CFG_DEF_LIMITS_REACH_SPEED
 #define ORTHOPUS_CFG_DEF_LIMITS_REACH_SPEED 2
-#endif
-
-// Angle Division
-#ifndef ORTHOPUS_CFG_DEF_ANGLE_DIVISION
-#define ORTHOPUS_CFG_DEF_ANGLE_DIVISION 700
 #endif
 
 // Perf Rate (Hz)

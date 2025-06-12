@@ -24,30 +24,29 @@ typedef struct
   /* EEPROM Addr - Size */
   /* 00 - 4 */float encoder_offset; 
   /* 01 - 4 */uint32_t signature;
-  /* 02 - 1 */uint8_t pad[1];
+  /* 02 - 1 */bool limits_enable_reaction;
   /* 02 - 1 */bool auto_clear_errors;
   /*    - 1 */bool limits_enable;
   /*    - 1 */uint8_t stream_rate_10;
   /* 03 - 4 */float limits_pos_max;
   /* 04 - 4 */float limits_pos_min;
-  /* 05 - 4 */float angle_division; //TODO: remove, unused
-  /* 06 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
-  /* 07 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
-  /* 08 - 4 */char joint_name[4];
-  /* 09 - 4 */int perf_rate_hz;
-  /* 10 - 1 */bool perf_compensateexectime;
+  /* 05 - 4 */float limits_reach_angle; //angle margin before the max/min pos limit whitin which the speed is limited (deg)
+  /* 06 - 4 */float limits_reach_speed; //speed limit in the reach angle (rpm)
+  /* 07 - 4 */char joint_name[4];
+  /* 08 - 4 */int perf_rate_hz;
+  /* 09 - 1 */bool perf_compensateexectime;
   /*    - 1 */bool ctrl_deadzone;
   /*    - 1 */bool ctrl_sample_adc3;
   /*    - 1 */bool simu_mode;
-  /* 11 - 4 */float ctrl_torquezero;
-  /* 12 - 4 */float ctrl_torquegain;
-  /* 13 - 4 */float limits_kp;
-  /* 14 - 4 */float limits_kd;
-  /* 15 - 4 */int limits_powp;
-  /* 16 - 4 */int limits_powd;
-  /* 17 - 4 */int limits_damp_reachangle;
-  /* 18 - 4 */float ctrl_stiffness;
-  /* 19 - 4 */float ctrl_damping;
+  /* 10 - 4 */float ctrl_torquezero;
+  /* 11 - 4 */float ctrl_torquegain;
+  /* 12 - 4 */float limits_kp;
+  /* 13 - 4 */float limits_kd;
+  /* 14 - 4 */int limits_powp;
+  /* 15 - 4 */int limits_powd;
+  /* 16 - 4 */int limits_damp_reachangle;
+  /* 17 - 4 */float ctrl_stiffness;
+  /* 18 - 4 */float ctrl_damping;
   /* 19 - 4 */float torque_filter_const;
   /* 20 - 4 */float ctrl_kp;
   /* 21 - 4 */float ctrl_a;
@@ -198,7 +197,7 @@ void orthopus_init_lisp(void);
 //algo
 void orthopus_estop(void);
 bool orthopus_safety(void);
-void orthopus_limits(void);
+void orthopus_limits_reaction(void);
 void orthopus_plot_encoder_filtering(int ns);
 void orthopus_plot_cycletime(int ns);
 void orthopus_plot_impedance(int ns);

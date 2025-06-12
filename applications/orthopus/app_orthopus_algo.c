@@ -124,10 +124,6 @@ THD_FUNCTION(orthopus_thread, arg)
     //TODO: speed now computed at higher freq
     or_state.speed_now = mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div;
 
-    /* --------------------------------- Limits --------------------------------- */
-    if (or_conf.limits_enable)
-      orthopus_limits();
-
     /* ---------------------------- Sample adc3 value --------------------------- */ //TODO: always sample at high freq
     if (or_conf.ctrl_sample_adc3)
     {
@@ -251,6 +247,8 @@ THD_FUNCTION(orthopus_thread, arg)
                   {
                     orthopus_comm.state->word |= ORTHOPUS_STATE_MODE_TRQ; // Set mode
                     or_state.ext_torque_setpoint = orthopus_comm.ctrl->trq;
+                    if (or_conf.limits_enable_reaction)
+                      orthopus_limits_reaction();
                     or_interface_torquecontrol();
                   }
                   break;
@@ -528,6 +526,31 @@ bool orthopus_safety(void)
     or_state.nid1 = 0;
   } 
 
+  // ------------------- limits --------------------------//
+  if (or_conf.limits_enable)
+  {
+    if (   (or_state.pos_multiturn_now > or_conf.limits_pos_max)
+        || (or_state.pos_multiturn_now < or_conf.limits_pos_min)) //out of limits
+    {
+      raise_error(ERR_POS_LIMIT);
+    }
+    else if ( (
+              (or_state.speed_now > or_conf.limits_reach_speed
+                && (or_state.pos_multiturn_now 
+                    > or_conf.limits_pos_max - or_conf.limits_reach_angle)
+              )
+              ||
+              ( or_state.speed_now < -or_conf.limits_reach_speed
+                && (or_state.pos_multiturn_now 
+                    < or_conf.limits_pos_min + or_conf.limits_reach_angle)
+              )
+              )
+            ) //reaching limit too fast
+    {
+      raise_error(ERR_SPEED_LIMIT);
+    }
+  }
+
   // -------------- sync errors in state word ----------------- //
   orthopus_sync_error_flags();
 
@@ -535,7 +558,7 @@ bool orthopus_safety(void)
 }
 
 /**
- * Limits management: stop actuator if exceeding defined limits
+ * Limits reaction: compute a torque setpoint to simulate a physical end stop
  * (position, speed, etc.)
  *
  * @param
@@ -544,33 +567,11 @@ bool orthopus_safety(void)
  * @return
  * void
  */
-void orthopus_limits(void)
+void orthopus_limits_reaction(void)
 {
   //check position limits
   or_state.limit_reaction = 0;
-  if (   (or_state.pos_multiturn_now > or_conf.limits_pos_max)
-      || (or_state.pos_multiturn_now < or_conf.limits_pos_min)) //out of limits
-  {
-    raise_error(ERR_POS_LIMIT);
-  }
-  else if ( (
-            (or_state.speed_now > or_conf.limits_reach_speed
-              && (or_state.pos_multiturn_now 
-                  > or_conf.limits_pos_max - or_conf.limits_reach_angle)
-            )
-            ||
-            ( or_state.speed_now < -or_conf.limits_reach_speed
-              && (or_state.pos_multiturn_now 
-                  < or_conf.limits_pos_min + or_conf.limits_reach_angle)
-            )
-            )
-          ) //reaching limit too fast
-  {
-    raise_error(ERR_SPEED_LIMIT);
-  }
-  if ( (or_state.ctrl_enable)
-       &&
-       (or_state.pos_multiturn_now 
+  if ( (or_state.pos_multiturn_now 
                          < or_conf.limits_pos_min + or_conf.limits_reach_angle))
   {
 /* --------------------------- Reaching min limit --------------------------- */
@@ -581,9 +582,7 @@ void orthopus_limits(void)
                - or_conf.limits_reach_angle
           ,or_conf.limits_powp);
   }
-  if ( (or_state.ctrl_enable)
-       &&
-       (or_state.pos_multiturn_now
+  if ( (or_state.pos_multiturn_now
                          > or_conf.limits_pos_max - or_conf.limits_reach_angle))
   { 
 /* --------------------------- Reaching max limit --------------------------- */
@@ -594,9 +593,7 @@ void orthopus_limits(void)
                + or_conf.limits_reach_angle
           ,or_conf.limits_powp);
   }
-  if ( (or_state.ctrl_enable) 
-       &&
-       (or_state.pos_multiturn_now
+  if ( (or_state.pos_multiturn_now
           < or_conf.limits_pos_min
             + or_conf.limits_reach_angle
             + or_conf.limits_damp_reachangle)
@@ -607,9 +604,7 @@ void orthopus_limits(void)
     or_state.limit_reaction += or_conf.limits_kd
                                *powf(fabs(or_state.speed_now),or_conf.limits_powd);
   }
-  if ( (or_state.ctrl_enable)
-       &&
-       (or_state.pos_multiturn_now
+  if ( (or_state.pos_multiturn_now
           > or_conf.limits_pos_max
             - or_conf.limits_reach_angle
             - or_conf.limits_damp_reachangle)

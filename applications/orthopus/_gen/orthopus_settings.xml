@@ -127,6 +127,18 @@ p, li { white-space: pre-wrap; }
             <cDefine>ORTHOPUS_CFG_DEF_LIMITS_ENABLE</cDefine>
             <valInt>0</valInt>
         </limits_enable>
+        <limits_enable_reaction>
+            <longName>Limits Enable Reaction</longName>
+            <type>5</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Simulates a physical end stop with a given siffnes/damping, set by limits_* parameters.&lt;br /&gt;&lt;br /&gt;Adds a torque reaction at limits, active only in torque/impedance control modes, when this variable is True&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_LIMITS_ENABLE_REACTION</cDefine>
+            <valInt>0</valInt>
+        </limits_enable_reaction>
         <limits_pos_min>
             <longName>Min position</longName>
             <type>1</type>
@@ -320,28 +332,6 @@ p, li { white-space: pre-wrap; }
             <suffix></suffix>
             <vTx>9</vTx>
         </limits_reach_speed>
-        <angle_division>
-            <longName>Angle Division</longName>
-            <type>1</type>
-            <transmittable>1</transmittable>
-            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Angle division from electric angle to output angle.&lt;br /&gt;i.e: a motor with 10 poles pair and a reduction ratio of 100 gives angle division of 1000&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
-            <cDefine>ORTHOPUS_CFG_DEF_ANGLE_DIVISION</cDefine>
-            <editorDecimalsDouble>3</editorDecimalsDouble>
-            <editorScale>1</editorScale>
-            <editAsPercentage>0</editAsPercentage>
-            <maxDouble>1000</maxDouble>
-            <minDouble>-1000</minDouble>
-            <showDisplay>0</showDisplay>
-            <stepDouble>1</stepDouble>
-            <valDouble>700</valDouble>
-            <vTxDoubleScale>1</vTxDoubleScale>
-            <suffix></suffix>
-            <vTx>9</vTx>
-        </angle_division>
         <perf_rate_hz>
             <longName>Perf Rate (Hz)</longName>
             <type>2</type>
@@ -638,6 +628,7 @@ p, li { white-space: pre-wrap; }
         <ser>encoder_offset</ser>
         <ser>encoder_max_diff</ser>
         <ser>limits_enable</ser>
+        <ser>limits_enable_reaction</ser>
         <ser>limits_pos_min</ser>
         <ser>limits_pos_max</ser>
         <ser>limits_kp</ser>
@@ -647,7 +638,6 @@ p, li { white-space: pre-wrap; }
         <ser>limits_damp_reachangle</ser>
         <ser>limits_reach_angle</ser>
         <ser>limits_reach_speed</ser>
-        <ser>angle_division</ser>
         <ser>perf_rate_hz</ser>
         <ser>perf_compensateexectime</ser>
         <ser>ctrl_deadzone</ser>
@@ -671,7 +661,6 @@ p, li { white-space: pre-wrap; }
                 <subgroupName>Common</subgroupName>
                 <subgroupParams>
                     <param>joint_name</param>
-                    <param>angle_division</param>
                     <param>torque_filter_const</param>
                     <param>simu_mode</param>
                     <param>stream_rate_10</param>
@@ -698,6 +687,7 @@ p, li { white-space: pre-wrap; }
                     <param>limits_damp_reachangle</param>
                     <param>limits_reach_angle</param>
                     <param>limits_reach_speed</param>
+                    <param>limits_enable_reaction</param>
                 </subgroupParams>
             </subgroup>
             <subgroup>
