@@ -30,7 +30,7 @@
 uint8_t hw_id_from_uuid(void) {
 	uint8_t id = utils_crc32c(STM32_UUID_8, 12) & 0x7F;
 	// CAN ID 10 and 11 are often used by DieBieMS / FlexiBMS
-	uint8_t reserved[] = {10, 11};
+	uint8_t reserved[] = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
 	for (size_t i = 0; i < sizeof(reserved); ++i) {
 		if (id == reserved[i]) {
 			id = (id + 1) & 0x7F;
