@@ -134,6 +134,7 @@ typedef enum {
   ERR_LEVEL_HOLD,        // Needs HOLD
   ERR_LEVEL_BRAKE,       // Needs BRAKE
   ERR_LEVEL_ESTOP,        // Must stop immediately
+  ERR_LEVEL_COUNT,
 } or_error_level_t;
 
 /** @brief Internal error types */
@@ -157,6 +158,7 @@ typedef enum {
   ERR_TST_ESTOP,
 
   // Add others...
+  ERR_STP_HOLD,
 
   ERR_COUNT // Always last
 } or_error_t;
