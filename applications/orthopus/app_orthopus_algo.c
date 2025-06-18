@@ -32,6 +32,7 @@ int ninitadc = 0; //number of ADC samples used to compute torque zero
 bool or_active_errors[ERR_COUNT] = { false }; //array tracking all errors state
 bool or_error_triggered[ERR_COUNT] = { false }; // true = triggered at least once since startup/reset
 bool hold_initialized = false;
+bool release_on_enable = false;
 float hold_position = 0.0;
 
 THD_FUNCTION(orthopus_thread, arg) 
@@ -271,7 +272,11 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_OFF:
                 {
-                  //mc_interface_release_motor(); //safer but prevents any control from vesc_tool / lisp 
+                  if (release_on_enable)
+                  {
+                    mc_interface_release_motor();
+                    release_on_enable = false;
+                  }
                   break;
                 }
                 default:
@@ -850,6 +855,11 @@ uint16_t or_evaluate_safety_state(void) {
  */
 void or_set_safety_mode(uint32_t mode)
 {
+  //check if we are swithcing to ENABLE and trigger release if so
+  if (mode == OR_SAFETY_ENABLE && (or_comm.ctrl->word & OR_CTRL_MODE_MSK) == OR_CTRL_MODE_OFF && (or_comm.state->word &= OR_SAFETY_MSK) != OR_SAFETY_ENABLE)
+  {
+  release_on_enable = true;
+  }
   or_comm.state->word &= ~OR_SAFETY_MSK; // Clear current safety bits
   or_comm.state->word |= mode; // Set new safety mode
 }
