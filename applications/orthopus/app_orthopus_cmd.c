@@ -5,7 +5,7 @@ void orthopus_pos_cmd(int argc, const char **argv);
 //void orthopus_filter_cmd(int argc, const char **argv);
 void orthopus_offset_cmd(int argc, const char **argv);
 void orthopus_config_cmd(int argc, const char **argv);
-void orthopus_limits_cmd(int argc, const char **argv);
+//void orthopus_limits_cmd(int argc, const char **argv);
 void orthopus_perf_cmd(int argc, const char **argv);
 void orthopus_control_cmd(int argc, const char **argv);
 void orthopus_comm_cmd(int argc, const char **argv);
@@ -42,12 +42,12 @@ void or_cmd_init(void)
     orthopus_filter_cmd
   );*/
 
-  terminal_register_command_callback(
+  /*terminal_register_command_callback(
     "o_limits",
     "[Orthopus] Actuator limits setting",
     "[posmax/posmin/enable/disable/reachangle/reachspeed/kp/kd/powp/powd/damp_reachangle]",
     orthopus_limits_cmd
-  );
+  );*/
 
   
   terminal_register_command_callback(
@@ -93,7 +93,7 @@ void or_cmd_deinit(void)
   terminal_unregister_callback(orthopus_config_cmd);
   terminal_unregister_callback(orthopus_pos_cmd);
   //terminal_unregister_callback(orthopus_filter_cmd);
-  terminal_unregister_callback(orthopus_limits_cmd);
+  //terminal_unregister_callback(orthopus_limits_cmd);
   terminal_unregister_callback(orthopus_perf_cmd);
   terminal_unregister_callback(orthopus_comm_cmd);
   terminal_unregister_callback(orthopus_can_cmd);
@@ -456,6 +456,7 @@ void orthopus_filter_cmd(int argc, const char **argv)
 /* -------------------------------------------------------------------------- */
 /*                                   LIMITS                                   */
 /* -------------------------------------------------------------------------- */
+/*
 void orthopus_limits_cmd(int argc, const char **argv)
 {
   if(argc == 1)
@@ -524,7 +525,7 @@ void orthopus_limits_cmd(int argc, const char **argv)
   } else {
     commands_printf("Invalid arguments.");
   }
-}
+}*/
 
 /* -------------------------------------------------------------------------- */
 /*                                    PERF                                    */
