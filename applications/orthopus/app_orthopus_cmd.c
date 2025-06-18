@@ -82,7 +82,7 @@ void or_cmd_init(void)
   terminal_register_command_callback(
     "o_safety",
     "[Orthopus] Safety monitor/debug/test commands",
-    "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init/clear_all/clear_history/print]",
+    "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init/clear_all/clear_history/release/print]",
     OR_SAFETY_cmd
   );
 }
@@ -837,6 +837,9 @@ void OR_SAFETY_cmd(int argc, const char **argv)
           {
             or_error_triggered[i] = false;
           }
+        } else if (!strcmp(argv[1], "release"))
+        {
+          mc_interface_release_motor();
         } else if (!strcmp(argv[1], "print"))
         {
           switch(or_comm.state->word & OR_SAFETY_MSK)
