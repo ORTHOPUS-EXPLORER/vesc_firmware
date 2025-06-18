@@ -249,6 +249,7 @@ void or_set_control_mode(uint32_t mode);
 #define OR_STATE_ERR_POS_STEP 0x0010
 #define OR_STATE_ERR_VEL_STEP 0x0020
 #define OR_STATE_ERR_TRQ_STEP 0x0040
+#define OR_STATE_ERR_OTHER    0x0080
 #define OR_STATE_ERR_MSK      0x00F0
 
 #define OR_SAFETY_INIT    0x0000

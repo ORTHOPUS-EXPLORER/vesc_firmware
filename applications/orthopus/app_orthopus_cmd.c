@@ -82,7 +82,7 @@ void or_cmd_init(void)
   terminal_register_command_callback(
     "o_safety",
     "[Orthopus] Safety monitor/debug/test commands",
-    "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init/clear_all/clear_history]",
+    "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init/clear_all/clear_history/print]",
     OR_SAFETY_cmd
   );
 }
@@ -829,12 +829,94 @@ void OR_SAFETY_cmd(int argc, const char **argv)
           {
             or_active_errors[i] = false;
           }
+          or_comm.state->word &= ~OR_STATE_ERR_MSK;
         } else if (!strcmp(argv[1], "clear_history"))
         {
           for (int i = 0; i < ERR_COUNT; ++i)
           {
             or_error_triggered[i] = false;
           }
+        } else if (!strcmp(argv[1], "print"))
+        {
+          switch(or_comm.state->word & OR_SAFETY_MSK)
+          {
+            case OR_SAFETY_INIT:
+            {
+              commands_printf("Safety state: INIT");
+              break;
+            }
+            case OR_SAFETY_IDLE:
+            {
+              commands_printf("Safety state: IDLE");
+              break;
+            }
+            case OR_SAFETY_ENABLE:
+            {
+              commands_printf("Safety state: ENABLE");
+              break;
+            }
+            case OR_SAFETY_HOLD:
+            {
+              commands_printf("Safety state: HOLD");
+              break;
+            }
+            case OR_SAFETY_BRAKE:
+            {
+              commands_printf("Safety state: BRAKE");
+              break;
+            }
+            case OR_SAFETY_ESTOP:
+            {
+              commands_printf("Safety state: ESTOP");
+              break;
+            }
+          }
+
+          switch(or_comm.ctrl->word & OR_CTRL_MODE_MSK)
+          {
+            case OR_CTRL_MODE_POS:
+            {
+              commands_printf("Control mode: POS");
+              break;
+            }
+            case OR_CTRL_MODE_VEL:
+            {
+              commands_printf("Control mode: VEL");
+              break;
+            }
+            case OR_CTRL_MODE_TRQ:
+            {
+              commands_printf("Control mode: TRQ");
+              break;
+            }
+            case OR_CTRL_MODE_IMP:
+            {
+              commands_printf("Control mode: IMP - impedance");
+              break;
+            }
+            case OR_CTRL_MODE_CST:
+            {
+              commands_printf("Control mode: CST - custom");
+              break;
+            }
+            case OR_CTRL_MODE_OFF:
+            {
+              commands_printf("Control mode: OFF");
+              break;
+            }
+          }
+
+          commands_printf("Active errors:");
+
+          for (int i = 0; i < ERR_COUNT; i++) {
+              if (or_active_errors[i]) {
+                  commands_printf(" - %s (%s)", or_error_messages[i], or_error_level_txt[or_get_error_severity(i)]);
+              }
+          }
+
+          commands_printf("Control word: 0x%04X", or_comm.ctrl->word);
+          commands_printf("Status word : 0x%04X", or_comm.state->word);
+          commands_printf("Auto clear errors: %s", or_conf.auto_clear_errors ? "true" : "false");        
         } else {
             commands_printf("Invalid arguments.");
         }
