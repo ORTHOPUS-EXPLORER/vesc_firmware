@@ -748,15 +748,16 @@ const char* or_error_messages[ERR_COUNT] = {
     "Trq stp",
     "Same ctrlout",
     "Limit endstop",
-    "max speed toward endstop"
+    "max speed toward endstop",
     "Test warning",
     "Test hold",
     "Test brake",
     "Test estop",
+    "Pos error in HOLD",
     // Add corresponding error messages here
 };
 
-const char* or_error_level_txt[ERR_COUNT] = {
+const char* or_error_level_txt[ERR_LEVEL_COUNT] = {
     "none",
     "warning",
     "hold",

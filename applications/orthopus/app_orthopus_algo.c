@@ -295,7 +295,7 @@ THD_FUNCTION(orthopus_thread, arg)
               // check the position error
               if (error >= or_conf.safety_max_q_error)
               {
-                or_set_safety_mode(OR_SAFETY_BRAKE);
+                or_raise_error(ERR_STP_HOLD);
               }
               else
               {
@@ -729,6 +729,7 @@ or_error_level_t or_get_error_severity(or_error_t err) {
 
     case ERR_TST_BRAKE:
     case ERR_SPEED_LIMIT:
+    case ERR_STP_HOLD:
       return ERR_LEVEL_BRAKE;
 
     case ERR_TST_ESTOP:
@@ -831,6 +832,8 @@ uint16_t or_evaluate_safety_state(void) {
     case ERR_LEVEL_WARNING: //do not change safety state
       break;
     case ERR_LEVEL_NONE: //do not change safety state
+      break;
+    case ERR_LEVEL_COUNT:
       break;
   }
 
