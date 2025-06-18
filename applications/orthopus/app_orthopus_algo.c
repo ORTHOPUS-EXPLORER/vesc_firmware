@@ -891,4 +891,12 @@ void or_sync_error_flags(void)
 
   if (or_active_errors[ERR_TRQ_STEP])
     or_comm.state->word |= OR_STATE_ERR_TRQ_STEP;
+
+  // Check for any other active errors
+  for (int i = 0; i < ERR_COUNT; ++i) {
+    if (i != ERR_POS_STEP && i != ERR_VEL_STEP && i != ERR_TRQ_STEP && or_active_errors[i]) {
+      or_comm.state->word |= OR_STATE_ERR_OTHER;
+      break;
+    }
+  }
 }
