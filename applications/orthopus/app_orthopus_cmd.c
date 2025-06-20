@@ -225,14 +225,6 @@ void orthopus_comm_cmd(int argc, const char **argv)
     ctrl->word = v;
     commands_printf("New ctrl_word: 0x%04X", ctrl->word);
   }
-  else if(argc == 3 &&!strcmp(argv[1],"set_can_id"))
-  {
-    float v = 0;
-    sscanf(argv[2], "%f", &v);
-    app_configuration *appconf = (app_configuration*)app_get_configuration();
-    appconf->controller_id = v;
-
-  }
   else
     commands_printf("o_comm <print|stream_rate <0-999(in Hz)>|process_ctrl <on|off>|"
                     "process_rx <on|off>|simu_mode <on|off>|set_qd <-1.57..1.57>>");
