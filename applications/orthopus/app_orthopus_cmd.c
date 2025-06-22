@@ -755,6 +755,8 @@ const char* or_error_messages[ERR_COUNT] = {
     "Test brake",
     "Test estop",
     "Pos error in HOLD",
+    "Can timeout",
+    "Max speed exceeded",
     // Add corresponding error messages here
 };
 

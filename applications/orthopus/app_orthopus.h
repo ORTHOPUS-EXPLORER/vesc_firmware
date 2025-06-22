@@ -53,6 +53,7 @@ typedef struct
   /* 23 - 4 */float ctrl_kd_filter;
   /* 24 - 4 */float encoder_max_diff;
   /* 25 - 4 */float safety_max_q_error;
+  /* 26 - 4 */float safety_max_speed;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
@@ -125,6 +126,7 @@ typedef struct
                                     *ctrl_prev;
   volatile bool process_ctrl,
                 process_rx;
+  systime_t last_update;
 } or_comm_t;
 
 /** @brief Error severity levels */
@@ -159,6 +161,8 @@ typedef enum {
 
   // Add others...
   ERR_STP_HOLD,
+  ERR_CAN_TIMEOUT,
+  ERR_MAX_SPEED,
 
   ERR_COUNT // Always last
 } or_error_t;
