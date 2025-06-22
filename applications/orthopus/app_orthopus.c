@@ -314,6 +314,7 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       // Activate
       or_comm.ctrl_prev = or_comm.ctrl;
       or_comm.ctrl = ctrl; // Swap ! //TODO: keep or not?
+      or_comm.last_update = chVTGetSystemTimeX();
       return true;
     }
     case CAN_AUX_DATA_DOWNSTREAM:
