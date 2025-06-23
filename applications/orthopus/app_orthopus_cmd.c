@@ -922,7 +922,8 @@ void OR_SAFETY_cmd(int argc, const char **argv)
 
           commands_printf("Control word: 0x%04X", or_comm.ctrl->word);
           commands_printf("Status word : 0x%04X", or_comm.state->word);
-          commands_printf("Auto clear errors: %s", or_conf.auto_clear_errors ? "true" : "false");        
+          commands_printf("Auto clear errors: %s", or_conf.auto_clear_errors ? "true" : "false");
+          commands_printf("System time (s): % 5d",  ST2S(chVTGetSystemTimeX()));
         } else {
             commands_printf("Invalid arguments.");
         }

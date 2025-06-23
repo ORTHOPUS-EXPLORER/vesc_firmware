@@ -308,16 +308,22 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
                                       : &(or_comm.ctrl1);
       long int ilen = 0;
       // Fill in some data from the received packet
-      //invert direction to match ROs REP 103
-      ctrl->pos  = 360 - buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
-      ctrl->vel  = - buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
-      ctrl->trq  = - buffer_get_float16(data, OR_COMM_RT_TRQ_SCALE, &ilen); // 6
-      ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
-      // Activate
-      or_comm.ctrl_prev = or_comm.ctrl;
-      or_comm.ctrl = ctrl; // Swap ! //TODO: keep or not?
-      or_comm.last_update = chVTGetSystemTimeX();
-      return true;
+      // Ignore commands in INIT state
+      if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
+      {
+        //invert direction to match ROs REP 103
+        ctrl->pos  = 360 - buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
+        ctrl->vel  = - buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
+        ctrl->trq  = - buffer_get_float16(data, OR_COMM_RT_TRQ_SCALE, &ilen); // 6
+        ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
+        // Activate
+        or_comm.ctrl_prev = or_comm.ctrl;
+        or_comm.ctrl = ctrl; // Swap ! //TODO: keep or not?
+        or_comm.last_update = chVTGetSystemTimeX();
+        return true;
+      } else {
+        break;
+      }
     }
     case CAN_AUX_DATA_DOWNSTREAM:
     {
