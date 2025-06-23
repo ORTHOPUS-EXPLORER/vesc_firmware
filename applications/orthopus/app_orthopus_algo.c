@@ -827,7 +827,8 @@ uint16_t or_evaluate_safety_state(void) {
 
   // Automatic INIT → IDLE
   if (current_safety_state == OR_SAFETY_INIT) {
-    if (or_state.encoders_init /* && other init flags */) {
+    //Stay in INIT mode 8 seconds (enough to let the actuator boot properly and flush eventual remaining data in CAN buffer)
+    if (or_state.encoders_init && ST2S(chVTGetSystemTimeX()) > 8) {
       return OR_SAFETY_IDLE;
     }
     return OR_SAFETY_INIT;

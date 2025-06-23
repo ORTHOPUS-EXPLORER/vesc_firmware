@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include "ch.h"
 #include "datatypes.h"
+#include "chconf.h"
 
 // Algo
 THD_FUNCTION(orthopus_thread, arg);
