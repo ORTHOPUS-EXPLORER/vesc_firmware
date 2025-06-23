@@ -255,29 +255,32 @@ THD_FUNCTION(orthopus_comm_thread, arg)
       st->trq = or_state.torque_now;
     }
     
-    // Write TX
-    unsigned int rate = or_conf.stream_rate_10*10; // Fast copy to avoid locking it before use
-    if(rate > 0)
+    // Do not send meas in INIT state
+    if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
     {
-      // TX
-      // Get the current buffer
-      or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
-      // Copy the data to the send buffer
-      unsigned char tx_d[8]; // One CAN Message
-      long int olen=0;
-      //invert direction to match ROs REP 103
-      buffer_append_float16(tx_d, 360 - st->pos, OR_COMM_RT_POS_SCALE,  &olen); // 2
-      buffer_append_float16(tx_d, - st->vel, OR_COMM_RT_VEL_SCALE,  &olen); // 4
-      buffer_append_float16(tx_d, - st->trq, OR_COMM_RT_TRQ_SCALE,  &olen); // 6
-      buffer_append_uint16 (tx_d, st->word, &olen);                             // 8
-      const uint16_t can_id = ((uint16_t)CAN_RT_DATA_UPSTREAM<<8)|(app_get_configuration()->controller_id);
-      comm_can_transmit_eid_if(can_id, tx_d, olen, CAN_RT_UPSTREAM_INTF);
+      // Write TX
+      unsigned int rate = or_conf.stream_rate_10*10; // Fast copy to avoid locking it before use
+      if(rate > 0)
+      {
+        // TX
+        // Get the current buffer
+        or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
+        // Copy the data to the send buffer
+        unsigned char tx_d[8]; // One CAN Message
+        long int olen=0;
+        //invert direction to match ROs REP 103
+        buffer_append_float16(tx_d, 360 - st->pos, OR_COMM_RT_POS_SCALE,  &olen); // 2
+        buffer_append_float16(tx_d, - st->vel, OR_COMM_RT_VEL_SCALE,  &olen); // 4
+        buffer_append_float16(tx_d, - st->trq, OR_COMM_RT_TRQ_SCALE,  &olen); // 6
+        buffer_append_uint16 (tx_d, st->word, &olen);                             // 8
+        const uint16_t can_id = ((uint16_t)CAN_RT_DATA_UPSTREAM<<8)|(app_get_configuration()->controller_id);
+        comm_can_transmit_eid_if(can_id, tx_d, olen, CAN_RT_UPSTREAM_INTF);
 
-      chThdSleepMicroseconds(1000000.0*1.0/rate); // FIXME: Thread loop should run faster and this if() {} should only trigger on select intervals, but for now, all this do is stream so let's sleep the whole thread
+        chThdSleepMicroseconds(1000000.0*1.0/rate); // FIXME: Thread loop should run faster and this if() {} should only trigger on select intervals, but for now, all this do is stream so let's sleep the whole thread
+      }
+      else
+        chThdSleepMilliseconds(1000); // FIXME: Fallback when rate is zero, wait for update
     }
-    else
-      chThdSleepMilliseconds(1000); // FIXME: Fallback when rate is zero, wait for update
-    
     /*time_end = chVTGetSystemTimeX();
     exectime = time_end - time_start;
     if (or_conf.perf_compensateexectime)
@@ -333,7 +336,11 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       // Okay let's do it right here for now...
       float servo_pos  = buffer_get_float16(data, OR_COMM_AUX_SERVO_SCALE, &ilen); // 2
       if(or_comm.process_ctrl)
-        pwm_servo_set_servo_out(servo_pos);
+        // Ignore commands in INIT state
+        if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
+        {
+          pwm_servo_set_servo_out(servo_pos);
+        }
     }
     default:
       break;
