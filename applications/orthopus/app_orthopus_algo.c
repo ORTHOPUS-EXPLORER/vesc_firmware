@@ -232,10 +232,10 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_VEL:
                 {
-                  if ((ST2US2(or_comm.last_update - chVTGetSystemTimeX()) > 10000) && or_comm.ctrl->vel != 0.0) //raise error if command does not ensure at least 100Hz
+                  if ((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && or_comm.ctrl->vel != 0.0) //raise error if command does not ensure at least 100Hz
                   {
-                    //or_raise_error(ERR_CAN_TIMEOUT);
-                    //TODO: fix: always triggers when starting
+                    or_raise_error(ERR_CAN_TIMEOUT);
+                    break; // Stop executing velocity control when timeout occurs
                   }
                   or_comm.state->word |= OR_STATE_MODE_VEL; // Set mode
                   mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(or_comm.ctrl->vel)/10); //TODO: check why factor 10
@@ -243,10 +243,10 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_TRQ :
                 {
-                  if ((ST2US2(or_comm.last_update - chVTGetSystemTimeX()) > 10000) && or_comm.ctrl->trq != 0.0) //raise error if command does not ensure at least 100Hz
+                  if ((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000)) //raise error if command does not ensure at least 100Hz
                   {
-                    //or_raise_error(ERR_CAN_TIMEOUT);
-                    //TODO: fix: always triggers when starting
+                    or_raise_error(ERR_CAN_TIMEOUT);
+                    break; // Stop executing torque control when timeout occurs
                   }
                   // that state word does not contain OR_STATE_ERR_TRQ_STEP
                   if (or_comm.state->word & OR_STATE_ERR_TRQ_STEP)
@@ -266,10 +266,10 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_IMP : //Impedance mode: available for later
                 {
-                  if (ST2US2(or_comm.last_update - chVTGetSystemTimeX()) > 10000) //raise error if command does not ensure at least 100Hz
+                  if (ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) //raise error if command does not ensure at least 100Hz
                   {
-                    //or_raise_error(ERR_CAN_TIMEOUT);
-                    //TODO: fix: always triggers when starting
+                    or_raise_error(ERR_CAN_TIMEOUT);
+                    break; // Stop executing impedance control when timeout occurs
                   }
                   or_comm.state->word |= OR_STATE_MODE_IMP; // Set mode
                   or_state.ext_pos_setpoint = or_comm.ctrl->pos;
@@ -279,10 +279,10 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TOODO
                 {
-                  if (ST2US2(or_comm.last_update - chVTGetSystemTimeX()) > 10000) //raise error if command does not ensure at least 100Hz
+                  if (ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) //raise error if command does not ensure at least 100Hz
                   {
-                    //or_raise_error(ERR_CAN_TIMEOUT);
-                    //TODO: fix: always triggers when starting
+                    or_raise_error(ERR_CAN_TIMEOUT);
+                    break; // Stop executing custom control when timeout occurs
                   }
                   or_comm.state->word |= OR_STATE_MODE_CST; // Set mode
                   or_state.ext_pos_setpoint = or_comm.ctrl->pos;
