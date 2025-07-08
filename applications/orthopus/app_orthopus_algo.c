@@ -453,6 +453,9 @@ void or_interface_torquecontrol(void)
     or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
                           + or_conf.ctrl_kd*or_state.d_torque_err;
   }
+  
+  // add feedforward term
+  or_state.ctrl_command += or_state.ext_torque_setpoint / or_conf.ff_torque_constant;
 
   /* ------------------------ Compute safety indicators ----------------------- */
   if ((or_state.last_ctrl_command == or_state.ctrl_command)
@@ -471,7 +474,7 @@ void or_interface_torquecontrol(void)
   /* -------------------------------------------------------------------------- */
   mc_interface_set_current_off_delay(0.1);  //prevent disabling motor if 
                       //torque request is 0 //todo: move somewhere else?
-  mc_interface_set_current_rel(or_state.ctrl_command);
+  mc_interface_set_current(or_state.ctrl_command);
   //}    //TODO: check limits after last ctrl_command computation and set to
                                                   //zero if out of limits?
 }

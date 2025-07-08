@@ -115,7 +115,7 @@
 
 // Control Torque Gain
 #ifndef ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN
-#define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN -14.7
+#define ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN 30
 #endif
 
 // Control Damping
@@ -176,6 +176,11 @@
 // Disable safety max speed
 #ifndef ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED
 #define ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED 0
+#endif
+
+// Feedforward Torque constant [N.m/A]
+#ifndef ORTHOPUS_CFG_DEF_FF_TORQUE_CONSTANT
+#define ORTHOPUS_CFG_DEF_FF_TORQUE_CONSTANT 3.5
 #endif
 
 // ORTHOPUS_CONF_DEFAULT_H_

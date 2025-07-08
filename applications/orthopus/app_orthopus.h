@@ -59,6 +59,7 @@ typedef struct
   /*    - 1 */bool safety_timeout_disable;
   /*    - 1 */bool safety_max_speed_disable;
   /*    - 1 */bool pad[1];
+  /* 28 - 4 */float ff_torque_constant;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;

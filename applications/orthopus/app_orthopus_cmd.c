@@ -689,6 +689,11 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.ctrl_kd_filter = v;
     commands_printf("Control kd filter const: % 7.3f", (double)v);
   }
+  else if(!strcmp(argv[1],"kt"))
+  {
+    or_conf.ff_torque_constant = v;
+    commands_printf("Torque const Kt for feedforward: % 7.3f", (double)v);
+  }
   else if(!strcmp(argv[1],"zerotorque"))
   {
     mc_interface_release_motor();   //disable motor
@@ -730,6 +735,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("Kd:                  % 7.3f", (double)or_conf.ctrl_kd             );
     commands_printf("a:                   % 7.3f", (double)or_conf.ctrl_a                   );
     commands_printf("Stiffness:           % 7.3f", (double)or_conf.ctrl_stiffness      );
+    commands_printf("FF Torque const kt:     % 7.3f", (double)or_conf.ff_torque_constant);
     commands_printf("ctrl_torquezero:          % 7.3f", (double)or_state.adc3_zero             );
     commands_printf("Control overwrite:  %s", or_state.ctrl_overwrite ? "true" : "false" );
     commands_printf("control_command:     % 7.3f", (double)or_state.ctrl_command         );
