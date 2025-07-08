@@ -3,7 +3,7 @@
 #include "encoder/enc_sincos.h"
 #include "encoder/encoder_cfg.h" // For encoder_cfg_***
 #include "mc_interface.h"
-//#include <math.h> //for atanf function
+#include <math.h>
 
 volatile bool orthopus_thread_stop = true;
 volatile bool orthopus_thread_running = false;
@@ -84,6 +84,21 @@ THD_FUNCTION(orthopus_thread, arg)
       or_state.adc3_init = true;
       or_state.adc3_zero = or_conf.ctrl_torquezero;
   }
+
+  or_state.rls_filter.lambda_factor = 0.99; //constant for RLS
+  or_state.rls_filter.x[0] = 1.57; //initial value
+  or_state.rls_filter.x[1] = 0.017; //initial value
+  or_state.rls_filter.x[2] = 0.017; //initial value
+  or_state.rls_filter.P[0][0] = 100.0; // initial value
+  or_state.rls_filter.P[0][1] = 0.0; //initial value
+  or_state.rls_filter.P[0][2] = 0.0; //initial value
+  or_state.rls_filter.P[1][0] = 0.0; //initial value
+  or_state.rls_filter.P[1][1] = 100.0; //initial value
+  or_state.rls_filter.P[1][2] = 0.0; //initial value
+  or_state.rls_filter.P[2][0] = 0.0; //initial value
+  or_state.rls_filter.P[2][1] = 0.0; //initial value
+  or_state.rls_filter.P[2][2] = 100.0; //initial value
+
   /* -------------------------------------------------------------------------- */
   /*                                  MAIN LOOP                                 */
   /* -------------------------------------------------------------------------- */
@@ -174,12 +189,32 @@ THD_FUNCTION(orthopus_thread, arg)
                               * or_conf.ctrl_torquegain
                               * (or_state.adc3_val-or_state.adc3_zero);
       }
-
-      /* ------------------------------ Control plot ------------------------------ */
-      if (or_state.ctrl_plot){
-        ++nsample;
-        or_plot_impedance(nsample);
+      float speed_rad_per_sec = RPM2RADPS_f(or_state.speed_now);
+      float pos_rad = pid_pos_now / 180.0 * M_PI;
+      if(fabsf(speed_rad_per_sec) < (float)M_PI)
+      {
+        //if speed is too low, use last torque value
+        or_state.torque_predicted = or_state.torque_now;
+        or_state.rls_filter.x[0] = or_state.torque_now;
+        or_state.rls_filter.x[1] = 0.0;
+        or_state.rls_filter.x[2] = 0.0;
+        or_state.rls_filter.P[0][0] = 10.0;
+        or_state.rls_filter.P[0][1] = 0.0;
+        or_state.rls_filter.P[0][2] = 0.0;
+        or_state.rls_filter.P[1][0] = 0.0;
+        or_state.rls_filter.P[1][1] = 10.0;
+        or_state.rls_filter.P[1][2] = 0.0;
+        or_state.rls_filter.P[2][0] = 0.0;
+        or_state.rls_filter.P[2][1] = 0.0;
+        or_state.rls_filter.P[2][2] = 10.0;
       }
+      else
+      {
+        //predict next torque value using RLS filter
+        or_state.torque_predicted = or_rls_filter_update(or_state.torque_now, speed_rad_per_sec, pos_rad);
+      }
+      //or_state.torque_predicted = or_state.torque_now * 0.005  + (1 - 0.005)* or_state.torque_predicted;
+
 
       /* ------------------------------ Safety / modes switch --------------------- */
 
@@ -445,7 +480,7 @@ void or_interface_torquecontrol(void)
   or_state.stopped = false;
   //TODO write clear control law bloc diagram
   or_state.torque_err = or_state.ext_torque_setpoint
-                        - or_state.torque_now;
+                        - or_state.torque_predicted;
   //add stiffness action
   or_state.torque_err += or_conf.ctrl_stiffness
                 *(or_state.ext_pos_setpoint-or_state.pos_multiturn_now);
@@ -978,4 +1013,66 @@ void or_send_log(void)
   //log_struct.encoder_out = or_state.enc_pos;
 
   commands_send_packet((uint8_t *)&log_struct, sizeof(log_struct_t));
+}
+
+float or_rls_filter_update(float z, float omega_k, float theta_k)
+{
+  // Regression vector
+  float cos_term, sin_term;
+  float perturbation_phase = 10.0 * theta_k;
+  utils_fast_sincos_better(perturbation_phase, &sin_term, &cos_term);
+  float phi_vec[3] = {1.0, omega_k * sin_term, omega_k * cos_term};
+
+  // Prediction
+  float y_hat = phi_vec[0] * or_state.rls_filter.x[0] + 
+                phi_vec[1] * or_state.rls_filter.x[1] + 
+                phi_vec[2] * or_state.rls_filter.x[2];
+  float error = z - y_hat;
+
+  // Kalman gain
+  float denom = or_state.rls_filter.lambda_factor;
+  for (int i = 0; i < 3; i++) {
+    for (int j = i; j < 3; j++) {
+      denom += or_state.rls_filter.P[i][j] * phi_vec[i] * phi_vec[j];
+    }
+  }
+  
+  float K[3] = {0.0f, 0.0f, 0.0f};
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+        K[i] += (or_state.rls_filter.P[i][j] * phi_vec[j]) / denom;
+    }
+  }
+
+  // Update parameters
+  for (int i = 0; i < 3; i++) {
+    or_state.rls_filter.x[i] += K[i] * error;
+  }
+
+  // Update covariance
+  float delta_P[3][3];
+  for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+          float sum = 0.0f;
+          for (int k = 0; k < 3; k++) {
+              sum += phi_vec[k] * or_state.rls_filter.P[k][j];
+          }
+          delta_P[i][j] = K[i] * sum;
+      }
+  }
+
+  for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+          or_state.rls_filter.P[i][j] = (or_state.rls_filter.P[i][j] - delta_P[i][j]);
+          or_state.rls_filter.P[i][j] = or_state.rls_filter.P[i][j] / or_state.rls_filter.lambda_factor;
+
+          if (!isfinite(or_state.rls_filter.P[i][j])) {
+            // Ajoute ici un log ou un breakpoint
+            or_state.rls_filter.P[i][j] = 0.0f;
+          }
+      }
+  }
+
+  // Reconstruction
+  return or_state.rls_filter.x[0];
 }
