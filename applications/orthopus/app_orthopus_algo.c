@@ -22,6 +22,13 @@ volatile or_state_t or_state =
   .encoders_init = false
 };
 
+volatile log_struct_t log_struct = 
+{
+  .pos_multiturn_now = 0.0,
+  .torque_now = 0.0,
+  .ctrl_command   = 0.0,
+};
+
 int get_fw_version_cnt;
 float enc_pos_last = 0.0;
 unsigned long int nsample = 0; //sample number - used in plots
@@ -34,6 +41,7 @@ bool or_error_triggered[ERR_COUNT] = { false }; // true = triggered at least onc
 bool hold_initialized = false;
 bool release_on_enable = false;
 float hold_position = 0.0;
+int16_t log_freq_divider_counter = 0;
 
 THD_FUNCTION(orthopus_thread, arg) 
 {
@@ -360,6 +368,18 @@ THD_FUNCTION(orthopus_thread, arg)
             }
           }
         }
+      }
+
+      /* ------------------------------ Control plot ------------------------------ */
+      if (or_state.ctrl_plot){
+        //++nsample;
+        //orthopus_plot_impedance(nsample);
+        if(log_freq_divider_counter >= 5)
+        {
+          or_send_log();
+          log_freq_divider_counter = 0;
+        }
+        log_freq_divider_counter++;
       }
     }
     
@@ -940,4 +960,22 @@ void or_sync_error_flags(void)
       break;
     }
   }
+}
+
+#define COMM_ORTHOPUS_LOG 255
+void or_send_log(void)
+{
+  log_struct.comm_id = COMM_ORTHOPUS_LOG;
+  log_struct.timestamp = chVTGetSystemTimeX();
+  log_struct.pos_multiturn_now = or_state.pos_multiturn_now;
+  //log_struct.iq_now = mc_interface_get_tot_current_directional();
+  log_struct.torque_now = or_state.torque_now;
+  //log_struct.torque_predicted = or_state.torque_now;
+  log_struct.ctrl_command = or_state.ctrl_command;
+  //log_struct.temperature = mc_interface_temp_motor_filtered();
+  //log_struct.torque_adc = or_state.adc3_val;
+  log_struct.iq_filtered_now = mc_interface_get_tot_current_directional_filtered();
+  //log_struct.encoder_out = or_state.enc_pos;
+
+  commands_send_packet((uint8_t *)&log_struct, sizeof(log_struct_t));
 }
