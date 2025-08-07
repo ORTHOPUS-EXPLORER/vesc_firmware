@@ -55,6 +55,10 @@ typedef struct
   /* 24 - 4 */float encoder_max_diff;
   /* 25 - 4 */float safety_max_q_error;
   /* 26 - 4 */float safety_max_speed;
+  /* 27 - 1 */bool safety_track_disable;
+  /*    - 1 */bool safety_timeout_disable;
+  /*    - 1 */bool safety_max_speed_disable;
+  /*    - 1 */bool pad[1];
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;

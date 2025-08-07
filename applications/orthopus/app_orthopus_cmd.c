@@ -742,6 +742,28 @@ void orthopus_control_cmd(int argc, const char **argv)
 /*                                   SAFETY                                   */
 /* -------------------------------------------------------------------------- */
 
+/*list of errors:
+  ERR_NONE = 0,
+  // Control-related
+  ERR_POS_STEP,
+  ERR_VEL_STEP,
+  ERR_TRQ_STEP,
+  ERR_SAME_CTRL_OUT,
+  //Limits:
+  ERR_POS_LIMIT,
+  ERR_SPEED_LIMIT,
+  //Test errors:
+  ERR_TST_WARNING,
+  ERR_TST_HOLD,
+  ERR_TST_BRAKE,
+  ERR_TST_ESTOP,
+  // Add others...
+  ERR_STP_HOLD,
+  ERR_CAN_TIMEOUT,
+  ERR_MAX_SPEED,
+  ERR_COUNT // Always last
+} or_error_t;*/
+
 const char* or_error_messages[ERR_COUNT] = {
     "none",
     "Pos stp",
