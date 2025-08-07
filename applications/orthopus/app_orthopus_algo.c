@@ -214,7 +214,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   or_comm.state->word |= OR_STATE_MODE_POS; // Set mode 
 
                   // TODO: tunable max position error
-                  if (fabs(fmod((or_comm.ctrl->pos - or_comm.state->pos + 540),360) - 180) >= (double)or_conf.safety_max_q_error)
+                  if ((fabs(fmod((or_comm.ctrl->pos - or_comm.state->pos + 540),360) - 180) >= (double)or_conf.safety_max_q_error) && !or_conf.safety_track_disable)
                   {
                     or_raise_error(ERR_POS_STEP); // Set error flag
                   } else {
@@ -532,12 +532,12 @@ bool or_safety(void)
       }
     }
     
-    if (fabs(or_comm.ctrl->trq - or_comm.ctrl_prev->trq) > 5) //TODO: parametrable max torque command step
+    if ((fabs(or_comm.ctrl->trq - or_comm.ctrl_prev->trq) > 5) && !or_conf.safety_track_disable) //TODO: parametrable max torque command step
     {
       or_raise_error(ERR_TRQ_STEP); // Set error flag
     }
 
-    if (fabs(or_comm.ctrl->vel - or_comm.ctrl_prev->vel) > 5)
+    if ((fabs(or_comm.ctrl->vel - or_comm.ctrl_prev->vel) > 5) && !or_conf.safety_track_disable)
     {
       or_raise_error(ERR_VEL_STEP); // Set error flag
     }
@@ -551,7 +551,7 @@ bool or_safety(void)
     or_state.nid1 = 0;
   } 
 
-  if (fabs(or_state.speed_now) > (double)or_conf.safety_max_speed)
+  if ((fabs(or_state.speed_now) > (double)or_conf.safety_max_speed) && !or_conf.safety_max_speed_disable) //check speed limit
   {
     or_raise_error(ERR_MAX_SPEED);
   }

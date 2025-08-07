@@ -43,6 +43,9 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer_append_float32_auto(buffer, conf->safety_max_q_error, &ind);
 	buffer_append_float32_auto(buffer, conf->safety_max_speed, &ind);
 	buffer[ind++] = conf->auto_clear_errors;
+	buffer[ind++] = conf->safety_track_disable;
+	buffer[ind++] = conf->safety_timeout_disable;
+	buffer[ind++] = conf->safety_max_speed_disable;
 
 	return ind;
 }
@@ -88,6 +91,9 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->safety_max_q_error = buffer_get_float32_auto(buffer, &ind);
 	conf->safety_max_speed = buffer_get_float32_auto(buffer, &ind);
 	conf->auto_clear_errors = buffer[ind++];
+	conf->safety_track_disable = buffer[ind++];
+	conf->safety_timeout_disable = buffer[ind++];
+	conf->safety_max_speed_disable = buffer[ind++];
 
 	return true;
 }
@@ -126,5 +132,11 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->safety_max_speed = 
 ORTHOPUS_CFG_DEF_SAFETY_MAX_SPEED;
 	conf->auto_clear_errors = ORTHOPUS_CFG_DEF_AUTO_CLEAR_ERRORS;
+	conf->safety_track_disable = 
+ORTHOPUS_CFG_DEF_SAFETY_TRACK_DISABLE;
+	conf->safety_timeout_disable = 
+ORTHOPUS_CFG_DEF_SAFETY_TIMEOUT_DISABLE;
+	conf->safety_max_speed_disable = 
+ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED;
 }
 
