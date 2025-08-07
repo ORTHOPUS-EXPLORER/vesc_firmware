@@ -617,8 +617,7 @@ p, li { white-space: pre-wrap; }
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Maximum actuator speed that triggers safety brake (rpm)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
-            <cDefine>
-ORTHOPUS_CFG_DEF_SAFETY_MAX_SPEED</cDefine>
+            <cDefine>ORTHOPUS_CFG_DEF_SAFETY_MAX_SPEED</cDefine>
             <editorDecimalsDouble>2</editorDecimalsDouble>
             <editorScale>1</editorScale>
             <editAsPercentage>0</editAsPercentage>
@@ -652,8 +651,7 @@ p, li { white-space: pre-wrap; }
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Disable tracking errors in pos, vel and torque mode.&lt;br /&gt;WARNING: use only for development in safe conditions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
-            <cDefine>
-ORTHOPUS_CFG_DEF_SAFETY_TRACK_DISABLE</cDefine>
+            <cDefine>ORTHOPUS_CFG_DEF_SAFETY_TRACK_DISABLE</cDefine>
             <valInt>0</valInt>
         </safety_track_disable>
         <safety_timeout_disable>
@@ -665,8 +663,7 @@ ORTHOPUS_CFG_DEF_SAFETY_TRACK_DISABLE</cDefine>
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Disable CAN timeout safety&lt;br /&gt;WARNING: use only for development in safe conditions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
-            <cDefine>
-ORTHOPUS_CFG_DEF_SAFETY_TIMEOUT_DISABLE</cDefine>
+            <cDefine>ORTHOPUS_CFG_DEF_SAFETY_TIMEOUT_DISABLE</cDefine>
             <valInt>0</valInt>
         </safety_timeout_disable>
         <safety_max_speed_disable>
@@ -678,8 +675,7 @@ ORTHOPUS_CFG_DEF_SAFETY_TIMEOUT_DISABLE</cDefine>
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Disable safety max speed&lt;br /&gt;WARNING: use only for development in safe conditions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
-            <cDefine>
-ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED</cDefine>
+            <cDefine>ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED</cDefine>
             <valInt>0</valInt>
         </safety_max_speed_disable>
     </Params>
