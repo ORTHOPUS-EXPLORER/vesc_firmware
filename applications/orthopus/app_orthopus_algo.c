@@ -232,7 +232,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_VEL:
                 {
-                  if ((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && or_comm.ctrl->vel != 0.0) //raise error if command does not ensure at least 100Hz
+                  if (((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && or_comm.ctrl->vel != 0.0) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing velocity control when timeout occurs
@@ -243,7 +243,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_TRQ :
                 {
-                  if ((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000)) //raise error if command does not ensure at least 100Hz
+                  if (((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && !or_conf.safety_timeout_disable)) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing torque control when timeout occurs
@@ -266,7 +266,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_IMP : //Impedance mode: available for later
                 {
-                  if (ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) //raise error if command does not ensure at least 100Hz
+                  if ((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing impedance control when timeout occurs
@@ -279,7 +279,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TOODO
                 {
-                  if (ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) //raise error if command does not ensure at least 100Hz
+                  if ((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing custom control when timeout occurs

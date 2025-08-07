@@ -129,14 +129,10 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->ctrl_kd_filter = ORTHOPUS_CFG_DEF_CTRL_KD_FILTER;
 	conf->torque_filter_const = ORTHOPUS_CFG_DEF_TORQUE_FILTER_CONST;
 	conf->safety_max_q_error = ORTHOPUS_CFG_SAFETY_MAX_Q_ERROR;
-	conf->safety_max_speed = 
-ORTHOPUS_CFG_DEF_SAFETY_MAX_SPEED;
+	conf->safety_max_speed = ORTHOPUS_CFG_DEF_SAFETY_MAX_SPEED;
 	conf->auto_clear_errors = ORTHOPUS_CFG_DEF_AUTO_CLEAR_ERRORS;
-	conf->safety_track_disable = 
-ORTHOPUS_CFG_DEF_SAFETY_TRACK_DISABLE;
-	conf->safety_timeout_disable = 
-ORTHOPUS_CFG_DEF_SAFETY_TIMEOUT_DISABLE;
-	conf->safety_max_speed_disable = 
-ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED;
+	conf->safety_track_disable = ORTHOPUS_CFG_DEF_SAFETY_TRACK_DISABLE;
+	conf->safety_timeout_disable = ORTHOPUS_CFG_DEF_SAFETY_TIMEOUT_DISABLE;
+	conf->safety_max_speed_disable = ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED;
 }
 
