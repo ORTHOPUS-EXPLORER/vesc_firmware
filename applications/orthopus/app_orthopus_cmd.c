@@ -68,7 +68,7 @@ void or_cmd_init(void)
   terminal_register_command_callback(
     "o_comm",
     "[Orthopus] Debug Comm packets",
-    "[stream_rate/set_qd/process_rx/process_ctrl/print/set_ctrl]",
+    "[stream_rate/set_qd/set_td/process_rx/process_ctrl/print/set_ctrl]",
     orthopus_comm_cmd
   );
 
@@ -176,7 +176,7 @@ void orthopus_comm_cmd(int argc, const char **argv)
       or_conf.stream_rate_10 = v/10;
     commands_printf("Stream Rate: %dHz", ((uint16_t)or_conf.stream_rate_10)*10);
   }
-  else if(argc == 3 &&!strcmp(argv[1],"set_qd"))
+  /*else if(argc == 3 &&!strcmp(argv[1],"set_qd"))
   {
     or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
     float v = 0;
@@ -184,6 +184,15 @@ void orthopus_comm_cmd(int argc, const char **argv)
     if(v >= -360 && v <= 360)
       ctrl->pos = v;
     commands_printf("New qd: %f", (double)ctrl->pos);
+  }*/
+  else if(argc == 3 &&!strcmp(argv[1],"set_td"))
+  {
+    or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
+    float v = 0;
+    sscanf(argv[2], "%f", &v);
+    if(v >= -360 && v <= 360)
+      ctrl->trq = v;
+    commands_printf("New td: %f", (double)ctrl->trq);
   }
   else if(argc == 3 && !strcmp(argv[1],"process_rx"))
   {
