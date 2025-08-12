@@ -405,7 +405,7 @@ p, li { white-space: pre-wrap; }
             <minDouble>-1000</minDouble>
             <showDisplay>0</showDisplay>
             <stepDouble>1</stepDouble>
-            <valDouble>1.45627</valDouble>
+            <valDouble>1.436</valDouble>
             <vTxDoubleScale>1</vTxDoubleScale>
             <suffix></suffix>
             <vTx>9</vTx>
@@ -701,13 +701,13 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Input shaper A1 is the amount of the command that will be sent immediately. A1 should be near 0.5 or above for damped modes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>ORTHOPUS_CFG_DEF_INPUT_SHAPER_A1</cDefine>
             <editorDecimalsDouble>3</editorDecimalsDouble>
-            <editorScale>0.01</editorScale>
+            <editorScale>1</editorScale>
             <editAsPercentage>0</editAsPercentage>
             <maxDouble>1</maxDouble>
             <minDouble>0</minDouble>
             <showDisplay>0</showDisplay>
             <stepDouble>0.01</stepDouble>
-            <valDouble>0.5</valDouble>
+            <valDouble>1</valDouble>
             <vTxDoubleScale>1</vTxDoubleScale>
             <suffix></suffix>
             <vTx>9</vTx>
