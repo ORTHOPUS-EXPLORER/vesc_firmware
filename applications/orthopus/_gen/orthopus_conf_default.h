@@ -110,7 +110,7 @@
 
 // Control Torque Zero
 #ifndef ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO
-#define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO 1.45627
+#define ORTHOPUS_CFG_DEF_CTRL_TORQUEZERO 1.436
 #endif
 
 // Control Torque Gain
@@ -185,7 +185,7 @@
 
 // Input shaper A1
 #ifndef ORTHOPUS_CFG_DEF_INPUT_SHAPER_A1
-#define ORTHOPUS_CFG_DEF_INPUT_SHAPER_A1 0.5
+#define ORTHOPUS_CFG_DEF_INPUT_SHAPER_A1 1
 #endif
 
 // Inout shaper T1
