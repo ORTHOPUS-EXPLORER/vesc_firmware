@@ -361,7 +361,7 @@ void orthopus_config_cmd(int argc, const char **argv)
     }
 
   } 
-  else if(!strcmp(argv[1],"stiffness"))
+  /*else if(!strcmp(argv[1],"stiffness"))
   {
     or_conf.ctrl_stiffness = val;
     commands_printf("Control stiffness: % 7.3f", (double)val);
@@ -396,12 +396,12 @@ void orthopus_config_cmd(int argc, const char **argv)
   {
     or_conf.ctrl_sample_adc3 = false;
     commands_printf("Sampling ADC3 in main control loop");
-  }
-  /*else if(!strcmp(argv[1],"storetorquezero"))
+  }*/
+  else if(!strcmp(argv[1],"storetorquezero"))
   {
     or_conf.ctrl_torquezero  = or_state.adc3_zero;
     commands_printf("Saved actual torque zero [% 7.3f] to config, don't forget to save config to eeprom", (double)or_conf.ctrl_torquezero);
-  }*/
+  }
   else if(!strcmp(argv[1],"settorquegain"))
   {
     or_conf.ctrl_torquegain = val;
@@ -600,7 +600,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //todo set zero torque and/or estop
   }
-  else if(!strcmp(argv[1],"eoverwrite"))
+  /*else if(!strcmp(argv[1],"eoverwrite"))
   {
     or_state.ctrl_overwrite = true;
 
@@ -608,7 +608,7 @@ void orthopus_control_cmd(int argc, const char **argv)
   else if(!strcmp(argv[1],"doverwrite"))
   {
     or_state.ctrl_overwrite = false;
-  }
+  }*/
   else if(!strcmp(argv[1],"eplot"))
   {
     or_state.ctrl_plot = true;
@@ -619,7 +619,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_state.ctrl_plot = false;
     commands_printf("Control plot Disabled");
   }
-  else if(!strcmp(argv[1],"edeadzone"))
+  /*else if(!strcmp(argv[1],"edeadzone"))
   {
     or_conf.ctrl_deadzone = true;
     commands_printf("Deadzone Enabled");
@@ -628,7 +628,7 @@ void orthopus_control_cmd(int argc, const char **argv)
   {
     or_conf.ctrl_deadzone = false;
     commands_printf("Deadzone Disabled");
-  }
+  }*/
   else if(!strcmp(argv[1],"a"))
   {
     if (v != 0)
@@ -652,7 +652,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_set_control_mode(OR_STATE_MODE_TRQ);
     or_set_safety_mode(OR_SAFETY_ENABLE);
   }
-  else if(!strcmp(argv[1],"demo2"))
+  /*else if(!strcmp(argv[1],"demo2"))
   {
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
@@ -673,7 +673,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_set_control_mode(OR_STATE_MODE_TRQ);
     or_set_safety_mode(OR_SAFETY_ENABLE);
     commands_printf("Overwriting current setpoints into torque setpoint");
-  }
+  }*/
   else if(!strcmp(argv[1],"kp"))
   {
     or_conf.ctrl_kp = v;
@@ -697,7 +697,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_state.adc3_zero = 0;
     commands_printf("reinitializing torque zero");
   }
-  else if(!strcmp(argv[1],"loadedzerotorque"))
+  /*else if(!strcmp(argv[1],"loadedzerotorque"))
   {
     mc_interface_release_motor();   //disable motor
     commands_printf("enabled brake current %7.3f",(double)v);
@@ -705,7 +705,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_state.adc3_init = false;
     or_state.adc3_zero = 0;
     commands_printf("reinitializing torque zero");
-  }
+  }*/
   else if(!strcmp(argv[1],"torquefilterconst"))
   {
     or_conf.torque_filter_const = v;

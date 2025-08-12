@@ -58,7 +58,9 @@ typedef struct
   /* 27 - 1 */bool safety_track_disable;
   /*    - 1 */bool safety_timeout_disable;
   /*    - 1 */bool safety_max_speed_disable;
-  /*    - 1 */bool pad[1];
+  /*    - 1 */bool input_shaper_enable;
+  /* 28 - 4 */float input_shaper_A1;
+  /* 29 - 4 */int input_shaper_T1;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
@@ -100,6 +102,10 @@ typedef struct
   float d_torque_err;
   float d_torque_err_filt;
   bool encoders_init;
+  // Input shaper variables
+  float input_shaper_buffer[1000]; // Buffer for delayed commands (index 0 = newest, index N = oldest)
+  int input_shaper_delay_samples;  // Delay in samples
+  float input_shaper_A2;           // Second amplitude factor (1-A1)
 } or_state_t;
 
 extern volatile or_state_t or_state;
@@ -209,6 +215,7 @@ void or_set_safety_mode(uint32_t mode);
 void or_sync_error_flags(void);
 void or_interface_torquecontrol(void);
 void or_set_control_mode(uint32_t mode);
+float or_input_shaper(float input_command);
 
 /**
  * @brief   System ticks to microseconds.

@@ -46,6 +46,9 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer[ind++] = conf->safety_track_disable;
 	buffer[ind++] = conf->safety_timeout_disable;
 	buffer[ind++] = conf->safety_max_speed_disable;
+	buffer[ind++] = conf->input_shaper_enable;
+	buffer_append_float32_auto(buffer, conf->input_shaper_A1, &ind);
+	buffer[ind++] = (uint8_t)conf->input_shaper_T1;
 
 	return ind;
 }
@@ -94,6 +97,9 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->safety_track_disable = buffer[ind++];
 	conf->safety_timeout_disable = buffer[ind++];
 	conf->safety_max_speed_disable = buffer[ind++];
+	conf->input_shaper_enable = buffer[ind++];
+	conf->input_shaper_A1 = buffer_get_float32_auto(buffer, &ind);
+	conf->input_shaper_T1 = buffer[ind++];
 
 	return true;
 }
@@ -134,5 +140,8 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->safety_track_disable = ORTHOPUS_CFG_DEF_SAFETY_TRACK_DISABLE;
 	conf->safety_timeout_disable = ORTHOPUS_CFG_DEF_SAFETY_TIMEOUT_DISABLE;
 	conf->safety_max_speed_disable = ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED;
+	conf->input_shaper_enable = ORTHOPUS_CFG_DEF_INPUT_SHAPER_ENABLE;
+	conf->input_shaper_A1 = ORTHOPUS_CFG_DEF_INPUT_SHAPER_A1;
+	conf->input_shaper_T1 = ORTHOPUS_CFG_DEF_INPUT_SHAPER_T1;
 }
 
