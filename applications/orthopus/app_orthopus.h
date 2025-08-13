@@ -64,13 +64,6 @@ typedef struct
 
 extern orthopus_config_t or_conf;
 
-typedef struct
-{
-  float lambda_factor;
-  float x[3];
-  float P[3][3];
-} rls_filter_t;
-
 //global variables (interfaces with lispBM and terminal)
 typedef struct
 {
@@ -91,7 +84,6 @@ typedef struct
   float adc3_zero;
   float torque_now;
   float torque_predicted;
-  rls_filter_t rls_filter;
   float adc3_init;
   bool ctrl_plot;
   float ctrl_command;
@@ -238,7 +230,6 @@ void or_sync_error_flags(void);
 void or_interface_torquecontrol(void);
 void or_set_control_mode(uint32_t mode);
 void or_send_log(void);
-float or_rls_filter_update(float z, float omega_k, float theta_k);
 
 /**
  * @brief   System ticks to microseconds.

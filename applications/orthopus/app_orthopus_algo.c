@@ -85,20 +85,6 @@ THD_FUNCTION(orthopus_thread, arg)
       or_state.adc3_zero = or_conf.ctrl_torquezero;
   }
 
-  or_state.rls_filter.lambda_factor = 0.99; //constant for RLS
-  or_state.rls_filter.x[0] = 1.57; //initial value
-  or_state.rls_filter.x[1] = 0.017; //initial value
-  or_state.rls_filter.x[2] = 0.017; //initial value
-  or_state.rls_filter.P[0][0] = 100.0; // initial value
-  or_state.rls_filter.P[0][1] = 0.0; //initial value
-  or_state.rls_filter.P[0][2] = 0.0; //initial value
-  or_state.rls_filter.P[1][0] = 0.0; //initial value
-  or_state.rls_filter.P[1][1] = 100.0; //initial value
-  or_state.rls_filter.P[1][2] = 0.0; //initial value
-  or_state.rls_filter.P[2][0] = 0.0; //initial value
-  or_state.rls_filter.P[2][1] = 0.0; //initial value
-  or_state.rls_filter.P[2][2] = 100.0; //initial value
-
   /* -------------------------------------------------------------------------- */
   /*                                  MAIN LOOP                                 */
   /* -------------------------------------------------------------------------- */
@@ -189,33 +175,9 @@ THD_FUNCTION(orthopus_thread, arg)
                               * or_conf.ctrl_torquegain
                               * (or_state.adc3_val-or_state.adc3_zero);
       }
-      float speed_rad_per_sec = RPM2RADPS_f(or_state.speed_now);
-      float pos_rad = pid_pos_now / 180.0 * M_PI;
-      if(fabsf(speed_rad_per_sec) < (float)M_PI)
-      {
-        //if speed is too low, use last torque value
-        or_state.torque_predicted = or_state.torque_now;
-        or_state.rls_filter.x[0] = or_state.torque_now;
-        or_state.rls_filter.x[1] = 0.0;
-        or_state.rls_filter.x[2] = 0.0;
-        or_state.rls_filter.P[0][0] = 10.0;
-        or_state.rls_filter.P[0][1] = 0.0;
-        or_state.rls_filter.P[0][2] = 0.0;
-        or_state.rls_filter.P[1][0] = 0.0;
-        or_state.rls_filter.P[1][1] = 10.0;
-        or_state.rls_filter.P[1][2] = 0.0;
-        or_state.rls_filter.P[2][0] = 0.0;
-        or_state.rls_filter.P[2][1] = 0.0;
-        or_state.rls_filter.P[2][2] = 10.0;
-      }
-      else
-      {
-        //predict next torque value using RLS filter
-        or_state.torque_predicted = or_rls_filter_update(or_state.torque_now, speed_rad_per_sec, pos_rad);
-      }
-      //or_state.torque_predicted = or_state.torque_now * 0.005  + (1 - 0.005)* or_state.torque_predicted;
 
-
+      or_state.torque_predicted = or_state.torque_now;
+      
       /* ------------------------------ Safety / modes switch --------------------- */
 
       if (!or_safety())
@@ -300,7 +262,8 @@ THD_FUNCTION(orthopus_thread, arg)
                   else
                   {
                     or_comm.state->word |= OR_STATE_MODE_TRQ; // Set mode
-                    or_state.ext_torque_setpoint = or_comm.ctrl->trq;
+                    if(!or_state.ctrl_overwrite)
+                      or_state.ext_torque_setpoint = or_comm.ctrl->trq;
                     if (or_conf.limits_enable_reaction && or_conf.limits_enable)
                       or_limits_reaction();
                     or_interface_torquecontrol();
@@ -409,7 +372,7 @@ THD_FUNCTION(orthopus_thread, arg)
       if (or_state.ctrl_plot){
         //++nsample;
         //orthopus_plot_impedance(nsample);
-        if(log_freq_divider_counter >= 5)
+        if(log_freq_divider_counter >= 8)
         {
           or_send_log();
           log_freq_divider_counter = 0;
@@ -1005,7 +968,7 @@ void or_send_log(void)
   log_struct.pos_multiturn_now = or_state.pos_multiturn_now;
   //log_struct.iq_now = mc_interface_get_tot_current_directional();
   log_struct.torque_now = or_state.torque_now;
-  //log_struct.torque_predicted = or_state.torque_now;
+  log_struct.torque_predicted = or_state.torque_predicted;
   log_struct.ctrl_command = or_state.ctrl_command;
   //log_struct.temperature = mc_interface_temp_motor_filtered();
   //log_struct.torque_adc = or_state.adc3_val;
@@ -1013,66 +976,4 @@ void or_send_log(void)
   //log_struct.encoder_out = or_state.enc_pos;
 
   commands_send_packet((uint8_t *)&log_struct, sizeof(log_struct_t));
-}
-
-float or_rls_filter_update(float z, float omega_k, float theta_k)
-{
-  // Regression vector
-  float cos_term, sin_term;
-  float perturbation_phase = 10.0 * theta_k;
-  utils_fast_sincos_better(perturbation_phase, &sin_term, &cos_term);
-  float phi_vec[3] = {1.0, omega_k * sin_term, omega_k * cos_term};
-
-  // Prediction
-  float y_hat = phi_vec[0] * or_state.rls_filter.x[0] + 
-                phi_vec[1] * or_state.rls_filter.x[1] + 
-                phi_vec[2] * or_state.rls_filter.x[2];
-  float error = z - y_hat;
-
-  // Kalman gain
-  float denom = or_state.rls_filter.lambda_factor;
-  for (int i = 0; i < 3; i++) {
-    for (int j = i; j < 3; j++) {
-      denom += or_state.rls_filter.P[i][j] * phi_vec[i] * phi_vec[j];
-    }
-  }
-  
-  float K[3] = {0.0f, 0.0f, 0.0f};
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
-        K[i] += (or_state.rls_filter.P[i][j] * phi_vec[j]) / denom;
-    }
-  }
-
-  // Update parameters
-  for (int i = 0; i < 3; i++) {
-    or_state.rls_filter.x[i] += K[i] * error;
-  }
-
-  // Update covariance
-  float delta_P[3][3];
-  for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-          float sum = 0.0f;
-          for (int k = 0; k < 3; k++) {
-              sum += phi_vec[k] * or_state.rls_filter.P[k][j];
-          }
-          delta_P[i][j] = K[i] * sum;
-      }
-  }
-
-  for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-          or_state.rls_filter.P[i][j] = (or_state.rls_filter.P[i][j] - delta_P[i][j]);
-          or_state.rls_filter.P[i][j] = or_state.rls_filter.P[i][j] / or_state.rls_filter.lambda_factor;
-
-          if (!isfinite(or_state.rls_filter.P[i][j])) {
-            // Ajoute ici un log ou un breakpoint
-            or_state.rls_filter.P[i][j] = 0.0f;
-          }
-      }
-  }
-
-  // Reconstruction
-  return or_state.rls_filter.x[0];
 }
