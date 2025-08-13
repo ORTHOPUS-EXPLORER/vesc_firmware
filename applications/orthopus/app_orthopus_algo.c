@@ -5,6 +5,8 @@
 #include "mc_interface.h"
 #include <math.h>
 
+#include "ripple_lookup_table.h"
+
 volatile bool orthopus_thread_stop = true;
 volatile bool orthopus_thread_running = false;
 
@@ -58,8 +60,11 @@ THD_FUNCTION(orthopus_thread, arg)
       break;
   } while(!encoder_cfg_as504x.state.sensor_diag.is_connected);
 
-  float v = 0;
-  or_set_joint_offset(v, false);
+  //float v = 0;
+  //or_set_joint_offset(v, false);
+
+  // Set mc pid pos accodring to encoder
+  mc_interface_update_pid_pos_angle_accumulator(or_read_encoder(), 80.0);
 
   pid_pos_now = mc_interface_get_pid_pos_now();
   pid_pos_last = pid_pos_now;
@@ -176,8 +181,15 @@ THD_FUNCTION(orthopus_thread, arg)
                               * (or_state.adc3_val-or_state.adc3_zero);
       }
 
-      or_state.torque_predicted = or_state.torque_now;
-      
+      // Interpolate ripple torque from the lookup table depending on motor mechanical angle
+      float rotor_index_float = pid_pos_now / (360.0 / (float)RIPPLE_LOOKUP_TABLE_SIZE);
+      int index = (int)(rotor_index_float);
+      int next_index = (index + 1) % RIPPLE_LOOKUP_TABLE_SIZE;
+
+      float ripple_torque = ripple_lookup_table[index] + 
+                (rotor_index_float - index) * (ripple_lookup_table[next_index] - ripple_lookup_table[index]);
+      or_state.torque_predicted = or_state.torque_now - ripple_torque;
+
       /* ------------------------------ Safety / modes switch --------------------- */
 
       if (!or_safety())
@@ -471,10 +483,21 @@ void or_interface_torquecontrol(void)
     or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
                           + or_conf.ctrl_kd*or_state.d_torque_err;
   }
-  
-  // add feedforward term
-  or_state.ctrl_command += or_state.ext_torque_setpoint / or_conf.ff_torque_constant;
 
+  // add feedforward term to iq command
+  float feedforward_torque = or_state.ext_torque_setpoint / or_conf.ff_torque_constant; // Torque related iq feedforward
+  /* if(or_state.speed_now * 60.0 > 50.0)  // Speed related iq feedforward (in deg/s)
+  {
+    or_state.friction_direction = 1;
+  }
+  else if(or_state.speed_now * 60.0 < -50.0)
+  {
+    or_state.friction_direction = -1;
+  }
+  feedforward_torque += 0.4 * or_state.friction_direction;  */
+
+  or_state.ctrl_command += feedforward_torque;
+  
   /* ------------------------ Compute safety indicators ----------------------- */
   if ((or_state.last_ctrl_command == or_state.ctrl_command)
                                       &&

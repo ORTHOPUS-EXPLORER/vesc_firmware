@@ -1481,6 +1481,22 @@ void mc_interface_update_pid_pos_offset(float angle_now, bool store) {
 	mempools_free_mcconf(mcconf);
 }
 
+void mc_interface_update_pid_pos_angle_accumulator(float external_angle_reference, float input_to_output_ratio)
+{
+	volatile mc_configuration *conf = &motor_now()->m_conf;
+
+	switch (conf->motor_type) {
+	case MOTOR_TYPE_FOC:
+		mcpwm_foc_set_angle_accumulator(external_angle_reference, input_to_output_ratio);
+		break;
+
+	case MOTOR_TYPE_BLDC:
+	case MOTOR_TYPE_DC:
+	default:
+		break;
+	}
+}
+
 float mc_interface_get_last_sample_adc_isr_duration(void) {
 	return m_last_adc_duration_sample;
 }

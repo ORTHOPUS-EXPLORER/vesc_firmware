@@ -2791,6 +2791,23 @@ void mcpwm_foc_print_state(void) {
 	commands_printf("off_delay: %.2f", (double)get_motor_now()->m_current_off_delay);
 }
 
+// Initialize the mechanical offset accumulator from an external mechanical reference.
+void mcpwm_foc_set_angle_accumulator(float external_angle_reference, float input_to_output_ratio) {
+    utils_norm_angle(&external_angle_reference); // 1) Normalize external mechanical reference (output shaft) to [0,360)
+    float mech_motor_deg = external_angle_reference * input_to_output_ratio; // 2) Convert to mechanical motor angle (via gear ratio), then normalize
+    utils_norm_angle(&mech_motor_deg);  // [0,360)
+
+    float angle_elec_now = get_motor_now()->m_pid_div_angle_last; // 3) Read current electrical angle from the sin/cos sensor and normalize
+    utils_norm_angle(&angle_elec_now);  // [0,360)
+
+    // 4) Compute new accumulator (mechanical degrees at motor side)
+    //    We want: m_pos_pid_now = accumulator + angle_elec_now/div ≈ mech_motor_deg (mod 360)
+    float new_acc = mech_motor_deg - (angle_elec_now / mc_interface_get_configuration()->p_pid_ang_div);
+    utils_norm_angle(&new_acc);         // keep offset modulo 360 for consistency with runtime
+    get_motor_now()->m_pid_div_angle_accumulator = new_acc;
+}
+
+
 float mcpwm_foc_get_last_adc_isr_duration(void) {
 	return m_last_adc_isr_duration;
 }

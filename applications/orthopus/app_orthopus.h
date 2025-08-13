@@ -87,6 +87,7 @@ typedef struct
   float adc3_init;
   bool ctrl_plot;
   float ctrl_command;
+  // int friction_direction; // 1 for positive, -1 for negative
   int turn_now;
   float ext_torque_setpoint;
   float ext_pos_setpoint;

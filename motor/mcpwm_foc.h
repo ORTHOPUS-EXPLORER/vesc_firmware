@@ -147,6 +147,9 @@ mc_state mcpwm_foc_get_state_motor(bool is_second_motor);
 void mcpwm_foc_tim_sample_int_handler(void);
 void mcpwm_foc_adc_int_handler(void *p, uint32_t flags);
 
+// Set pid pos value
+void mcpwm_foc_set_angle_accumulator(float external_angle_reference, float input_to_output_ratio);
+
 // Defines
 #define MCPWM_FOC_CURRENT_SAMP_OFFSET				(2) // Offset from timer top for ADC samples
 
