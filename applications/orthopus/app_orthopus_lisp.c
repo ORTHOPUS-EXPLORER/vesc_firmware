@@ -1,4 +1,6 @@
 #include "app_orthopus.h"
+#include "lispif.h"
+#include "lispbm.h"
 
 lbm_value orthopus_lisp_read_encoder(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn);
@@ -7,6 +9,7 @@ lbm_value orthopus_lisp_read_encoder_raw(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_read_pos_multiturn(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_read_speed(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_read_torque(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_read_rotor_pos(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_limitreaction(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn);
@@ -67,6 +70,7 @@ void or_init_lisp(void)
   lbm_add_extension("orthopus-read-pos-multiturn", orthopus_lisp_read_pos_multiturn);
   lbm_add_extension("orthopus-read-speed", orthopus_lisp_read_speed);
   lbm_add_extension("orthopus-read-torque", orthopus_lisp_read_torque);
+  lbm_add_extension("orthopus-read-rotor-pos", orthopus_lisp_read_rotor_pos);
   lbm_add_extension("orthopus-read-limit_reaction", orthopus_lisp_limitreaction);
   // in REPL, test with: (orthopus-offset "encoder") or (orthopus-init-offset "encoder" 45)
   lbm_add_extension("orthopus-offset", orthopus_lisp_offset);
@@ -115,6 +119,12 @@ lbm_value orthopus_lisp_read_torque(lbm_value *args, lbm_uint argn)
 {
 	(void)args; (void)argn;
   return lbm_enc_float(or_state.torque_now);
+}
+
+lbm_value orthopus_lisp_read_rotor_pos(lbm_value *args, lbm_uint argn)
+{
+	(void)args; (void)argn;
+  return lbm_enc_float(or_state.rotor_pos_now);
 }
 
 lbm_value orthopus_lisp_limitreaction(lbm_value *args, lbm_uint argn)

@@ -106,6 +106,8 @@ typedef struct
   float input_shaper_buffer[1000]; // Buffer for delayed commands (index 0 = newest, index N = oldest)
   int input_shaper_delay_samples;  // Delay in samples
   float input_shaper_A1;           // First amplitude factor
+  // Rotor position
+  float rotor_pos_now;             // Rotor position in degrees (0-360°)
 } or_state_t;
 
 extern volatile or_state_t or_state;
