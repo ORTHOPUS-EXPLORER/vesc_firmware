@@ -3,7 +3,7 @@
 #include "encoder/enc_sincos.h"
 #include "encoder/encoder_cfg.h" // For encoder_cfg_***
 #include "mc_interface.h"
-//#include <math.h> //for atanf function
+#include <math.h> //for atanf function and fmodf function
 
 volatile bool orthopus_thread_stop = true;
 volatile bool orthopus_thread_running = false;
@@ -129,6 +129,13 @@ THD_FUNCTION(orthopus_thread, arg)
       --or_state.turn_now;
     or_state.pos_multiturn_now = pid_pos_now + 360.0*or_state.turn_now;
     pid_pos_last = pid_pos_now;
+
+    // Calculate rotor position: multiply by gear ratio and convert to 0-360°
+    float rotor_pos_raw = pid_pos_now * mc_interface_get_configuration()->si_gear_ratio;
+    or_state.rotor_pos_now = fmodf(rotor_pos_raw, 360.0f);
+    if (or_state.rotor_pos_now < 0.0f) {
+        or_state.rotor_pos_now += 360.0f;
+    }
 
     //TODO: speed now computed at higher freq
     or_state.speed_now = mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div;
