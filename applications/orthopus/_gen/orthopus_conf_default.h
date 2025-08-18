@@ -193,6 +193,11 @@
 #define ORTHOPUS_CFG_DEF_INPUT_SHAPER_T1 0
 #endif
 
+// Encoder filter constant
+#ifndef ORTHOPUS_CFG_DEF_ENCODER_FILTER_CONST
+#define ORTHOPUS_CFG_DEF_ENCODER_FILTER_CONST 1
+#endif
+
 // ORTHOPUS_CONF_DEFAULT_H_
 #endif
 

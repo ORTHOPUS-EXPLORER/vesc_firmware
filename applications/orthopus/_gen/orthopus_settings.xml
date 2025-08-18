@@ -732,6 +732,28 @@ p, li { white-space: pre-wrap; }
             <suffix></suffix>
             <vTx>1</vTx>
         </input_shaper_T1>
+        <encoder_filter_const>
+            <longName>Encoder filter constant</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Output encoder filter constant (1.0: no filtering 0:max filtering) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_ENCODER_FILTER_CONST</cDefine>
+            <editorDecimalsDouble>2</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>1</maxDouble>
+            <minDouble>0</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>0.01</stepDouble>
+            <valDouble>1</valDouble>
+            <vTxDoubleScale>1</vTxDoubleScale>
+            <suffix></suffix>
+            <vTx>9</vTx>
+        </encoder_filter_const>
     </Params>
     <SerOrder>
         <ser>joint_name</ser>
@@ -772,6 +794,7 @@ p, li { white-space: pre-wrap; }
         <ser>input_shaper_enable</ser>
         <ser>input_shaper_A1</ser>
         <ser>input_shaper_T1</ser>
+        <ser>encoder_filter_const</ser>
     </SerOrder>
     <Grouping>
         <group>
@@ -791,6 +814,7 @@ p, li { white-space: pre-wrap; }
                     <param>encoder_offset</param>
                     <param>::sep::Filter</param>
                     <param>encoder_max_diff</param>
+                    <param>encoder_filter_const</param>
                 </subgroupParams>
             </subgroup>
             <subgroup>

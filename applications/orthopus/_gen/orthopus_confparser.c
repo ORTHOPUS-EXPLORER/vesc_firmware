@@ -49,6 +49,7 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer[ind++] = conf->input_shaper_enable;
 	buffer_append_float32_auto(buffer, conf->input_shaper_A1, &ind);
 	buffer[ind++] = (uint8_t)conf->input_shaper_T1;
+	buffer_append_float32_auto(buffer, conf->encoder_filter_const, &ind);
 
 	return ind;
 }
@@ -100,6 +101,7 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->input_shaper_enable = buffer[ind++];
 	conf->input_shaper_A1 = buffer_get_float32_auto(buffer, &ind);
 	conf->input_shaper_T1 = buffer[ind++];
+	conf->encoder_filter_const = buffer_get_float32_auto(buffer, &ind);
 
 	return true;
 }
@@ -143,5 +145,6 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->input_shaper_enable = ORTHOPUS_CFG_DEF_INPUT_SHAPER_ENABLE;
 	conf->input_shaper_A1 = ORTHOPUS_CFG_DEF_INPUT_SHAPER_A1;
 	conf->input_shaper_T1 = ORTHOPUS_CFG_DEF_INPUT_SHAPER_T1;
+	conf->encoder_filter_const = ORTHOPUS_CFG_DEF_ENCODER_FILTER_CONST;
 }
 
