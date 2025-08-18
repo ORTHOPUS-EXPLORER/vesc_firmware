@@ -112,9 +112,9 @@ THD_FUNCTION(orthopus_thread, arg)
       ++or_state.enc_turn;
     else if (or_state.enc_pos - enc_pos_last > 350.0)
       --or_state.enc_turn;
-    or_state.enc_pos_multiturn = 0.1*(or_state.enc_pos
+    or_state.enc_pos_multiturn = or_conf.encoder_filter_const*(or_state.enc_pos
                                               + 360.0*or_state.enc_turn)
-                                        + 0.9*or_state.enc_pos_multiturn;
+                                        + (1-or_conf.encoder_filter_const)*or_state.enc_pos_multiturn;
     enc_pos_last = or_state.enc_pos;
     //Input encoder
     pid_pos_now = mc_interface_get_pid_pos_now();
