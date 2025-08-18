@@ -61,6 +61,7 @@ typedef struct
   /*    - 1 */bool input_shaper_enable;
   /* 28 - 4 */float input_shaper_A1;
   /* 29 - 4 */int input_shaper_T1;
+  /* 30 - 4 */float encoder_filter_const;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
@@ -72,7 +73,7 @@ typedef struct
   float enc_pos_multiturn;//encoder position filtred and multiturn
   int enc_turn; //encoder angle turn count
   float speed_now; //actual speed from mc_interface
-  float enc_pos; //raw encoder position
+  float enc_pos; //encoder position (filtered with encoder_filter_const)
   float time_diff;
   float time_diff_filt;
   int time_lag_filt;
