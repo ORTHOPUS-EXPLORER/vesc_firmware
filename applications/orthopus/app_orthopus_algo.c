@@ -253,7 +253,7 @@ THD_FUNCTION(orthopus_thread, arg)
                     break; // Stop executing velocity control when timeout occurs
                   }
                   or_comm.state->word |= OR_STATE_MODE_VEL; // Set mode
-                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(or_comm.ctrl->vel)/10); //TODO: check why factor 10
+                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(or_comm.ctrl->vel));
                   break;
                 }
                 case OR_CTRL_MODE_TRQ :
