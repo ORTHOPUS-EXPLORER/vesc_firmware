@@ -326,7 +326,7 @@ void orthopus_config_cmd(int argc, const char **argv)
   {
     const uint32_t sz = sizeof(orthopus_config_t)/4;
     commands_printf("Bool: %d uint8_t: %d int: %d Uint32: %d Float: %d ", sizeof(bool), sizeof(uint8_t), sizeof(int), sizeof(uint32_t), sizeof(float));
-    commands_printf("Cfg: Print %d dwords",sz); 
+    commands_printf("Cfg: Print %d/%d dwords",sz,MAX_CONFIG_U32_SIZE); 
     uint32_t addr=0;
     for(addr=0;addr<sz;addr++)
     {

@@ -10,7 +10,7 @@ bool or_config_load(orthopus_config_t* cfg)
   for(addr=0;addr<sz;addr++)
   {
     eeprom_var v;
-    if(conf_general_read_eeprom_var_hw(&v,addr))
+    if(conf_general_read_eeprom_var_custom(&v,addr))
     {
       uint32_t* raddr = (uint32_t*)((uint8_t*)(cfg)+addr*4);
       // FIXME: Remove debug
@@ -53,7 +53,7 @@ bool or_config_save(const orthopus_config_t* cfg)
     eeprom_var v; v.as_u32 = *raddr;
     // FIXME: Remove debug
     commands_printf("Cfg: Saving data from RAM 0x%08p to EEPROM 0x%02X: '0x%08X/% 11d/% 11.5f'",raddr, addr, v.as_u32, v.as_i32, (double)v.as_float);
-    if(!conf_general_store_eeprom_var_hw(&v,addr))
+    if(!conf_general_store_eeprom_var_custom(&v,addr))
     {
       commands_printf("Cfg: Failed to save data from RAM 0x%08p to EEPROM 0x%02X: '0x%08X/% 11d/% 11.5f'",raddr, addr, v.as_u32, v.as_i32, (double)v.as_float);
       return false;
