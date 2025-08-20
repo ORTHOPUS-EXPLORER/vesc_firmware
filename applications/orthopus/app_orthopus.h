@@ -14,7 +14,7 @@ extern volatile bool orthopus_comm_thread_stop,
                     orthopus_comm_thread_running;
 
 // MAX Number of U32 words to store/load to/from EEPROM fo Config
-#define MAX_CONFIG_U32_SIZE 32
+#define MAX_CONFIG_U32_SIZE 128
 // Config
 // 1: uint8_t, int8_t, bool
 // 2: uint16_t, int16_t
