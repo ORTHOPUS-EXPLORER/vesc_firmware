@@ -92,7 +92,6 @@ typedef struct
   float ext_torque_setpoint;
   float ext_pos_setpoint;
   float ext_vel_setpoint;
-  bool ctrl_overwrite;
   float limit_reaction;
   float torque_err;
   float last_ctrl_command;

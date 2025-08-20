@@ -600,15 +600,6 @@ void orthopus_control_cmd(int argc, const char **argv)
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //todo set zero torque and/or estop
   }
-  /*else if(!strcmp(argv[1],"eoverwrite"))
-  {
-    or_state.ctrl_overwrite = true;
-
-  }
-  else if(!strcmp(argv[1],"doverwrite"))
-  {
-    or_state.ctrl_overwrite = false;
-  }*/
   else if(!strcmp(argv[1],"eplot"))
   {
     or_state.ctrl_plot = true;
@@ -669,7 +660,6 @@ void orthopus_control_cmd(int argc, const char **argv)
   {
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
-    or_state.ctrl_overwrite = true;
     or_set_control_mode(OR_STATE_MODE_TRQ);
     or_set_safety_mode(OR_SAFETY_ENABLE);
     commands_printf("Overwriting current setpoints into torque setpoint");
@@ -731,7 +721,6 @@ void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("a:                   % 7.3f", (double)or_conf.ctrl_a                   );
     commands_printf("Stiffness:           % 7.3f", (double)or_conf.ctrl_stiffness      );
     commands_printf("ctrl_torquezero:          % 7.3f", (double)or_state.adc3_zero             );
-    commands_printf("Control overwrite:  %s", or_state.ctrl_overwrite ? "true" : "false" );
     commands_printf("control_command:     % 7.3f", (double)or_state.ctrl_command         );
     commands_printf("last_control_command:% 7.3f", (double)or_state.last_ctrl_command    );
     commands_printf("limit_reaction:       % 7.3f", (double)or_state.limit_reaction        );

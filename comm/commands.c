@@ -493,12 +493,7 @@ void commands_process_packet(unsigned char *data, unsigned int len,
 		int32_t ind = 0;
 		float currentsetpoint = 0;
 		currentsetpoint = buffer_get_int32(data, &ind) / 1000.0;
-		if (or_state.ctrl_overwrite) 
-		{
-			or_state.ext_torque_setpoint = currentsetpoint;
-		} else {
-			mc_interface_set_current(currentsetpoint);
-		}
+		mc_interface_set_current(currentsetpoint);
 
 		timeout_reset();
 	} break;
@@ -519,13 +514,7 @@ void commands_process_packet(unsigned char *data, unsigned int len,
 		int32_t ind = 0;
 		float possetpoint;
 		possetpoint = buffer_get_int32(data, &ind) / 1000000.0;
-		//commands_printf("pos setpoint received: % 7.3f", possetpoint);
-		if (or_state.ctrl_overwrite) 
-		{
-			or_state.ext_pos_setpoint = possetpoint;
-		} else {
-			mc_interface_set_pid_pos(possetpoint);
-		}
+		mc_interface_set_pid_pos(possetpoint);
 		timeout_reset();
 	} break;
 
