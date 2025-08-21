@@ -182,6 +182,12 @@ THD_FUNCTION(orthopus_thread, arg)
                               * (or_state.adc3_val-or_state.adc3_zero);
       }
 
+      /* Apply motor direction inversion to torque if needed */
+      const volatile mc_configuration *mcconf = mc_interface_get_configuration();
+      if (mcconf->m_invert_direction) {
+        or_state.torque_now = -or_state.torque_now;
+      }
+
       /* ------------------------------ Control plot ------------------------------ */
       if (or_state.ctrl_plot){
         ++nsample;
