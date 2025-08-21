@@ -13,6 +13,8 @@ lbm_value orthopus_lisp_read_rotor_pos(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_limitreaction(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_offset(lbm_value *args, lbm_uint argn);
 lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_set_openloop_current(lbm_value *args, lbm_uint argn);
+lbm_value orthopus_lisp_set_openloop_phase(lbm_value *args, lbm_uint argn);
 
 lbm_uint orthopus_lisp_s0
               , orthopus_lisp_s1;
@@ -76,6 +78,10 @@ void or_init_lisp(void)
   lbm_add_extension("orthopus-offset", orthopus_lisp_offset);
   // in REPL, test with: (orthopus-config) or (orthopus-config "print/load/save")
   lbm_add_extension("orthopus-config", orthopus_lisp_config);
+  // in REPL, test with: (orthopus-set-openloop-current 5.0 100.0)
+  lbm_add_extension("orthopus-set-openloop-current", orthopus_lisp_set_openloop_current);
+  // in REPL, test with: (orthopus-set-openloop-phase 5.0 90.0)
+  lbm_add_extension("orthopus-set-openloop-phase", orthopus_lisp_set_openloop_phase);
 }
 
 
@@ -190,6 +196,35 @@ lbm_value orthopus_lisp_config(lbm_value *args, lbm_uint argn)
   }
   return ENC_SYM_TRUE;
 }
+
+lbm_value orthopus_lisp_set_openloop_current(lbm_value *args, lbm_uint argn)
+{
+  if (argn != 2) {
+    lbm_set_error_reason("Invalid arguments. Usage: orthopus-set-openloop-current <current> <rpm>");
+    return ENC_SYM_EERROR;
+  }
+  
+  float current = lbm_dec_as_float(args[0]);
+  float rpm = lbm_dec_as_float(args[1]);
+  mc_interface_set_openloop_current(current, rpm);
+  
+  return ENC_SYM_TRUE;
+}
+
+lbm_value orthopus_lisp_set_openloop_phase(lbm_value *args, lbm_uint argn)
+{
+  if (argn != 2) {
+    lbm_set_error_reason("Invalid arguments. Usage: orthopus-set-openloop-phase <current> <phase>");
+    return ENC_SYM_EERROR;
+  }
+  
+  float current = lbm_dec_as_float(args[0]);
+  float phase = lbm_dec_as_float(args[1]);
+  mc_interface_set_openloop_phase(current, phase);
+  
+  return ENC_SYM_TRUE;
+}
+
 /* BMi,2024107, Broken since rebase on 6.05
 lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn)
 {
