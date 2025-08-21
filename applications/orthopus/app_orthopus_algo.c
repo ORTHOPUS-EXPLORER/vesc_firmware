@@ -138,7 +138,7 @@ THD_FUNCTION(orthopus_thread, arg)
     }
 
     //TODO: speed now computed at higher freq
-    or_state.speed_now = mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div;
+    //or_state.speed_now = mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div;
 
     /* ---------------------------- Sample adc3 value --------------------------- */ //TODO: always sample at high freq
     if (or_conf.ctrl_sample_adc3)
@@ -424,8 +424,9 @@ void or_pwm_callback(void)
   //Sample torque sensor ADC at high frequency
   or_state.adc3_filt = or_conf.torque_filter_const*ADC_VOLTS(ADC_IND_EXT3)
                      + (1-or_conf.torque_filter_const)*or_state.adc3_filt;
-  /*or_state.speed_now = or_conf.speed_filter_const*(mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div)
-                     + (1-or_conf.speed_filter_const)*or_state.speed_now;*/
+  //Sample and filter speed at high frequency
+  or_state.speed_now = or_conf.speed_filter_const*(mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div)
+                     + (1-or_conf.speed_filter_const)*or_state.speed_now;
 }
 
 /**
