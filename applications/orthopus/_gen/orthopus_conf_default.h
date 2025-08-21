@@ -198,6 +198,11 @@
 #define ORTHOPUS_CFG_DEF_ENCODER_FILTER_CONST 1
 #endif
 
+// Feedforward torque constant
+#ifndef ORTHOPUS_CFG_DEF_FF_TORQUE_CONSTANT
+#define ORTHOPUS_CFG_DEF_FF_TORQUE_CONSTANT 3.5
+#endif
+
 // ORTHOPUS_CONF_DEFAULT_H_
 #endif
 

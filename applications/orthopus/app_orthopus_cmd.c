@@ -194,7 +194,7 @@ void orthopus_comm_cmd(int argc, const char **argv)
       ctrl->trq = v;
     commands_printf("New td: %f", (double)ctrl->trq);
   }
-  else if(argc == 3 && !strcmp(argv[1],"process_rx"))
+  /*else if(argc == 3 && !strcmp(argv[1],"process_rx"))
   {
     or_comm.process_rx = !strcmp(argv[2],"on");
     commands_printf("Process RX: %s", or_comm.process_rx ? "true" : "false");
@@ -203,7 +203,7 @@ void orthopus_comm_cmd(int argc, const char **argv)
   {
     or_comm.process_ctrl = !strcmp(argv[2],"on");
     commands_printf("Process Ctrl: %s", or_comm.process_ctrl ? "true" : "false");
-  }
+  }*/
   else if(argc == 2  && !strcmp(argv[1],"print"))
   {
     or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
@@ -335,11 +335,11 @@ void orthopus_config_cmd(int argc, const char **argv)
       commands_printf("  [0x%02X][0x%08p] '0x%04X/% 5d/% 5.3f'",addr,raddr,v.as_u32,v.as_i32,(double)v.as_float);
     }
   }
-  else if(!strcmp(argv[1],"reset"))
+  /*else if(!strcmp(argv[1],"reset"))
   {
     or_config_set(&or_conf, NULL);
     commands_printf("Orthopus config reset to default. Don't forget to save to EEPROM !");
-  }
+  }*/
   else if(!strcmp(argv[1],"load"))
   {
     if(or_config_load(&or_conf))
@@ -402,11 +402,11 @@ void orthopus_config_cmd(int argc, const char **argv)
     or_conf.ctrl_torquezero  = or_state.adc3_zero;
     commands_printf("Saved actual torque zero [% 7.3f] to config, don't forget to save config to eeprom", (double)or_conf.ctrl_torquezero);
   }
-  else if(!strcmp(argv[1],"settorquegain"))
+  /*else if(!strcmp(argv[1],"settorquegain"))
   {
     or_conf.ctrl_torquegain = val;
     commands_printf("ctrl_torquegain: % 7.3f", (double)val);
-  } else {
+  }*/ else {
     commands_printf("Invalid arguments.");
   }
 }
@@ -679,6 +679,11 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.ctrl_kd_filter = v;
     commands_printf("Control kd filter const: % 7.3f", (double)v);
   }
+  else if(!strcmp(argv[1],"kt"))
+  {
+    or_conf.ff_torque_constant = v;
+    commands_printf("Torque const Kt for feedforward: % 7.3f", (double)v);
+  }
   else if(!strcmp(argv[1],"zerotorque"))
   {
     mc_interface_release_motor();   //disable motor
@@ -720,6 +725,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("Kd:                  % 7.3f", (double)or_conf.ctrl_kd             );
     commands_printf("a:                   % 7.3f", (double)or_conf.ctrl_a                   );
     commands_printf("Stiffness:           % 7.3f", (double)or_conf.ctrl_stiffness      );
+    commands_printf("FF Torque const kt:     % 7.3f", (double)or_conf.ff_torque_constant);
     commands_printf("ctrl_torquezero:          % 7.3f", (double)or_state.adc3_zero             );
     commands_printf("control_command:     % 7.3f", (double)or_state.ctrl_command         );
     commands_printf("last_control_command:% 7.3f", (double)or_state.last_ctrl_command    );
