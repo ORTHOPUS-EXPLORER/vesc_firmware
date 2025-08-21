@@ -51,6 +51,7 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer[ind++] = (uint8_t)conf->input_shaper_T1;
 	buffer_append_float32_auto(buffer, conf->encoder_filter_const, &ind);
 	buffer_append_float32_auto(buffer, conf->ff_torque_constant, &ind);
+	buffer_append_float32_auto(buffer, conf->speed_filter_const, &ind);
 
 	return ind;
 }
@@ -104,6 +105,7 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->input_shaper_T1 = buffer[ind++];
 	conf->encoder_filter_const = buffer_get_float32_auto(buffer, &ind);
 	conf->ff_torque_constant = buffer_get_float32_auto(buffer, &ind);
+	conf->speed_filter_const = buffer_get_float32_auto(buffer, &ind);
 
 	return true;
 }
@@ -149,5 +151,6 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->input_shaper_T1 = ORTHOPUS_CFG_DEF_INPUT_SHAPER_T1;
 	conf->encoder_filter_const = ORTHOPUS_CFG_DEF_ENCODER_FILTER_CONST;
 	conf->ff_torque_constant = ORTHOPUS_CFG_DEF_FF_TORQUE_CONSTANT;
+	conf->speed_filter_const = ORTHOPUS_CFG_DEF_SPEED_FILTER_CONSTANT;
 }
 
