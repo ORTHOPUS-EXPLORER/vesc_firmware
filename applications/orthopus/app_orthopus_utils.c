@@ -1,4 +1,5 @@
 #include "app_orthopus.h"
+#include "mc_interface.h"
 
 bool or_config_load(orthopus_config_t* cfg)
 {
@@ -64,14 +65,26 @@ bool or_config_save(const orthopus_config_t* cfg)
 
 float or_read_encoder(void)
 {
-  return or_read_encoder_raw()-or_conf.encoder_offset;
+  float raw_pos = or_read_encoder_raw();
+  float offset = or_conf.encoder_offset;
+  
+  return raw_pos - offset;
 }
 
 float or_read_encoder_raw(void)
 {
   if(!orthopus_thread_running)
     enc_as504x_routine(&encoder_cfg_as504x);
-  return encoder_cfg_as504x.state.last_enc_angle;
+  
+  float raw_angle = encoder_cfg_as504x.state.last_enc_angle;
+  
+  // Apply direction correction if motor direction is inverted
+  const volatile mc_configuration *mcconf = mc_interface_get_configuration();
+  if (mcconf->m_invert_direction) {
+    raw_angle = -raw_angle;
+  }
+  
+  return raw_angle;
 }
 
 float or_set_joint_offset(float v, bool use_v)
@@ -95,6 +108,7 @@ float or_set_encoder_offset(float v, bool use_v)
 {
   if(!use_v)
     v = or_read_encoder_raw();
+    
   or_state.turn_now = 0;
   or_state.enc_turn = 0;
   or_conf.encoder_offset = v;
