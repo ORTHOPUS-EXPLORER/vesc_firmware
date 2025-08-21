@@ -595,7 +595,8 @@ void orthopus_control_cmd(int argc, const char **argv)
   }
   else if(!strcmp(argv[1],"disable"))
   {
-    or_set_safety_mode(OR_SAFETY_ESTOP);
+    or_set_safety_mode(OR_SAFETY_ENABLE);
+    or_set_control_mode(OR_STATE_MODE_OFF);
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //todo set zero torque and/or estop
