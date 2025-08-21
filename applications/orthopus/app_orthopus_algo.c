@@ -468,6 +468,10 @@ void or_interface_torquecontrol(void)
     or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
                           + or_conf.ctrl_kd*or_state.d_torque_err;
   }
+  
+  // add feedforward term
+  if (or_conf.ff_torque_constant != 0.0)
+    or_state.ctrl_command += or_state.ext_torque_setpoint / or_conf.ff_torque_constant;
 
   /* ------------------------ Compute safety indicators ----------------------- */
   if ((or_state.last_ctrl_command == or_state.ctrl_command)
