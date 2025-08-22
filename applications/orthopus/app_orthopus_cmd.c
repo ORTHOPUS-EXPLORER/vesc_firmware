@@ -16,35 +16,35 @@ void or_cmd_init(void)
 {
    terminal_register_command_callback(
     "o_offset",
-    "[Orthopus] Initialize Pos PID offset with current AMS (or forced) value. joint: based on AMS zero / encoder: based on actual position  ",
+    "[OR] Initialize Pos PID offset with current AMS (or forced) value. joint: based on AMS zero / encoder: based on actual position  ",
     "[joint/encoder]",
     orthopus_offset_cmd
   );
 
   terminal_register_command_callback(
     "o_config",
-    "[Orthopus] Load/Save Orthopus config from/to EEPROM",
+    "[OR] Load/Save OR config from/to EEPROM",
     "[print/dprint/load/save/reset/setrate/stiffness/damping/etimecomp/dtimecomp/settorquegain/encoder_max_diff/esampleadc3/dsampleadc3]",
     orthopus_config_cmd
   );
 
   terminal_register_command_callback(
     "o_pos",
-    "[Orthopus] Get current positions",
+    "[OR] Get current positions",
     "",
     orthopus_pos_cmd
   );
 
   /*terminal_register_command_callback(
     "o_filter",
-    "[Orthopus] AMS filter parameters",
+    "[OR] AMS filter parameters",
     "[anglestep/enable/disable/eplot/dplot/encerrorgain]",
     orthopus_filter_cmd
   );*/
 
   /*terminal_register_command_callback(
     "o_limits",
-    "[Orthopus] Actuator limits setting",
+    "[OR] Actuator limits setting",
     "[posmax/posmin/enable/disable/reachangle/reachspeed/kp/kd/powp/powd/damp_reachangle]",
     orthopus_limits_cmd
   );*/
@@ -52,14 +52,14 @@ void or_cmd_init(void)
   
   terminal_register_command_callback(
     "o_perf",
-    "[Orthopus] Performance stats",
+    "[OR] Performance stats",
     "[-/void/eplot]",
     orthopus_perf_cmd
   );
 
   terminal_register_command_callback(
     "o_control",
-    "[Orthopus] AMS filter parameters",
+    "[OR] AMS filter parameters",
     "[print/enable/disable/eplot/dplot/kp/zerotorque/loadedzerotorque/torquefilterconst/edeadzone/ddeadzone/a/demo1/demo2/eoverwrite/doverwrite/torquecontrol/setzerotorque/readzerotorque/]",
     orthopus_control_cmd
   );
@@ -67,21 +67,21 @@ void or_cmd_init(void)
 
   terminal_register_command_callback(
     "o_comm",
-    "[Orthopus] Debug Comm packets",
+    "[OR] Debug Comm packets",
     "[stream_rate/set_qd/set_td/process_rx/process_ctrl/print/set_ctrl]",
     orthopus_comm_cmd
   );
 
   terminal_register_command_callback(
     "o_can",
-    "[Orthopus] CAN debug/test commands",
+    "[OR] CAN debug/test commands",
     "[tx_eid/tx_sid/tx_b]",
     orthopus_can_cmd
   );
 
   terminal_register_command_callback(
     "o_safety",
-    "[Orthopus] Safety monitor/debug/test commands",
+    "[OR] Safety monitor/debug/test commands",
     "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init/clear_all/clear_history/release/print]",
     OR_SAFETY_cmd
   );
@@ -264,7 +264,7 @@ void orthopus_offset_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
-    commands_printf("Invalid arguments. Usage: o_offset <joint|encoder> [v]");
+    commands_printf("X. Usage: o_offset <joint|encoder> [v]");
     return;
   }
   float v = 0;
@@ -281,7 +281,7 @@ void orthopus_offset_cmd(int argc, const char **argv)
     v = or_set_encoder_offset(v,argc == 3);
     commands_printf("Init encoder offset: % 7.3f", (double)or_conf.encoder_offset);
   } else {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
   }
 }
 
@@ -289,7 +289,7 @@ void orthopus_config_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
     return;
   }
   float val = 0; //store
@@ -298,7 +298,7 @@ void orthopus_config_cmd(int argc, const char **argv)
 
   if(argc == 1 || !strcmp(argv[1],"print"))
   {
-    commands_printf("Encoder offset:              % 7.3f",(double)or_conf.encoder_offset                    );
+    /* commands_printf("Encoder offset:              % 7.3f",(double)or_conf.encoder_offset                    );
     //commands_printf("Encoder filter anglestep:    % 7.3f",(double)or_conf.encoder_filter_anglestep          );
     //commands_printf("Encoder Filter enabled:      %s", or_conf.encoder_filter_enable ? "true" : "false"     );
     //commands_printf("Encoder Filter plot enabled: %s", or_conf.encoder_filter_plot_enable ? "true" : "false");
@@ -320,7 +320,9 @@ void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Stiffness:                   % 7.3f", (double)or_conf.ctrl_stiffness                   );
     commands_printf("damping:                     % 7.3f", (double)or_conf.ctrl_damping                     );
     commands_printf("encoder_max_diff:                % 7.3f", (double)or_conf.encoder_max_diff                     );
-    commands_printf("adc3 sampled in mc pwm callback: %s", or_conf.ctrl_sample_adc3 ? "true" : "false"       );
+    commands_printf("adc3 sampled in mc pwm callback: %s", or_conf.ctrl_sample_adc3 ? "true" : "false"       ); */
+
+    commands_printf("...");
   }
   else if(!strcmp(argv[1],"dprint"))
   {
@@ -338,21 +340,21 @@ void orthopus_config_cmd(int argc, const char **argv)
   else if(!strcmp(argv[1],"reset"))
   {
     or_config_set(&or_conf, NULL);
-    commands_printf("Orthopus config reset to default. Don't forget to save to EEPROM !");
+    commands_printf("OR config reset to default. Don't forget to save to EEPROM !");
   }
   else if(!strcmp(argv[1],"load"))
   {
     if(or_config_load(&or_conf))
-      commands_printf("Orthopus config loaded from EEPROM");
+      commands_printf("OR config loaded from EEPROM");
     else
-      commands_printf("Orthopus config load failed =/");
+      commands_printf("OR config load failed =/");
   }
   else if(!strcmp(argv[1],"save"))
   {
     if(or_config_save(&or_conf))
-      commands_printf("Orthopus config saved to EEPROM");
+      commands_printf("OR config saved to EEPROM");
     else
-      commands_printf("Orthopus config save failed =/");
+      commands_printf("OR config save failed =/");
   } else if(!strcmp(argv[1],"setrate"))
   {
     if (val > 10) {
@@ -407,7 +409,7 @@ void orthopus_config_cmd(int argc, const char **argv)
     or_conf.ctrl_torquegain = val;
     commands_printf("ctrl_torquegain: % 7.3f", (double)val);
   } else {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
   }
 }
 
@@ -419,7 +421,7 @@ void orthopus_filter_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
     return;
   }
   float v = 0; //store
@@ -456,7 +458,7 @@ void orthopus_filter_cmd(int argc, const char **argv)
     or_conf.encoder_filter_error_gain = v;
     commands_printf("Encoder error gain: % 7.3f", (double)v);
   } else {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
   }
 }
 
@@ -470,7 +472,7 @@ void orthopus_limits_cmd(int argc, const char **argv)
 {
   if(argc == 1)
   {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
     return;
   }
   float v = 0; //store
@@ -532,7 +534,7 @@ void orthopus_limits_cmd(int argc, const char **argv)
     or_conf.limits_damp_reachangle = (float)v;
     commands_printf("damp reachangle: % 7.3f", (double)v);
   } else {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
   }
 }*/
 
@@ -567,7 +569,7 @@ void orthopus_perf_cmd(int argc, const char **argv)
       or_state.perf_plot = false;
       commands_printf("Perf plot Disabled");
     } else {
-      commands_printf("Invalid arguments.");
+      commands_printf("X.");
     }
   }
 }
@@ -580,7 +582,7 @@ void orthopus_control_cmd(int argc, const char **argv)
 {
   if(argc == 1)//TODO: print all parameter values
   {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
     return;
   }
   float v = 0; //store
@@ -749,7 +751,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("turn sincos:         % 5d",(int)or_state.turn_now                   );
     commands_printf("turn encoder:        % 5d",(int)or_state.enc_turn                   );
   } else {
-    commands_printf("Invalid arguments.");
+    commands_printf("X.");
   }
 }
 
@@ -962,7 +964,7 @@ void OR_SAFETY_cmd(int argc, const char **argv)
           commands_printf("Auto clear errors: %s", or_conf.auto_clear_errors ? "true" : "false");
           commands_printf("System time (s): % 5d",  ST2S(chVTGetSystemTimeX()));
         } else {
-            commands_printf("Invalid arguments.");
+            commands_printf("X.");
         }
     }
 }
