@@ -60,11 +60,11 @@ THD_FUNCTION(orthopus_thread, arg)
       break;
   } while(!encoder_cfg_as504x.state.sensor_diag.is_connected);
 
-  //float v = 0;
-  //or_set_joint_offset(v, false);
+  float v = 0;
+  or_set_joint_offset(v, false);
 
   // Set mc pid pos accodring to encoder
-  mc_interface_update_pid_pos_angle_accumulator(or_read_encoder(), 80.0);
+  //mc_interface_update_pid_pos_angle_accumulator(or_read_encoder(), 80.0);
 
   pid_pos_now = mc_interface_get_pid_pos_now();
   pid_pos_last = pid_pos_now;
@@ -188,7 +188,7 @@ THD_FUNCTION(orthopus_thread, arg)
 
       float ripple_torque = ripple_lookup_table[index] + 
                 (rotor_index_float - index) * (ripple_lookup_table[next_index] - ripple_lookup_table[index]);
-      or_state.torque_predicted = or_state.torque_now - ripple_torque;
+      or_state.torque_predicted = or_state.torque_now; // - ripple_torque;
 
       /* ------------------------------ Safety / modes switch --------------------- */
 
@@ -258,7 +258,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(or_comm.ctrl->vel)/10); //TODO: check why factor 10
                   break;
                 }
-                case OR_CTRL_MODE_TRQ :
+                case OR_CTRL_MODE_TRQ:
                 {
                   if (((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && !or_conf.safety_timeout_disable)) //raise error if command does not ensure at least 100Hz
                   {

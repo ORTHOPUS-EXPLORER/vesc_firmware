@@ -255,6 +255,7 @@ void or_send_log(void);
 #define CAN_RT_DATA_DOWNSTREAM  180
 //#define CAN_AUX_DATA_UPSTREAM    181
 #define CAN_AUX_DATA_DOWNSTREAM 182
+#define CAN_CFG_DATA_DOWNSTREAM 183
 
 // Float scaling
 #define OR_COMM_RT_POS_SCALE 90  // 0->360 deg

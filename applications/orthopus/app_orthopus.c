@@ -342,6 +342,35 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
           pwm_servo_set_servo_out(servo_pos);
         }
     }
+    case CAN_CFG_DATA_DOWNSTREAM:
+    {   
+      if(len != 8 || !or_comm.process_rx)
+        break;
+      long int ilen = 0;
+
+      if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
+      {
+        mc_interface_release_motor();
+        or_set_safety_mode(OR_SAFETY_IDLE);
+
+        //invert direction to match ROs REP 103
+        float pos  = 360 - buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
+        float vel  = - buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
+        float trq  = - buffer_get_float16(data, OR_COMM_RT_TRQ_SCALE, &ilen); // 6
+        uint16_t word = buffer_get_uint16(data, &ilen);                             // 8
+
+        if(word == 0x04)
+        {
+          or_state.adc3_zero = -(trq / or_conf.ctrl_torquegain - or_state.adc3_filt);
+        }
+        
+        or_comm.last_update = chVTGetSystemTimeX();
+        
+        return true;
+      } else {
+        break;
+      }
+    }
     default:
       break;
   }
