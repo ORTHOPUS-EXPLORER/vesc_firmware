@@ -246,8 +246,8 @@ float or_input_shaper(float input_command);
 #define CAN_AUX_DATA_DOWNSTREAM 182
 
 // Float scaling
-#define OR_COMM_RT_POS_SCALE 90  // 0->360 deg
-#define OR_COMM_RT_VEL_SCALE 600 // -50->50 rpm
+#define OR_COMM_RT_POS_SCALE 5000  // 0->6.28 rad (0->360 deg)
+#define OR_COMM_RT_VEL_SCALE 5900 // -5.5->5.5 rad/S (-50->50 rpm)
 #define OR_COMM_RT_TRQ_SCALE 600 // -50->50 Nm
 #define OR_COMM_AUX_SERVO_SCALE 1000
 
