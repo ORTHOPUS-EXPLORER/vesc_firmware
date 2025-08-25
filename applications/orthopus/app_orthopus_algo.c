@@ -500,7 +500,7 @@ void or_interface_torquecontrol(void)
   
   // Apply input shaping to the control command
   float shaped_command = or_input_shaper(or_state.ctrl_command);
-  mc_interface_set_current_rel(shaped_command);
+  mc_interface_set_current(shaped_command);
   //}    //TODO: check limits after last ctrl_command computation and set to
                                                   //zero if out of limits?
 }
