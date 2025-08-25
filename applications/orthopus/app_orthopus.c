@@ -268,10 +268,9 @@ THD_FUNCTION(orthopus_comm_thread, arg)
         // Copy the data to the send buffer
         unsigned char tx_d[8]; // One CAN Message
         long int olen=0;
-        //invert direction to match ROs REP 103
-        buffer_append_float16(tx_d, 360 - st->pos, OR_COMM_RT_POS_SCALE,  &olen); // 2
-        buffer_append_float16(tx_d, - st->vel, OR_COMM_RT_VEL_SCALE,  &olen); // 4
-        buffer_append_float16(tx_d, - st->trq, OR_COMM_RT_TRQ_SCALE,  &olen); // 6
+        buffer_append_float16(tx_d, st->pos, OR_COMM_RT_POS_SCALE,  &olen); // 2
+        buffer_append_float16(tx_d, st->vel, OR_COMM_RT_VEL_SCALE,  &olen); // 4
+        buffer_append_float16(tx_d, st->trq, OR_COMM_RT_TRQ_SCALE,  &olen); // 6
         buffer_append_uint16 (tx_d, st->word, &olen);                             // 8
         const uint16_t can_id = ((uint16_t)CAN_RT_DATA_UPSTREAM<<8)|(app_get_configuration()->controller_id);
         comm_can_transmit_eid_if(can_id, tx_d, olen, CAN_RT_UPSTREAM_INTF);
@@ -314,10 +313,9 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       // Ignore commands in INIT state
       if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
       {
-        //invert direction to match ROs REP 103
-        ctrl->pos  = 360 - buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
-        ctrl->vel  = - buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
-        ctrl->trq  = - buffer_get_float16(data, OR_COMM_RT_TRQ_SCALE, &ilen); // 6
+        ctrl->pos  = buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
+        ctrl->vel  = buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
+        ctrl->trq  = buffer_get_float16(data, OR_COMM_RT_TRQ_SCALE, &ilen); // 6
         ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
         // Activate
         or_comm.ctrl_prev = or_comm.ctrl;
