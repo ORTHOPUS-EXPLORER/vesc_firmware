@@ -116,6 +116,24 @@ extern volatile or_state_t or_state;
 
 typedef struct 
 {
+  uint8_t comm_id;
+  uint8_t pad[3];
+  uint32_t timestamp;
+  float pos_multiturn_now;
+  float torque_now;
+  float torque_predicted;
+  //float iq_now;
+  float ctrl_command;
+  //float temperature;
+  //float torque_adc;
+  float iq_filtered_now;
+  //float encoder_out;
+} log_struct_t;
+
+extern volatile log_struct_t log_struct;
+
+typedef struct 
+{
   uint16_t   word;
   float     pos,
             vel,
@@ -220,6 +238,7 @@ void or_sync_error_flags(void);
 void or_interface_torquecontrol(void);
 void or_set_control_mode(uint32_t mode);
 float or_input_shaper(float input_command);
+void or_send_log(void);
 
 /**
  * @brief   System ticks to microseconds.
