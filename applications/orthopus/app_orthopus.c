@@ -250,8 +250,8 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     else
     {
       or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
-      st->pos = mc_interface_get_pid_pos_now();
-      st->vel = or_state.speed_now;
+      st->pos = DEG2RAD_f(mc_interface_get_pid_pos_now());
+      st->vel = RPM2RADPS_f(or_state.speed_now);
       st->trq = or_state.torque_now;
     }
     
