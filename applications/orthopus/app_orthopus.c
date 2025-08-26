@@ -352,10 +352,10 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
         or_set_safety_mode(OR_SAFETY_IDLE);
 
         //invert direction to match ROs REP 103
-        float pos  = 360 - buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
-        float vel  = - buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
-        float trq  = - buffer_get_float16(data, OR_COMM_RT_TRQ_SCALE, &ilen); // 6
-        uint16_t word = buffer_get_uint16(data, &ilen);                             // 8
+        float pos  = buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
+        float vel  = buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
+        float trq  = buffer_get_float16(data, OR_COMM_RT_TRQ_SCALE, &ilen); // 6
+        uint16_t word = buffer_get_uint16(data, &ilen);                     // 8
 
         if(word == 0x04)
         {
