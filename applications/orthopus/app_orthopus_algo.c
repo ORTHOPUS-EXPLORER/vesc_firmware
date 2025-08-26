@@ -243,7 +243,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   } else {
                     if (!or_active_errors[ERR_POS_STEP] || or_conf.auto_clear_errors) //if 
                     {
-                      mc_interface_set_pid_pos(or_comm.ctrl->pos);
+                      mc_interface_set_pid_pos(RAD2DEG_f(or_comm.ctrl->pos));
                     }
 
                     if (or_conf.auto_clear_errors)
