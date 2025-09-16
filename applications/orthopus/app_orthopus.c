@@ -242,7 +242,14 @@ THD_FUNCTION(orthopus_comm_thread, arg)
       {
         // Get the current Refs and refs
         const or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
-        st->pos += SIMU_LP_ALPHA*(ctrl->pos - st->pos);
+        
+        // Handle position with proper angle wrapping for simulation
+        float pos_diff = utils_angle_difference_rad(ctrl->pos, st->pos);
+        st->pos += SIMU_LP_ALPHA * pos_diff;
+        // Normalize the resulting angle to [0, 2*pi]
+        while (st->pos < 0.0) st->pos += 2.0 * M_PI;
+        while (st->pos >= 2.0 * M_PI) st->pos -= 2.0 * M_PI;
+        
         st->vel += SIMU_LP_ALPHA*(ctrl->vel - st->vel);
         st->trq += SIMU_LP_ALPHA*(ctrl->trq - st->trq);
       }
