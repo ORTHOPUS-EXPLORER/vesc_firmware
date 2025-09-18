@@ -64,6 +64,7 @@ typedef struct
   /* 30 - 4 */float encoder_filter_const;
   /* 31 - 4 */float ff_torque_constant;
   /* 32 - 4 */float speed_filter_const;
+  /* 33 - 4 */float servo_offset;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
