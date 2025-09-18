@@ -60,13 +60,23 @@ void app_set_configuration(app_configuration *conf) {
 	appconf = *conf;
 
 	if (app_changed) {
+#if APP_PPM_ENABLE
 		app_ppm_stop();
+#endif
+#if APP_ADC_ENABLE
 		app_adc_stop();
+#endif
+#if APP_UART_ENABLE
 		app_uartcomm_stop(UART_PORT_COMM_HEADER);
+#endif
+#if APP_NUNCHUK_ENABLE
 		app_nunchuk_stop();
+#endif
+#if APP_PAS_ENABLE
 		app_pas_stop();
+#endif
 
-#ifdef APP_CUSTOM_TO_USE
+#if APP_CUSTOM_ENABLE && defined(APP_CUSTOM_TO_USE)
 		app_custom_stop();
 #endif
 	}
@@ -93,41 +103,57 @@ void app_set_configuration(app_configuration *conf) {
 
 		switch (appconf.app_to_use) {
 		case APP_PPM:
+#if APP_PPM_ENABLE
 			app_ppm_start();
+#endif
 			break;
 
 		case APP_ADC:
+#if APP_ADC_ENABLE
 			app_adc_start(true);
+#endif
 			break;
 
 		case APP_UART:
+#if APP_UART_ENABLE
 			hw_stop_i2c();
 			app_uartcomm_start(UART_PORT_COMM_HEADER);
+#endif
 			break;
 
 		case APP_PPM_UART:
+#if APP_PPM_ENABLE && APP_UART_ENABLE
 			hw_stop_i2c();
 			app_ppm_start();
 			app_uartcomm_start(UART_PORT_COMM_HEADER);
+#endif
 			break;
 
 		case APP_ADC_UART:
+#if APP_ADC_ENABLE && APP_UART_ENABLE
 			hw_stop_i2c();
 			app_adc_start(false);
 			app_uartcomm_start(UART_PORT_COMM_HEADER);
+#endif
 			break;
 
 		case APP_NUNCHUK:
+#if APP_NUNCHUK_ENABLE
 			app_nunchuk_start();
+#endif
 			break;
 
 		case APP_PAS:
+#if APP_PAS_ENABLE
 			app_pas_start(true);
+#endif
 			break;
 
 		case APP_ADC_PAS:
+#if APP_ADC_ENABLE && APP_PAS_ENABLE
 			app_adc_start(false);
 			app_pas_start(false);
+#endif
 			break;
 
 		case APP_NRF:
@@ -138,7 +164,7 @@ void app_set_configuration(app_configuration *conf) {
 			break;
 
 		case APP_CUSTOM:
-#ifdef APP_CUSTOM_TO_USE
+#if APP_CUSTOM_ENABLE && defined(APP_CUSTOM_TO_USE)
 			hw_stop_i2c();
 			app_custom_start();
 #endif
