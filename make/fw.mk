@@ -111,6 +111,9 @@ include imu/imu.mk
 include blackmagic/blackmagic.mk
 include encoder/encoder.mk
 
+# Add application configuration flags
+USE_OPT += $(APPFLAGS)
+
 ifeq ($(USE_LISPBM),1)
   include lispBM/lispbm.mk
   USE_OPT += -DUSE_LISPBM

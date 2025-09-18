@@ -21,6 +21,7 @@
 #define APP_H_
 
 #include "conf_general.h"
+#include "app_config.h"
 
 // Functions
 const app_configuration* app_get_configuration(void);
@@ -29,7 +30,8 @@ void app_disable_output(int time_ms);
 bool app_is_output_disabled(void);
 unsigned short app_calc_crc(app_configuration* conf);
 
-// Standard apps
+// Standard apps - always declare functions for compatibility
+// Implementations will be stubs if applications are disabled
 void app_ppm_start(void);
 void app_ppm_stop(void);
 float app_ppm_get_decoded_level(void);
