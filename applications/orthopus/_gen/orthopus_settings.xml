@@ -664,7 +664,7 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Disable CAN timeout safety&lt;br /&gt;WARNING: use only for development in safe conditions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>ORTHOPUS_CFG_DEF_SAFETY_TIMEOUT_DISABLE</cDefine>
-            <valInt>1</valInt>
+            <valInt>0</valInt>
         </safety_timeout_disable>
         <safety_max_speed_disable>
             <longName>Disable safety max speed</longName>
@@ -676,7 +676,7 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Disable safety max speed&lt;br /&gt;WARNING: use only for development in safe conditions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED</cDefine>
-            <valInt>1</valInt>
+            <valInt>0</valInt>
         </safety_max_speed_disable>
         <input_shaper_enable>
             <longName>Enable input shaper</longName>
@@ -798,6 +798,28 @@ p, li { white-space: pre-wrap; }
             <suffix></suffix>
             <vTx>9</vTx>
         </speed_filter_const>
+        <servo_offset>
+            <longName>Servo Offset</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Offset to be applied on CAN servo command&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_SERVO_OFFSET</cDefine>
+            <editorDecimalsDouble>3</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>1</maxDouble>
+            <minDouble>-1</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>0.001</stepDouble>
+            <valDouble>0</valDouble>
+            <vTxDoubleScale>1</vTxDoubleScale>
+            <suffix></suffix>
+            <vTx>9</vTx>
+        </servo_offset>
     </Params>
     <SerOrder>
         <ser>joint_name</ser>
@@ -841,6 +863,7 @@ p, li { white-space: pre-wrap; }
         <ser>encoder_filter_const</ser>
         <ser>ff_torque_constant</ser>
         <ser>speed_filter_const</ser>
+        <ser>servo_offset</ser>
     </SerOrder>
     <Grouping>
         <group>
@@ -852,6 +875,7 @@ p, li { white-space: pre-wrap; }
                     <param>torque_filter_const</param>
                     <param>simu_mode</param>
                     <param>stream_rate_10</param>
+                    <param>servo_offset</param>
                 </subgroupParams>
             </subgroup>
             <subgroup>

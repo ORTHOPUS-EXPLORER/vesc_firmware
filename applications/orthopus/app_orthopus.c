@@ -435,7 +435,7 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
         // Ignore commands in INIT state
         if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
         {
-          pwm_servo_set_servo_out(servo_pos);
+          pwm_servo_set_servo_out(servo_pos + or_conf.servo_offset);
         }
     }
     default:
