@@ -217,6 +217,13 @@ volatile bool orthopus_comm_thread_stop = true;
 volatile bool orthopus_comm_thread_running = false;
 
 #define SIMU_LP_ALPHA 0.005
+#define SIMU_INERTIA 0.01f  // kg*m^2 - simulation inertia
+#define SIMU_DAMPING 0.1f   // Nm*s/rad - simulation damping
+
+// Simulation state variables for physics calculations
+static float simu_prev_pos = 0.0f;
+static float simu_prev_vel = 0.0f;
+static float simu_prev_time = 0.0f;
 
 THD_FUNCTION(orthopus_comm_thread, arg) 
 {
@@ -243,15 +250,99 @@ THD_FUNCTION(orthopus_comm_thread, arg)
         // Get the current Refs and refs
         const or_comm_control_t* ctrl = (or_comm_control_t*)or_comm.ctrl;
         
-        // Handle position with proper angle wrapping for simulation
-        float pos_diff = utils_angle_difference_rad(ctrl->pos, st->pos);
-        st->pos += SIMU_LP_ALPHA * pos_diff;
-        // Normalize the resulting angle to [0, 2*pi]
-        while (st->pos < 0.0) st->pos += 2.0 * M_PI;
-        while (st->pos >= 2.0 * M_PI) st->pos -= 2.0 * M_PI;
+        // Calculate time step for physics integration
+        float current_time = chVTGetSystemTimeX() / (float)CH_CFG_ST_FREQUENCY;
+        float dt = (simu_prev_time > 0.0f) ? (current_time - simu_prev_time) : 0.001f; // Default 1ms if first call
+        if (dt > 0.1f) dt = 0.001f; // Cap dt to prevent instability
         
-        st->vel += SIMU_LP_ALPHA*(ctrl->vel - st->vel);
-        st->trq += SIMU_LP_ALPHA*(ctrl->trq - st->trq);
+        // Determine control mode from control word
+        uint16_t ctrl_mode = ctrl->word & OR_CTRL_MODE_MSK;
+        
+        switch(ctrl_mode) {
+          case OR_CTRL_MODE_POS:
+            // Position control mode - calculate velocity from position derivative
+            {
+              // Handle position with proper angle wrapping
+              float pos_diff = utils_angle_difference_rad(ctrl->pos, st->pos);
+              st->pos += SIMU_LP_ALPHA * pos_diff;
+              // Normalize to [0, 2*pi]
+              while (st->pos < 0.0) st->pos += 2.0 * M_PI;
+              while (st->pos >= 2.0 * M_PI) st->pos -= 2.0 * M_PI;
+              
+              // Calculate velocity from position change
+              if (simu_prev_time > 0.0f) {
+                float pos_change = utils_angle_difference_rad(st->pos, simu_prev_pos);
+                st->vel = pos_change / dt;
+                // Apply low-pass filter to smooth velocity
+                st->vel = simu_prev_vel + SIMU_LP_ALPHA * (st->vel - simu_prev_vel);
+              }
+              
+              // Torque follows with low-pass filter
+              st->trq += SIMU_LP_ALPHA * (ctrl->trq - st->trq);
+            }
+            break;
+            
+          case OR_CTRL_MODE_VEL:
+            // Velocity control mode - integrate velocity to get position
+            {
+              // Apply velocity control with low-pass filter
+              st->vel += SIMU_LP_ALPHA * (ctrl->vel - st->vel);
+              
+              // Integrate velocity to get position
+              if (simu_prev_time > 0.0f) {
+                st->pos += st->vel * dt;
+                // Normalize to [0, 2*pi]
+                while (st->pos < 0.0) st->pos += 2.0 * M_PI;
+                while (st->pos >= 2.0 * M_PI) st->pos -= 2.0 * M_PI;
+              }
+              
+              // Torque follows with low-pass filter
+              st->trq += SIMU_LP_ALPHA * (ctrl->trq - st->trq);
+            }
+            break;
+            
+          case OR_CTRL_MODE_TRQ:
+            // Torque control mode - use physics (F=ma) to calculate acceleration, then integrate
+            {
+              // Apply torque control with low-pass filter
+              st->trq += SIMU_LP_ALPHA * (ctrl->trq - st->trq);
+              
+              if (simu_prev_time > 0.0f) {
+                // Calculate acceleration from torque: a = (T - damping*v) / inertia
+                float damping_torque = SIMU_DAMPING * st->vel;
+                float net_torque = st->trq - damping_torque;
+                float acceleration = net_torque / SIMU_INERTIA;
+                
+                // Integrate acceleration to get velocity
+                st->vel += acceleration * dt;
+                
+                // Integrate velocity to get position
+                st->pos += st->vel * dt;
+                // Normalize to [0, 2*pi]
+                while (st->pos < 0.0) st->pos += 2.0 * M_PI;
+                while (st->pos >= 2.0 * M_PI) st->pos -= 2.0 * M_PI;
+              }
+            }
+            break;
+            
+          default:
+            // Default case - simple low-pass filter on all variables
+            {
+              float pos_diff = utils_angle_difference_rad(ctrl->pos, st->pos);
+              st->pos += SIMU_LP_ALPHA * pos_diff;
+              while (st->pos < 0.0) st->pos += 2.0 * M_PI;
+              while (st->pos >= 2.0 * M_PI) st->pos -= 2.0 * M_PI;
+              
+              st->vel += SIMU_LP_ALPHA * (ctrl->vel - st->vel);
+              st->trq += SIMU_LP_ALPHA * (ctrl->trq - st->trq);
+            }
+            break;
+        }
+        
+        // Store current values for next iteration
+        simu_prev_pos = st->pos;
+        simu_prev_vel = st->vel;
+        simu_prev_time = current_time;
       }
     }
     else
