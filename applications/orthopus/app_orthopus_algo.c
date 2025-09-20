@@ -22,7 +22,15 @@ volatile or_state_t or_state =
   .ext_pos_setpoint_deg = 0.0,
   .ext_vel_setpoint_rpm = 0.0,
   .ext_torque_setpoint = 0.0,
-  .ext_prev_torque_setpoint = 0.0
+  .ext_prev_torque_setpoint = 0.0,
+  // Previous setpoint values for change detection
+  .ext_prev_pos_setpoint_deg = 0.0,
+  .ext_prev_vel_setpoint_rpm = 0.0,
+  .prev_control_word = OR_CTRL_MODE_OFF,
+  // Internal state management
+  .safety_mode = OR_SAFETY_INIT,
+  .control_mode = OR_CTRL_MODE_OFF,
+  .last_cmd_time = 0
 };
 
 int get_fw_version_cnt;
@@ -202,7 +210,7 @@ THD_FUNCTION(orthopus_thread, arg)
       if (!or_safety())
       {
         //if orthopus_safety failed to handle modes, fallback to ESTOP (should never happend)
-        or_comm.state->word = (or_comm.state->word &= ~OR_SAFETY_MSK) | OR_SAFETY_ESTOP;
+        or_set_safety_mode(OR_SAFETY_ESTOP);
       } 
       else 
       {
@@ -214,13 +222,23 @@ THD_FUNCTION(orthopus_thread, arg)
 
         if(or_comm.process_ctrl && !or_conf.simu_mode) //TODO: deal with those cases properly
         {
+          // Store previous values for change detection
+          or_state.ext_prev_pos_setpoint_deg = or_state.ext_pos_setpoint_deg;
+          or_state.ext_prev_vel_setpoint_rpm = or_state.ext_vel_setpoint_rpm;
+          or_state.ext_prev_torque_setpoint = or_state.ext_torque_setpoint;
+          or_state.prev_control_word = or_state.control_mode;
+          
           // Update or_state setpoints once to avoid repeated conversions
           or_state.ext_pos_setpoint_deg = RAD2DEG_f(or_comm.ctrl->pos);
           or_state.ext_vel_setpoint_rpm = RADPS2RPM_f(or_comm.ctrl->vel);
-          or_state.ext_prev_torque_setpoint = or_state.ext_torque_setpoint;
           or_state.ext_torque_setpoint = or_comm.ctrl->trq;
+          
+          // Update internal state management from communication
+          or_state.control_mode = or_comm.ctrl->word & OR_CTRL_MODE_MSK;
+          or_state.last_cmd_time = or_comm.last_update;
+          
           // Note: Use or_state.pos_multiturn_now directly as it's already in degrees
-          switch(or_comm.state->word & OR_SAFETY_MSK)
+          switch(or_state.safety_mode)
           {
             case OR_SAFETY_INIT:
             {
@@ -235,13 +253,11 @@ THD_FUNCTION(orthopus_thread, arg)
             }
             case OR_SAFETY_ENABLE:
             {
-              or_comm.state->word &= ~OR_STATE_MODE_MSK;                       // Clear mode
               // Modes are currently exclusive. Refactor this switch for mode fine-grained mode control
-              switch(or_comm.ctrl->word & OR_CTRL_MODE_MSK) 
+              switch(or_state.control_mode) 
               {
                 case OR_CTRL_MODE_POS:
-                {
-                  or_comm.state->word |= OR_STATE_MODE_POS; // Set mode 
+                { 
 
                   // TODO: tunable max position error
                   if ((fabs(fmod((or_state.ext_pos_setpoint_deg - or_state.pos_multiturn_now + 540),360) - 180) >= (double)or_conf.safety_max_q_error) && !or_conf.safety_track_disable)
@@ -262,31 +278,29 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_VEL:
                 {
-                  if (((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && or_state.ext_vel_setpoint_rpm != 0.0) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
+                  if (((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && or_state.ext_vel_setpoint_rpm != 0.0) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing velocity control when timeout occurs
                   }
-                  or_comm.state->word |= OR_STATE_MODE_VEL; // Set mode
                   mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*or_state.ext_vel_setpoint_rpm);
                   break;
                 }
                 case OR_CTRL_MODE_TRQ :
                 {
-                  if (((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && !or_conf.safety_timeout_disable)) //raise error if command does not ensure at least 100Hz
+                  if (((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable)) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing torque control when timeout occurs
                   }
-                  // that state word does not contain OR_STATE_ERR_TRQ_STEP
-                  if (or_comm.state->word & OR_STATE_ERR_TRQ_STEP)
+                  // Check if torque step error is active
+                  if (or_active_errors[ERR_TRQ_STEP])
                   {
                     or_state.ext_torque_setpoint = 0.0;
                     //or_estop(); //TODO remove - handled by state machine
                   }
                   else
                   {
-                    or_comm.state->word |= OR_STATE_MODE_TRQ; // Set mode
                     // Torque setpoint is already set from communication values
                     if (or_conf.limits_enable_reaction && or_conf.limits_enable)
                       or_limits_reaction();
@@ -296,23 +310,21 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_IMP : //Impedance mode: available for later
                 {
-                  if ((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
+                  if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing impedance control when timeout occurs
                   }
-                  or_comm.state->word |= OR_STATE_MODE_IMP; // Set mode
                   // Position, velocity, and torque setpoints are already set from communication values
                   break;
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TOODO
                 {
-                  if ((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
+                  if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing custom control when timeout occurs
                   }
-                  or_comm.state->word |= OR_STATE_MODE_CST; // Set mode
                   // Position, velocity, and torque setpoints are already set from communication values
                   break;
                 }
@@ -357,7 +369,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 float pos_error = fabs(fmod((or_state.ext_pos_setpoint_deg - or_state.pos_multiturn_now + 540), 360) - 180);
 
                 if (or_conf.auto_clear_errors && or_active_errors[ERR_POS_STEP] &&
-                    pos_error < 0.1*or_conf.safety_max_q_error && (or_comm.ctrl->word & OR_CTRL_MODE_MSK) == OR_CTRL_MODE_POS) //reset if auto_reset AND error is less than 10% the max allowed value. TODO: better definition of the treshold?
+                    pos_error < 0.1*or_conf.safety_max_q_error && or_state.control_mode == OR_CTRL_MODE_POS) //reset if auto_reset AND error is less than 10% the max allowed value. TODO: better definition of the treshold?
                 {
                   or_clear_error(ERR_POS_STEP);
                   or_set_safety_mode(OR_SAFETY_ENABLE);
@@ -394,6 +406,22 @@ THD_FUNCTION(orthopus_thread, arg)
     or_comm.state->pos = DEG2RAD_f(or_state.pos_multiturn_now);
     or_comm.state->vel = RPM2RADPS_f(or_state.speed_now);
     or_comm.state->trq = or_state.torque_now;
+    
+    // Sync internal safety and control modes to communication state
+    or_comm.state->word &= ~OR_SAFETY_MSK; // Clear safety bits
+    or_comm.state->word |= or_state.safety_mode; // Set current safety mode
+    
+    // Clear and set control mode bits in state word (for output)
+    or_comm.state->word &= ~OR_STATE_MODE_MSK; // Clear mode bits
+    switch(or_state.control_mode) {
+      case OR_CTRL_MODE_POS: or_comm.state->word |= OR_STATE_MODE_POS; break;
+      case OR_CTRL_MODE_VEL: or_comm.state->word |= OR_STATE_MODE_VEL; break;
+      case OR_CTRL_MODE_TRQ: or_comm.state->word |= OR_STATE_MODE_TRQ; break;
+      case OR_CTRL_MODE_IMP: or_comm.state->word |= OR_STATE_MODE_IMP; break;
+      case OR_CTRL_MODE_CST: or_comm.state->word |= OR_STATE_MODE_CST; break;
+      case OR_CTRL_MODE_OFF: 
+      default: break; // OFF mode doesn't set any state mode bits
+    }
     
 /* -------------------------------------------------------------------------- */
 /*                          Execution time management                         */
@@ -545,21 +573,23 @@ void or_estop(void)
  */
 bool or_safety(void)
 {
-  // Values already converted from communication in the main control loop
-  // Only need to convert the previous velocity value for comparison
-  float ctrl_prev_vel_rpm = RADPS2RPM_f(or_comm.ctrl_prev->vel);
-  float ctrl_prev_torque = or_comm.ctrl_prev->trq;
+  // All values are now tracked in internal state - no need for or_comm access
 
   // ------------------ new command received: ------------------------//
 
-  //compare or_comm.ctrl_prev and or_comm.ctrl to detect changes in word , pos, trq or vel
-  if (or_comm.ctrl != or_comm.ctrl_prev)
+  // Check for changes by comparing current setpoints with previous values stored in or_state
+  bool command_changed = (or_state.ext_pos_setpoint_deg != or_state.ext_prev_pos_setpoint_deg) ||
+                        (or_state.ext_vel_setpoint_rpm != or_state.ext_prev_vel_setpoint_rpm) ||
+                        (or_state.ext_torque_setpoint != or_state.ext_prev_torque_setpoint) ||
+                        (or_state.control_mode != or_state.prev_control_word);
+
+  if (command_changed)
   {
-    if (or_comm.ctrl->word != or_comm.ctrl_prev->word) //detect change of control word
+    if (or_state.control_mode != or_state.prev_control_word) //detect change of control word
     {
       //TODO: manage modes switch
       //clear error if word goes from anything to 0x0000
-      if (or_comm.ctrl->word == OR_STATE_MODE_OFF)
+      if (or_state.control_mode == OR_CTRL_MODE_OFF)
       {
         or_clear_error(ERR_POS_STEP); // Clear error //TODO: manage error clear
         if (or_state.ext_torque_setpoint == 0.0)
@@ -568,7 +598,7 @@ bool or_safety(void)
           or_clear_error(ERR_VEL_STEP); // Clear error
         
         //setting control word OFF resets the safety mode to ENABLE if not critical
-        if ((or_comm.state->word & OR_SAFETY_MSK) <= OR_SAFETY_HOLD)
+        if (or_state.safety_mode <= OR_SAFETY_HOLD)
         {
           or_set_safety_mode(OR_SAFETY_ENABLE);
         }
@@ -577,17 +607,15 @@ bool or_safety(void)
       }
     }
     
-    if ((fabs(or_state.ext_torque_setpoint - ctrl_prev_torque) > 5) && !or_conf.safety_track_disable) //TODO: parametrable max torque command step
+    if ((fabs(or_state.ext_torque_setpoint - or_state.ext_prev_torque_setpoint) > 5) && !or_conf.safety_track_disable) //TODO: parametrable max torque command step
     {
       or_raise_error(ERR_TRQ_STEP); // Set error flag
     }
 
-    if ((fabs(or_state.ext_vel_setpoint_rpm - ctrl_prev_vel_rpm) > 5) && !or_conf.safety_track_disable)
+    if ((fabs(or_state.ext_vel_setpoint_rpm - or_state.ext_prev_vel_setpoint_rpm) > 5) && !or_conf.safety_track_disable)
     {
       or_raise_error(ERR_VEL_STEP); // Set error flag
     }
-
-    or_comm.ctrl_prev->word = or_comm.ctrl->word; //save previous ctrl word
   } 
 
   // ------------- check other indicators ----------------//
@@ -868,7 +896,7 @@ void or_clear_error(or_error_t err) {
  * @return The new safety state (e.g. OR_SAFETY_HOLD)
  */
 uint16_t or_evaluate_safety_state(void) {
-  uint16_t current_safety_state = or_comm.state->word & OR_SAFETY_MSK;
+  uint16_t current_safety_state = or_state.safety_mode;
 
   // Automatic INIT → IDLE
   if (current_safety_state == OR_SAFETY_INIT) {
@@ -928,13 +956,12 @@ uint16_t or_evaluate_safety_state(void) {
  */
 void or_set_safety_mode(uint32_t mode)
 {
-  //check if we are swithcing to ENABLE and trigger release if so
-  if (mode == OR_SAFETY_ENABLE && (or_comm.ctrl->word & OR_CTRL_MODE_MSK) == OR_CTRL_MODE_OFF && (or_comm.state->word &= OR_SAFETY_MSK) != OR_SAFETY_ENABLE)
+  //check if we are switching to ENABLE and trigger release if so
+  if (mode == OR_SAFETY_ENABLE && or_state.control_mode == OR_CTRL_MODE_OFF && or_state.safety_mode != OR_SAFETY_ENABLE)
   {
-  release_on_enable = true;
+    release_on_enable = true;
   }
-  or_comm.state->word &= ~OR_SAFETY_MSK; // Clear current safety bits
-  or_comm.state->word |= mode; // Set new safety mode
+  or_state.safety_mode = mode;
 }
 
 /**
@@ -947,8 +974,7 @@ void or_set_safety_mode(uint32_t mode)
  */
 void or_set_control_mode(uint32_t mode)
 {
-  or_comm.ctrl->word &= ~OR_CTRL_MODE_MSK; // Clear current control bits
-  or_comm.ctrl->word |= mode; // Set new control mode
+  or_state.control_mode = mode;
 }
 
 /**

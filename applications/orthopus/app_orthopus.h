@@ -114,6 +114,14 @@ typedef struct
   float ext_vel_setpoint_rpm;     // Control velocity setpoint in RPM  
   float ext_torque_setpoint;      // Control torque setpoint in N.m
   float ext_prev_torque_setpoint; // Previous control torque setpoint in N.m
+  // Previous setpoint values for change detection (internal state tracking)
+  float ext_prev_pos_setpoint_deg;  // Previous position setpoint in degrees
+  float ext_prev_vel_setpoint_rpm;  // Previous velocity setpoint in RPM
+  uint16_t prev_control_word;        // Previous control word for change detection
+  // Internal state management (separate from communication)
+  uint16_t safety_mode;           // Internal safety state (OR_SAFETY_*)
+  uint16_t control_mode;          // Internal control mode (OR_CTRL_MODE_*)
+  systime_t last_cmd_time;        // Time of last command for timeout checking
 } or_state_t;
 
 extern volatile or_state_t or_state;
