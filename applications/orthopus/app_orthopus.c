@@ -354,7 +354,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     }
     
     // Do not send meas in INIT state
-    if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
+    if((or_comm.state->word & OR_STATE_MSK) != OR_STATE_INIT)
     {
       // Write TX
       unsigned int rate = or_conf.stream_rate_10*10; // Fast copy to avoid locking it before use
@@ -409,7 +409,7 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       long int ilen = 0;
       // Fill in some data from the received packet
       // Ignore commands in INIT state
-      if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
+      if((or_comm.state->word & OR_STATE_MSK) != OR_STATE_INIT)
       {
         ctrl->pos  = buffer_get_float16(data, OR_COMM_RT_POS_SCALE, &ilen); // 2
         ctrl->vel  = buffer_get_float16(data, OR_COMM_RT_VEL_SCALE, &ilen); // 4
@@ -433,7 +433,7 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       float servo_pos  = buffer_get_float16(data, OR_COMM_AUX_SERVO_SCALE, &ilen); // 2
       if(or_comm.process_ctrl)
         // Ignore commands in INIT state
-        if((or_comm.state->word & OR_SAFETY_MSK) != OR_SAFETY_INIT)
+        if((or_comm.state->word & OR_STATE_MSK) != OR_STATE_INIT)
         {
           pwm_servo_set_servo_out(servo_pos + or_conf.servo_offset);
         }
