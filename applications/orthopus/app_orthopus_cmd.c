@@ -590,12 +590,12 @@ void orthopus_control_cmd(int argc, const char **argv)
   if(!strcmp(argv[1],"enable"))
   {
     or_set_control_mode(OR_STATE_MODE_TRQ);
-    or_set_safety_mode(OR_SAFETY_ENABLE);
+    or_set_safety_mode(OR_STATE_ENABLE);
     commands_printf("Control Enabled");
   }
   else if(!strcmp(argv[1],"disable"))
   {
-    or_set_safety_mode(OR_SAFETY_ENABLE);
+    or_set_safety_mode(OR_STATE_ENABLE);
     or_set_control_mode(OR_STATE_MODE_OFF);
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
@@ -642,7 +642,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 1: kp4 a1 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
     or_set_control_mode(OR_STATE_MODE_TRQ);
-    or_set_safety_mode(OR_SAFETY_ENABLE);
+    or_set_safety_mode(OR_STATE_ENABLE);
   }
   /*else if(!strcmp(argv[1],"demo2"))
   {
@@ -655,14 +655,14 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 2: kp4 a 3 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
     or_set_control_mode(OR_STATE_MODE_TRQ);
-    or_set_safety_mode(OR_SAFETY_ENABLE);
+    or_set_safety_mode(OR_STATE_ENABLE);
   }
   else if(!strcmp(argv[1],"torquecontrol"))
   {
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(1000);
     or_set_control_mode(OR_STATE_MODE_TRQ);
-    or_set_safety_mode(OR_SAFETY_ENABLE);
+    or_set_safety_mode(OR_STATE_ENABLE);
     commands_printf("Overwriting current setpoints into torque setpoint");
   }*/
   else if(!strcmp(argv[1],"kp"))
@@ -837,22 +837,22 @@ void OR_SAFETY_cmd(int argc, const char **argv)
           or_clear_error(ERR_TST_ESTOP);
         } else if (!strcmp(argv[1], "set_enable"))
         {
-          or_set_safety_mode(OR_SAFETY_ENABLE);
+          or_set_safety_mode(OR_STATE_ENABLE);
         } else if (!strcmp(argv[1], "set_idle"))
         {
-          or_set_safety_mode(OR_SAFETY_IDLE);
+          or_set_safety_mode(OR_STATE_IDLE);
         } else if (!strcmp(argv[1], "set_hold"))
         {
-          or_set_safety_mode(OR_SAFETY_HOLD);
+          or_set_safety_mode(OR_STATE_HOLD);
         } else if (!strcmp(argv[1], "set_estop"))
         {
-          or_set_safety_mode(OR_SAFETY_ESTOP);
+          or_set_safety_mode(OR_STATE_ESTOP);
         } else if (!strcmp(argv[1], "set_init"))
         {
-          or_set_safety_mode(OR_SAFETY_INIT);
+          or_set_safety_mode(OR_STATE_INIT);
         } else if (!strcmp(argv[1], "set_brake"))
         {
-          or_set_safety_mode(OR_SAFETY_BRAKE);
+          or_set_safety_mode(OR_STATE_BRAKE);
         } else if (!strcmp(argv[1], "clear_all"))
         {
           for (int i = 0; i < ERR_COUNT; ++i)
@@ -871,34 +871,34 @@ void OR_SAFETY_cmd(int argc, const char **argv)
           mc_interface_release_motor();
         } else if (!strcmp(argv[1], "print"))
         {
-          switch(or_comm.state->word & OR_SAFETY_MSK)
+          switch(or_comm.state->word & OR_STATE_MSK)
           {
-            case OR_SAFETY_INIT:
+            case OR_STATE_INIT:
             {
               commands_printf("Safety state: INIT");
               break;
             }
-            case OR_SAFETY_IDLE:
+            case OR_STATE_IDLE:
             {
               commands_printf("Safety state: IDLE");
               break;
             }
-            case OR_SAFETY_ENABLE:
+            case OR_STATE_ENABLE:
             {
               commands_printf("Safety state: ENABLE");
               break;
             }
-            case OR_SAFETY_HOLD:
+            case OR_STATE_HOLD:
             {
               commands_printf("Safety state: HOLD");
               break;
             }
-            case OR_SAFETY_BRAKE:
+            case OR_STATE_BRAKE:
             {
               commands_printf("Safety state: BRAKE");
               break;
             }
-            case OR_SAFETY_ESTOP:
+            case OR_STATE_ESTOP:
             {
               commands_printf("Safety state: ESTOP");
               break;

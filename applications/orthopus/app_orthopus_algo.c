@@ -28,7 +28,7 @@ volatile or_state_t or_state =
   .ext_prev_vel_setpoint_rpm = 0.0,
   .prev_control_word = OR_CTRL_MODE_OFF,
   // Internal state management
-  .safety_mode = OR_SAFETY_INIT,
+  .safety_mode = OR_STATE_INIT,
   .control_mode = OR_CTRL_MODE_OFF,
   .last_cmd_time = 0
 };
@@ -210,7 +210,7 @@ THD_FUNCTION(orthopus_thread, arg)
       if (!or_safety())
       {
         //if orthopus_safety failed to handle modes, fallback to ESTOP (should never happend)
-        or_set_safety_mode(OR_SAFETY_ESTOP);
+        or_set_safety_mode(OR_STATE_ESTOP);
       } 
       else 
       {
@@ -240,18 +240,18 @@ THD_FUNCTION(orthopus_thread, arg)
           // Note: Use or_state.pos_multiturn_now directly as it's already in degrees
           switch(or_state.safety_mode)
           {
-            case OR_SAFETY_INIT:
+            case OR_STATE_INIT:
             {
               hold_initialized = false;
               break;
             }
-            case OR_SAFETY_IDLE:
+            case OR_STATE_IDLE:
             {
               mc_interface_release_motor();
               hold_initialized = false;
               break;
             }
-            case OR_SAFETY_ENABLE:
+            case OR_STATE_ENABLE:
             {
               // Modes are currently exclusive. Refactor this switch for mode fine-grained mode control
               switch(or_state.control_mode) 
@@ -343,7 +343,7 @@ THD_FUNCTION(orthopus_thread, arg)
               hold_initialized = false;
               break;
             }
-            case OR_SAFETY_HOLD:
+            case OR_STATE_HOLD:
             {
               // Initialize hold by getting the current position as hold position
               if (!hold_initialized)
@@ -372,19 +372,19 @@ THD_FUNCTION(orthopus_thread, arg)
                     pos_error < 0.1*or_conf.safety_max_q_error && or_state.control_mode == OR_CTRL_MODE_POS) //reset if auto_reset AND error is less than 10% the max allowed value. TODO: better definition of the treshold?
                 {
                   or_clear_error(ERR_POS_STEP);
-                  or_set_safety_mode(OR_SAFETY_ENABLE);
+                  or_set_safety_mode(OR_STATE_ENABLE);
                 }
               }
 
               break;
             }
-            case OR_SAFETY_BRAKE:
+            case OR_STATE_BRAKE:
             {
               mc_interface_set_brake_current(3); //brake at 3 amps - TODO: tunable
               hold_initialized = false;
               break;
             }
-            case OR_SAFETY_ESTOP:
+            case OR_STATE_ESTOP:
             {
               or_estop();
               hold_initialized = false;
@@ -408,7 +408,7 @@ THD_FUNCTION(orthopus_thread, arg)
     or_comm.state->trq = or_state.torque_now;
     
     // Sync internal safety and control modes to communication state
-    or_comm.state->word &= ~OR_SAFETY_MSK; // Clear safety bits
+    or_comm.state->word &= ~OR_STATE_MSK; // Clear safety bits
     or_comm.state->word |= or_state.safety_mode; // Set current safety mode
     
     // Clear and set control mode bits in state word (for output)
@@ -598,9 +598,9 @@ bool or_safety(void)
           or_clear_error(ERR_VEL_STEP); // Clear error
         
         //setting control word OFF resets the safety mode to ENABLE if not critical
-        if (or_state.safety_mode <= OR_SAFETY_HOLD)
+        if (or_state.safety_mode <= OR_STATE_HOLD)
         {
-          or_set_safety_mode(OR_SAFETY_ENABLE);
+          or_set_safety_mode(OR_STATE_ENABLE);
         }
 
         mc_interface_release_motor(); //release motor last command -> allows control from VESC
@@ -893,26 +893,26 @@ void or_clear_error(or_error_t err) {
  * @brief Evaluates the appropriate safety level based on current errors.
  *        Only escalation is allowed (no automatic downgrade).
  * 
- * @return The new safety state (e.g. OR_SAFETY_HOLD)
+ * @return The new safety state (e.g. OR_STATE_HOLD)
  */
 uint16_t or_evaluate_safety_state(void) {
   uint16_t current_safety_state = or_state.safety_mode;
 
   // Automatic INIT → IDLE
-  if (current_safety_state == OR_SAFETY_INIT) {
+  if (current_safety_state == OR_STATE_INIT) {
     //Stay in INIT mode 8 seconds (enough to let the actuator boot properly and flush eventual remaining data in CAN buffer)
     if (or_state.encoders_init && ST2S(chVTGetSystemTimeX()) > 8) {
-      return OR_SAFETY_IDLE;
+      return OR_STATE_IDLE;
     }
-    return OR_SAFETY_INIT;
+    return OR_STATE_INIT;
   }
 
   // Automatic IDLE → ENABLE only if no active errors
-  if (current_safety_state == OR_SAFETY_IDLE) {
+  if (current_safety_state == OR_STATE_IDLE) {
     if (or_compute_max_error_level() == ERR_LEVEL_NONE) {
-      return OR_SAFETY_ENABLE;
+      return OR_STATE_ENABLE;
     }
-    return OR_SAFETY_IDLE;
+    return OR_STATE_IDLE;
   }
 
   // Escalation from ENABLE → HOLD → BRAKE → ESTOP
@@ -923,16 +923,16 @@ uint16_t or_evaluate_safety_state(void) {
   switch (severity)
   {
     case ERR_LEVEL_ESTOP:
-      new_safety_state = OR_SAFETY_ESTOP;
+      new_safety_state = OR_STATE_ESTOP;
       break;
     case ERR_LEVEL_BRAKE:
-      if (current_safety_state < OR_SAFETY_BRAKE) { //only escalate
-        new_safety_state = OR_SAFETY_BRAKE;
+      if (current_safety_state < OR_STATE_BRAKE) { //only escalate
+        new_safety_state = OR_STATE_BRAKE;
       }
       break;
     case ERR_LEVEL_HOLD:
-      if (current_safety_state < OR_SAFETY_HOLD) { //only escalate
-        new_safety_state = OR_SAFETY_HOLD;
+      if (current_safety_state < OR_STATE_HOLD) { //only escalate
+        new_safety_state = OR_STATE_HOLD;
       } //TODO: allow returning to ENABLE / Position control?
       break;
     case ERR_LEVEL_WARNING: //do not change safety state
@@ -950,14 +950,14 @@ uint16_t or_evaluate_safety_state(void) {
  * @brief Set the current safety mode in the orthopus state word.
  *
  * This function clears the existing safety mode bits and sets the new mode
- * using the defined OR_SAFETY_MSK. It ensures mutually exclusive safety states.
+ * using the defined OR_STATE_MSK. It ensures mutually exclusive safety states.
  *
- * @param mode  The new safety mode to apply (e.g. OR_SAFETY_ENABLE).
+ * @param mode  The new safety mode to apply (e.g. OR_STATE_ENABLE).
  */
 void or_set_safety_mode(uint32_t mode)
 {
   //check if we are switching to ENABLE and trigger release if so
-  if (mode == OR_SAFETY_ENABLE && or_state.control_mode == OR_CTRL_MODE_OFF && or_state.safety_mode != OR_SAFETY_ENABLE)
+  if (mode == OR_STATE_ENABLE && or_state.control_mode == OR_CTRL_MODE_OFF && or_state.safety_mode != OR_STATE_ENABLE)
   {
     release_on_enable = true;
   }

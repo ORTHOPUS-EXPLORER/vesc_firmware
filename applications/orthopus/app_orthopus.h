@@ -119,7 +119,7 @@ typedef struct
   float ext_prev_vel_setpoint_rpm;  // Previous velocity setpoint in RPM
   uint16_t prev_control_word;        // Previous control word for change detection
   // Internal state management (separate from communication)
-  uint16_t safety_mode;           // Internal safety state (OR_SAFETY_*)
+  uint16_t safety_mode;           // Internal safety state (OR_STATE_*)
   uint16_t control_mode;          // Internal control mode (OR_CTRL_MODE_*)
   systime_t last_cmd_time;        // Time of last command for timeout checking
 } or_state_t;
@@ -284,14 +284,14 @@ float or_input_shaper(float input_command);
 #define OR_STATE_ERR_OTHER    0x0080
 #define OR_STATE_ERR_MSK      0x00F0
 
-#define OR_SAFETY_INIT    0x0000
-#define OR_SAFETY_IDLE    0x0100
-#define OR_SAFETY_ENABLE  0x0200
-#define OR_SAFETY_HOLD    0x0300
-#define OR_SAFETY_BRAKE   0x0400
-#define OR_SAFETY_ESTOP   0x0500
+#define OR_STATE_INIT    0x0000
+#define OR_STATE_IDLE    0x0100
+#define OR_STATE_ENABLE  0x0200
+#define OR_STATE_HOLD    0x0300
+#define OR_STATE_BRAKE   0x0400
+#define OR_STATE_ESTOP   0x0500
 
-#define OR_SAFETY_MSK     0x0F00
+#define OR_STATE_MSK     0x0F00
 
 #include "_gen/orthopus_confparser.h"
 #include "_gen/orthopus_confxml.h"
