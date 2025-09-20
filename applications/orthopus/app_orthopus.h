@@ -92,9 +92,6 @@ typedef struct
   bool ctrl_plot;
   float ctrl_command;
   int turn_now;
-  float ext_torque_setpoint;
-  float ext_pos_setpoint;
-  float ext_vel_setpoint;
   float limit_reaction;
   float torque_err;
   float last_ctrl_command;
@@ -111,6 +108,12 @@ typedef struct
   float input_shaper_A1;           // First amplitude factor
   // Rotor position
   float rotor_pos_now;             // Rotor position in degrees (0-360°)
+  // Communication values in internal units (to avoid repeated conversions)
+  // These are used directly as setpoints by the control algorithm
+  float ext_pos_setpoint_deg;     // Control position setpoint in degrees
+  float ext_vel_setpoint_rpm;     // Control velocity setpoint in RPM  
+  float ext_torque_setpoint;      // Control torque setpoint in N.m
+  float ext_prev_torque_setpoint; // Previous control torque setpoint in N.m
 } or_state_t;
 
 extern volatile or_state_t or_state;
