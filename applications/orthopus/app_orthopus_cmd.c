@@ -731,7 +731,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     commands_printf("control_command:     % 7.3f", (double)or_state.ctrl_command         );
     commands_printf("last_control_command:% 7.3f", (double)or_state.last_ctrl_command    );
     commands_printf("limit_reaction:       % 7.3f", (double)or_state.limit_reaction        );
-    commands_printf("ext_pos_setpoint:    % 7.3f", (double)or_state.ext_pos_setpoint     );
+    commands_printf("ext_pos_setpoint:    % 7.3f", (double)or_state.ext_pos_setpoint_deg     );
     commands_printf("ext_torque_setpoint: % 7.3f", (double)or_state.ext_torque_setpoint  );
     commands_printf("damping:             % 7.3f", (double)or_conf.ctrl_damping        );
     commands_printf("safety stopped:      %s", or_state.stopped       ? "true" : "false" );

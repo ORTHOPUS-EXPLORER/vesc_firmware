@@ -17,9 +17,12 @@ volatile or_state_t or_state =
   .enc_pos   = 0.0,
   .adc3_zero = 0.0,
   .turn_now = 0,
-  .ext_torque_setpoint = 0,
-  .ext_pos_setpoint = 0,
-  .encoders_init = false
+  .encoders_init = false,
+  // Communication values in internal units (degrees/RPM/N.m) - used directly as setpoints
+  .ext_pos_setpoint_deg = 0.0,
+  .ext_vel_setpoint_rpm = 0.0,
+  .ext_torque_setpoint = 0.0,
+  .ext_prev_torque_setpoint = 0.0
 };
 
 int get_fw_version_cnt;
@@ -211,6 +214,12 @@ THD_FUNCTION(orthopus_thread, arg)
 
         if(or_comm.process_ctrl && !or_conf.simu_mode) //TODO: deal with those cases properly
         {
+          // Update or_state setpoints once to avoid repeated conversions
+          or_state.ext_pos_setpoint_deg = RAD2DEG_f(or_comm.ctrl->pos);
+          or_state.ext_vel_setpoint_rpm = RADPS2RPM_f(or_comm.ctrl->vel);
+          or_state.ext_prev_torque_setpoint = or_state.ext_torque_setpoint;
+          or_state.ext_torque_setpoint = or_comm.ctrl->trq;
+          // Note: Use or_state.pos_multiturn_now directly as it's already in degrees
           switch(or_comm.state->word & OR_SAFETY_MSK)
           {
             case OR_SAFETY_INIT:
@@ -235,13 +244,13 @@ THD_FUNCTION(orthopus_thread, arg)
                   or_comm.state->word |= OR_STATE_MODE_POS; // Set mode 
 
                   // TODO: tunable max position error
-                  if ((fabs(fmod((RAD2DEG_f(or_comm.ctrl->pos) - RAD2DEG_f(or_comm.state->pos) + 540),360) - 180) >= (double)or_conf.safety_max_q_error) && !or_conf.safety_track_disable)
+                  if ((fabs(fmod((or_state.ext_pos_setpoint_deg - or_state.pos_multiturn_now + 540),360) - 180) >= (double)or_conf.safety_max_q_error) && !or_conf.safety_track_disable)
                   {
                     or_raise_error(ERR_POS_STEP); // Set error flag
                   } else {
                     if (!or_active_errors[ERR_POS_STEP] || or_conf.auto_clear_errors) //if 
                     {
-                      mc_interface_set_pid_pos(RAD2DEG_f(or_comm.ctrl->pos));
+                      mc_interface_set_pid_pos(or_state.ext_pos_setpoint_deg);
                     }
 
                     if (or_conf.auto_clear_errors)
@@ -253,13 +262,13 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_VEL:
                 {
-                  if (((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && RADPS2RPM_f(or_comm.ctrl->vel) != 0.0) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
+                  if (((ST2US2(chVTGetSystemTimeX() - or_comm.last_update) > 10000) && or_state.ext_vel_setpoint_rpm != 0.0) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing velocity control when timeout occurs
                   }
                   or_comm.state->word |= OR_STATE_MODE_VEL; // Set mode
-                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*RADPS2RPM_f(or_comm.ctrl->vel));
+                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*or_state.ext_vel_setpoint_rpm);
                   break;
                 }
                 case OR_CTRL_MODE_TRQ :
@@ -278,7 +287,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   else
                   {
                     or_comm.state->word |= OR_STATE_MODE_TRQ; // Set mode
-                    or_state.ext_torque_setpoint = or_comm.ctrl->trq;
+                    // Torque setpoint is already set from communication values
                     if (or_conf.limits_enable_reaction && or_conf.limits_enable)
                       or_limits_reaction();
                     or_interface_torquecontrol();
@@ -293,9 +302,7 @@ THD_FUNCTION(orthopus_thread, arg)
                     break; // Stop executing impedance control when timeout occurs
                   }
                   or_comm.state->word |= OR_STATE_MODE_IMP; // Set mode
-                  or_state.ext_pos_setpoint = RAD2DEG_f(or_comm.ctrl->pos);
-                  or_state.ext_vel_setpoint = RADPS2RPM_f(or_comm.ctrl->vel);
-                  or_state.ext_torque_setpoint = or_comm.ctrl->trq;
+                  // Position, velocity, and torque setpoints are already set from communication values
                   break;
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TOODO
@@ -306,9 +313,7 @@ THD_FUNCTION(orthopus_thread, arg)
                     break; // Stop executing custom control when timeout occurs
                   }
                   or_comm.state->word |= OR_STATE_MODE_CST; // Set mode
-                  or_state.ext_pos_setpoint = RAD2DEG_f(or_comm.ctrl->pos);
-                  or_state.ext_vel_setpoint = RADPS2RPM_f(or_comm.ctrl->vel);
-                  or_state.ext_torque_setpoint = or_comm.ctrl->trq;
+                  // Position, velocity, and torque setpoints are already set from communication values
                   break;
                 }
                 case OR_CTRL_MODE_OFF:
@@ -331,12 +336,12 @@ THD_FUNCTION(orthopus_thread, arg)
               // Initialize hold by getting the current position as hold position
               if (!hold_initialized)
               {
-                hold_position = RAD2DEG_f(or_comm.state->pos);
+                hold_position = or_state.pos_multiturn_now;
                 hold_initialized = true;
               }
 
               // compute the actual error
-              float error = fabs(fmod((hold_position - RAD2DEG_f(or_comm.state->pos) + 540), 360) - 180);
+              float error = fabs(fmod((hold_position - or_state.pos_multiturn_now + 540), 360) - 180);
 
               // check the position error
               if (error >= or_conf.safety_max_q_error)
@@ -349,7 +354,7 @@ THD_FUNCTION(orthopus_thread, arg)
 
                 // if error was previously set and auto_clear is active,
                 // check if current position setpoint error is acceptable
-                float pos_error = fabs(fmod((RAD2DEG_f(or_comm.ctrl->pos) - RAD2DEG_f(or_comm.state->pos) + 540), 360) - 180);
+                float pos_error = fabs(fmod((or_state.ext_pos_setpoint_deg - or_state.pos_multiturn_now + 540), 360) - 180);
 
                 if (or_conf.auto_clear_errors && or_active_errors[ERR_POS_STEP] &&
                     pos_error < 0.1*or_conf.safety_max_q_error && (or_comm.ctrl->word & OR_CTRL_MODE_MSK) == OR_CTRL_MODE_POS) //reset if auto_reset AND error is less than 10% the max allowed value. TODO: better definition of the treshold?
@@ -383,6 +388,12 @@ THD_FUNCTION(orthopus_thread, arg)
         }
       }
     }
+    
+    // Update communication state from internal state
+    // Convert back to radians for CAN communication
+    or_comm.state->pos = DEG2RAD_f(or_state.pos_multiturn_now);
+    or_comm.state->vel = RPM2RADPS_f(or_state.speed_now);
+    or_comm.state->trq = or_state.torque_now;
     
 /* -------------------------------------------------------------------------- */
 /*                          Execution time management                         */
@@ -450,7 +461,7 @@ void or_interface_torquecontrol(void)
                         - or_state.torque_now;
   //add stiffness action
   or_state.torque_err += or_conf.ctrl_stiffness
-                *(or_state.ext_pos_setpoint-or_state.pos_multiturn_now);
+                *(or_state.ext_pos_setpoint_deg-or_state.pos_multiturn_now);
   // add damping action
   or_state.torque_err -= or_conf.ctrl_damping*or_state.speed_now;
   //add limits action
@@ -534,6 +545,11 @@ void or_estop(void)
  */
 bool or_safety(void)
 {
+  // Values already converted from communication in the main control loop
+  // Only need to convert the previous velocity value for comparison
+  float ctrl_prev_vel_rpm = RADPS2RPM_f(or_comm.ctrl_prev->vel);
+  float ctrl_prev_torque = or_comm.ctrl_prev->trq;
+
   // ------------------ new command received: ------------------------//
 
   //compare or_comm.ctrl_prev and or_comm.ctrl to detect changes in word , pos, trq or vel
@@ -546,9 +562,9 @@ bool or_safety(void)
       if (or_comm.ctrl->word == OR_STATE_MODE_OFF)
       {
         or_clear_error(ERR_POS_STEP); // Clear error //TODO: manage error clear
-        if (or_comm.ctrl->trq == 0.0)
+        if (or_state.ext_torque_setpoint == 0.0)
           or_clear_error(ERR_TRQ_STEP); // Clear error
-        if (RADPS2RPM_f(or_comm.ctrl->vel) == 0.0)
+        if (or_state.ext_vel_setpoint_rpm == 0.0)
           or_clear_error(ERR_VEL_STEP); // Clear error
         
         //setting control word OFF resets the safety mode to ENABLE if not critical
@@ -561,12 +577,12 @@ bool or_safety(void)
       }
     }
     
-    if ((fabs(or_comm.ctrl->trq - or_comm.ctrl_prev->trq) > 5) && !or_conf.safety_track_disable) //TODO: parametrable max torque command step
+    if ((fabs(or_state.ext_torque_setpoint - ctrl_prev_torque) > 5) && !or_conf.safety_track_disable) //TODO: parametrable max torque command step
     {
       or_raise_error(ERR_TRQ_STEP); // Set error flag
     }
 
-    if ((fabs(RADPS2RPM_f(or_comm.ctrl->vel) - RADPS2RPM_f(or_comm.ctrl_prev->vel)) > 5) && !or_conf.safety_track_disable)
+    if ((fabs(or_state.ext_vel_setpoint_rpm - ctrl_prev_vel_rpm) > 5) && !or_conf.safety_track_disable)
     {
       or_raise_error(ERR_VEL_STEP); // Set error flag
     }
