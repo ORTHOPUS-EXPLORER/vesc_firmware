@@ -198,6 +198,18 @@ extern or_comm_t or_comm;
 extern bool or_active_errors[ERR_COUNT];
 extern bool or_error_triggered[ERR_COUNT];
 
+// Parameter table for command line and LispBM access
+typedef struct {
+    const char* name;
+    void* ptr;
+    char type; // 'f' for float, 'i' for int, 'b' for bool, 'u' for uint8_t, 's' for string
+    size_t size; // For string types or size validation
+} param_entry_t;
+
+extern const param_entry_t param_table[];
+extern const size_t PARAM_TABLE_SIZE;
+extern const param_entry_t* find_param(const char* name);
+
 // Utils
 bool or_config_load(orthopus_config_t* cfg);
 bool or_config_save(const orthopus_config_t* cfg);
