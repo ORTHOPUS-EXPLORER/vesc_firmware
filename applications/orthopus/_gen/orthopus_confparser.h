@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 // Constants
-#define ORTHOPUS_CONFIG_T_SIGNATURE		520369225
+#define ORTHOPUS_CONFIG_T_SIGNATURE		976581682
 
 // Functions
 int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const orthopus_config_t *conf);
