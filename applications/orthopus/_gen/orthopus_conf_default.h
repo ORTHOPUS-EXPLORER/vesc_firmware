@@ -213,6 +213,16 @@
 #define ORTHOPUS_CFG_DEF_SERVO_OFFSET 0
 #endif
 
+// Safety max vel step
+#ifndef ORTHOPUS_CFG_DEF_SAFETY_MAX_VEL_STEP
+#define ORTHOPUS_CFG_DEF_SAFETY_MAX_VEL_STEP 5
+#endif
+
+// Safety max torque step
+#ifndef ORTHOPUS_CFG_DEF_SAFETY_MAX_TRQ_STEP
+#define ORTHOPUS_CFG_DEF_SAFETY_MAX_TRQ_STEP 5
+#endif
+
 // ORTHOPUS_CONF_DEFAULT_H_
 #endif
 

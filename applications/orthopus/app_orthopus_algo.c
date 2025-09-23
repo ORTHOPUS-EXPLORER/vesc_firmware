@@ -607,12 +607,12 @@ bool or_safety(void)
       }
     }
     
-    if ((fabs(or_state.ext_torque_setpoint - or_state.ext_prev_torque_setpoint) > 5) && !or_conf.safety_track_disable) //TODO: parametrable max torque command step
+    if ((fabsf(or_state.ext_torque_setpoint - or_state.ext_prev_torque_setpoint) > or_conf.safety_max_trq_step) && !or_conf.safety_track_disable)
     {
       or_raise_error(ERR_TRQ_STEP); // Set error flag
     }
 
-    if ((fabs(or_state.ext_vel_setpoint_rpm - or_state.ext_prev_vel_setpoint_rpm) > 5) && !or_conf.safety_track_disable)
+    if ((fabsf(or_state.ext_vel_setpoint_rpm - or_state.ext_prev_vel_setpoint_rpm) > or_conf.safety_max_vel_step) && !or_conf.safety_track_disable)
     {
       or_raise_error(ERR_VEL_STEP); // Set error flag
     }

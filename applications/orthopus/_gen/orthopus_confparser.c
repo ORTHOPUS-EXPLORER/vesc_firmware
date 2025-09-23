@@ -53,6 +53,8 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer_append_float32_auto(buffer, conf->ff_torque_constant, &ind);
 	buffer_append_float32_auto(buffer, conf->speed_filter_const, &ind);
 	buffer_append_float32_auto(buffer, conf->servo_offset, &ind);
+	buffer_append_float32_auto(buffer, conf->safety_max_vel_step, &ind);
+	buffer_append_float32_auto(buffer, conf->safety_max_trq_step, &ind);
 
 	return ind;
 }
@@ -108,6 +110,8 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->ff_torque_constant = buffer_get_float32_auto(buffer, &ind);
 	conf->speed_filter_const = buffer_get_float32_auto(buffer, &ind);
 	conf->servo_offset = buffer_get_float32_auto(buffer, &ind);
+	conf->safety_max_vel_step = buffer_get_float32_auto(buffer, &ind);
+	conf->safety_max_trq_step = buffer_get_float32_auto(buffer, &ind);
 
 	return true;
 }
@@ -155,5 +159,7 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->ff_torque_constant = ORTHOPUS_CFG_DEF_FF_TORQUE_CONSTANT;
 	conf->speed_filter_const = ORTHOPUS_CFG_DEF_SPEED_FILTER_CONSTANT;
 	conf->servo_offset = ORTHOPUS_CFG_DEF_SERVO_OFFSET;
+	conf->safety_max_vel_step = ORTHOPUS_CFG_DEF_SAFETY_MAX_VEL_STEP;
+	conf->safety_max_trq_step = ORTHOPUS_CFG_DEF_SAFETY_MAX_TRQ_STEP;
 }
 
