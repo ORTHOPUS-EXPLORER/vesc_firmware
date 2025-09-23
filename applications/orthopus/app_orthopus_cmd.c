@@ -10,6 +10,7 @@ void orthopus_perf_cmd(int argc, const char **argv);
 void orthopus_control_cmd(int argc, const char **argv);
 void orthopus_comm_cmd(int argc, const char **argv);
 void orthopus_can_cmd(int argc, const char **argv);
+void orthopus_param_cmd(int argc, const char **argv);
 void OR_SAFETY_cmd(int argc, const char **argv);
 
 void or_cmd_init(void)
@@ -80,6 +81,13 @@ void or_cmd_init(void)
   );
 
   terminal_register_command_callback(
+    "o_param",
+    "[Orthopus] Get or set config parameters",
+    "[get/set] <param_name> [value]",
+    orthopus_param_cmd
+  );
+
+  terminal_register_command_callback(
     "o_safety",
     "[Orthopus] Safety monitor/debug/test commands",
     "[errors/set_err_warn/set_err_hold/set_err_brake/set_err_estop/clear_test_err/set_enable/set_idle/set_brake/set_hold/set_estop/set_init/clear_all/clear_history/release/print]",
@@ -97,6 +105,7 @@ void or_cmd_deinit(void)
   terminal_unregister_callback(orthopus_perf_cmd);
   terminal_unregister_callback(orthopus_comm_cmd);
   terminal_unregister_callback(orthopus_can_cmd);
+  terminal_unregister_callback(orthopus_param_cmd);
   terminal_unregister_callback(OR_SAFETY_cmd);
 }
 
@@ -741,6 +750,199 @@ void orthopus_control_cmd(int argc, const char **argv)
   } else {
     commands_printf("Invalid arguments.");
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   PARAM                                    */
+/* -------------------------------------------------------------------------- */
+
+// Macro to define a parameter entry with symbol registration
+#define PARAM_ENTRY(name, type) {#name, &or_conf.name, type, sizeof(or_conf.name)}
+
+// Parameter lookup table for or_conf structure - auto-generated style
+const param_entry_t param_table[] = {
+    PARAM_ENTRY(encoder_offset, 'f'),
+    PARAM_ENTRY(signature, 'u'),
+    PARAM_ENTRY(limits_enable_reaction, 'b'),
+    PARAM_ENTRY(auto_clear_errors, 'b'),
+    PARAM_ENTRY(limits_enable, 'b'),
+    PARAM_ENTRY(stream_rate_10, 'u'),
+    PARAM_ENTRY(limits_pos_max, 'f'),
+    PARAM_ENTRY(limits_pos_min, 'f'),
+    PARAM_ENTRY(limits_reach_angle, 'f'),
+    PARAM_ENTRY(limits_reach_speed, 'f'),
+    PARAM_ENTRY(joint_name, 's'),
+    PARAM_ENTRY(perf_rate_hz, 'i'),
+    PARAM_ENTRY(perf_compensateexectime, 'b'),
+    PARAM_ENTRY(ctrl_deadzone, 'b'),
+    PARAM_ENTRY(ctrl_sample_adc3, 'b'),
+    PARAM_ENTRY(simu_mode, 'b'),
+    PARAM_ENTRY(ctrl_torquezero, 'f'),
+    PARAM_ENTRY(ctrl_torquegain, 'f'),
+    PARAM_ENTRY(limits_kp, 'f'),
+    PARAM_ENTRY(limits_kd, 'f'),
+    PARAM_ENTRY(limits_powp, 'i'),
+    PARAM_ENTRY(limits_powd, 'i'),
+    PARAM_ENTRY(limits_damp_reachangle, 'i'),
+    PARAM_ENTRY(ctrl_stiffness, 'f'),
+    PARAM_ENTRY(ctrl_damping, 'f'),
+    PARAM_ENTRY(torque_filter_const, 'f'),
+    PARAM_ENTRY(ctrl_kp, 'f'),
+    PARAM_ENTRY(ctrl_a, 'f'),
+    PARAM_ENTRY(ctrl_kd, 'f'),
+    PARAM_ENTRY(ctrl_kd_filter, 'f'),
+    PARAM_ENTRY(encoder_max_diff, 'f'),
+    PARAM_ENTRY(safety_max_q_error, 'f'),
+    PARAM_ENTRY(safety_max_speed, 'f'),
+    PARAM_ENTRY(safety_track_disable, 'b'),
+    PARAM_ENTRY(safety_timeout_disable, 'b'),
+    PARAM_ENTRY(safety_max_speed_disable, 'b'),
+    PARAM_ENTRY(input_shaper_enable, 'b'),
+    PARAM_ENTRY(input_shaper_A1, 'f'),
+    PARAM_ENTRY(input_shaper_T1, 'i'),
+    PARAM_ENTRY(encoder_filter_const, 'f'),
+    PARAM_ENTRY(ff_torque_constant, 'f'),
+    PARAM_ENTRY(speed_filter_const, 'f'),
+    PARAM_ENTRY(servo_offset, 'f'),
+};
+
+const size_t PARAM_TABLE_SIZE = sizeof(param_table) / sizeof(param_entry_t);
+
+// Alternative approach: Use the serialization functions from generated code
+// This leverages the auto-generated orthopus_confparser functions
+static bool or_param_set_from_serialized(const char* param_name, const char* value_str) {
+    // Create a copy of current config
+    orthopus_config_t temp_conf = or_conf;
+    
+    // Find the parameter in our table and update the temp config
+    for (size_t i = 0; i < PARAM_TABLE_SIZE; i++) {
+        if (!strcmp(param_table[i].name, param_name)) {
+            const param_entry_t* entry = &param_table[i];
+            void* temp_ptr = (uint8_t*)&temp_conf + ((uint8_t*)entry->ptr - (uint8_t*)&or_conf);
+            
+            switch (entry->type) {
+                case 'f': {
+                    float new_val;
+                    sscanf(value_str, "%f", &new_val);
+                    *(float*)temp_ptr = new_val;
+                    break;
+                }
+                case 'i': {
+                    int new_val;
+                    sscanf(value_str, "%d", &new_val);
+                    *(int*)temp_ptr = new_val;
+                    break;
+                }
+                case 'b': {
+                    bool new_val = (!strcmp(value_str, "true") || !strcmp(value_str, "1"));
+                    if (!new_val && strcmp(value_str, "false") && strcmp(value_str, "0")) {
+                        return false; // Invalid boolean
+                    }
+                    *(bool*)temp_ptr = new_val;
+                    break;
+                }
+                case 'u': {
+                    unsigned int new_val;
+                    sscanf(value_str, "%u", &new_val);
+                    *(uint8_t*)temp_ptr = (uint8_t)(new_val & 0xFF);
+                    break;
+                }
+                case 's': {
+                    strncpy((char*)temp_ptr, value_str, entry->size - 1);
+                    ((char*)temp_ptr)[entry->size - 1] = '\0';
+                    break;
+                }
+                default:
+                    return false;
+            }
+            
+            // If validation passed, copy back to actual config
+            or_conf = temp_conf;
+            return true;
+        }
+    }
+    return false; // Parameter not found
+}
+
+const param_entry_t* find_param(const char* name) {
+    for (size_t i = 0; i < PARAM_TABLE_SIZE; i++) {
+        if (!strcmp(param_table[i].name, name)) {
+            return &param_table[i];
+        }
+    }
+    return NULL;
+}
+
+void orthopus_param_cmd(int argc, const char **argv)
+{
+    if (argc < 2) {
+        commands_printf("Usage: o_param <get/set> <param_name> [value]");
+        commands_printf("Available parameters:");
+        for (size_t i = 0; i < PARAM_TABLE_SIZE; i++) {
+            const param_entry_t* entry = &param_table[i];
+            const char* type_str = "unknown";
+            switch (entry->type) {
+                case 'f': type_str = "float"; break;
+                case 'i': type_str = "int"; break;
+                case 'b': type_str = "bool"; break;
+                case 'u': type_str = "uint8"; break;
+                case 's': type_str = "string"; break;
+            }
+            commands_printf("  %s (%s)", entry->name, type_str);
+        }
+        return;
+    }
+
+    const char* action = argv[1];
+    
+    if (argc < 3) {
+        commands_printf("Parameter name required");
+        return;
+    }
+    
+    const char* param_name = argv[2];
+    const param_entry_t* entry = find_param(param_name);
+    
+    if (!entry) {
+        commands_printf("Unknown parameter: %s", param_name);
+        return;
+    }
+
+    if (!strcmp(action, "get")) {
+        switch (entry->type) {
+            case 'f': commands_printf("%s = % 7.3f", param_name, (double)*(float*)entry->ptr); break;
+            case 'i': commands_printf("%s = %d", param_name, *(int*)entry->ptr); break;
+            case 'b': commands_printf("%s = %s", param_name, *(bool*)entry->ptr ? "true" : "false"); break;
+            case 'u': commands_printf("%s = %u", param_name, (unsigned int)*(uint8_t*)entry->ptr); break;
+            case 's': commands_printf("%s = %.4s", param_name, (char*)entry->ptr); break;
+            default: commands_printf("Unsupported parameter type"); break;
+        }
+    }
+    else if (!strcmp(action, "set")) {
+        if (argc < 4) {
+            commands_printf("Value required for set operation");
+            return;
+        }
+        
+        const char* value_str = argv[3];
+        
+        // Use the safer approach with validation
+        if (or_param_set_from_serialized(param_name, value_str)) {
+            // Echo back the set value
+            switch (entry->type) {
+                case 'f': commands_printf("%s set to % 7.3f", param_name, (double)*(float*)entry->ptr); break;
+                case 'i': commands_printf("%s set to %d", param_name, *(int*)entry->ptr); break;
+                case 'b': commands_printf("%s set to %s", param_name, *(bool*)entry->ptr ? "true" : "false"); break;
+                case 'u': commands_printf("%s set to %u", param_name, (unsigned int)*(uint8_t*)entry->ptr); break;
+                case 's': commands_printf("%s set to %.4s", param_name, (char*)entry->ptr); break;
+            }
+        } else {
+            commands_printf("Failed to set %s (invalid value or parameter)", param_name);
+        }
+    }
+    else {
+        commands_printf("Invalid action. Use 'get' or 'set'");
+    }
 }
 
 /* -------------------------------------------------------------------------- */
