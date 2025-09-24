@@ -1016,6 +1016,8 @@ void or_sync_error_flags(void)
  * - A1 fraction sent immediately
  * - (1-A1) fraction sent after a delay T1
  * 
+ * Special handling for angular wraparound to prevent erratic behavior when crossing 0°/360°
+ * 
  * @param input_command The raw position command to be shaped
  * @return float - The shaped position command
  */
@@ -1050,8 +1052,19 @@ float or_input_shaper_pos(float input_command)
   // Get delayed command (older value from buffer)
   float delayed_command = or_state.input_shaper_buffer_pos[or_state.input_shaper_delay_samples];
   
-  // Calculate shaped output: A1 * current + (1-A1) * delayed
-  float shaped_command = or_state.input_shaper_A1 * input_command + (1.0f - or_state.input_shaper_A1) * delayed_command;
+  // Handle angular wraparound for position commands
+  // Calculate the shortest angular distance between current and delayed commands
+  float angle_diff = fmodf((input_command - delayed_command + 540.0f), 360.0f) - 180.0f;
+  
+  // Calculate shaped output using the corrected angular difference
+  // This prevents jumps when crossing 0°/360° boundary
+  float shaped_command = delayed_command + or_state.input_shaper_A1 * angle_diff;
+  
+  // Normalize result to keep it in reasonable range
+  shaped_command = fmodf(shaped_command, 360.0f);
+  if (shaped_command < 0.0f) {
+    shaped_command += 360.0f;
+  }
   
   return shaped_command;
 }
