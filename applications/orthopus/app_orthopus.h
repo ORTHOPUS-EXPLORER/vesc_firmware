@@ -194,6 +194,7 @@ typedef enum {
   ERR_STP_HOLD,
   ERR_CAN_TIMEOUT,
   ERR_MAX_SPEED,
+  ERR_ENC_DISCONNECTED,  // AS504x encoder disconnected
 
   ERR_COUNT // Always last
 } or_error_t;

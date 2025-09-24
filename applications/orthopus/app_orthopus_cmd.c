@@ -669,6 +669,7 @@ void orthopus_param_cmd(int argc, const char **argv)
   ERR_STP_HOLD,
   ERR_CAN_TIMEOUT,
   ERR_MAX_SPEED,
+  ERR_ENC_DISCONNECTED,
   ERR_COUNT // Always last
 } or_error_t;*/
 
@@ -687,6 +688,7 @@ const char* or_error_messages[ERR_COUNT] = {
     "Pos error in HOLD",
     "Can timeout",
     "Max speed exceeded",
+    "AS504x encoder disconnected",
     // Add corresponding error messages here
 };
 

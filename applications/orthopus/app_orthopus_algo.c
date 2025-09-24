@@ -50,7 +50,7 @@ THD_FUNCTION(orthopus_thread, arg)
 
 	chRegSetThreadName("OrthopusTh");
 
-  size_t encoder_wait=10;
+  size_t encoder_wait=100; // Increased wait time (100ms instead of 10ms)
   do
   {
     enc_as504x_routine(&encoder_cfg_as504x);
@@ -58,6 +58,12 @@ THD_FUNCTION(orthopus_thread, arg)
     if(encoder_wait && !(--encoder_wait))
       break;
   } while(!encoder_cfg_as504x.state.sensor_diag.is_connected);
+
+  // Check if encoder is still not connected after timeout
+  if (!encoder_cfg_as504x.state.sensor_diag.is_connected) {
+    // Raise error but allow system to continue in safe state
+    or_raise_error(ERR_ENC_DISCONNECTED);
+  }
 
   float v = 0;
   or_set_joint_offset(v, false);
@@ -831,6 +837,7 @@ or_error_level_t or_get_error_severity(or_error_t err) {
 
     case ERR_TST_ESTOP:
     case ERR_POS_LIMIT:
+    case ERR_ENC_DISCONNECTED:
       return ERR_LEVEL_ESTOP;
 
     default:
