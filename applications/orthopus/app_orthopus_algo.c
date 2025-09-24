@@ -8,8 +8,6 @@
 volatile bool orthopus_thread_stop = true;
 volatile bool orthopus_thread_running = false;
 
-//const int loop_rate = 2000; //loop rate in Hz
-
 volatile or_state_t or_state =
 {
   .pos_multiturn_now = 0.0,
@@ -114,8 +112,6 @@ THD_FUNCTION(orthopus_thread, arg)
     enc_as504x_routine(&encoder_cfg_as504x);
 
     or_state.enc_pos = or_read_encoder();
-    //TODO: take into account current speed to compare raw value with next 
-                                      //expected value instead of previous value
 
     /* ------------------------------- Count turns ------------------------------ */
     //Output encoder
@@ -148,9 +144,6 @@ THD_FUNCTION(orthopus_thread, arg)
         or_state.rotor_pos_now += 360.0f;
     }
 
-    //TODO: speed now computed at higher freq
-    //or_state.speed_now = mc_interface_get_rpm() / mc_interface_get_configuration()->p_pid_ang_div;
-
     /* ---------------------------- Sample adc3 value --------------------------- */ //TODO: always sample at high freq
     if (or_conf.ctrl_sample_adc3)
     {
@@ -169,12 +162,8 @@ THD_FUNCTION(orthopus_thread, arg)
       if (ninitadc == 500)
       {
         or_state.adc3_init = true;
-        //TODO: understand why the commands_printf induces fail (disconnect from VESC_tool + bricked controller sometimes)
-        /*commands_printf("torque zero done: or_state.adc3_zero: % 7.3f", 
-                                                    (double)or_state.adc3_zero);*/
         ninitadc = 0;
         or_conf.ctrl_torquezero = or_state.adc3_zero;
-        //commands_printf("save config to store in EEPROM");
         mc_interface_release_motor();
       }
     } 
@@ -193,7 +182,7 @@ THD_FUNCTION(orthopus_thread, arg)
                               * (or_state.adc3_val-or_state.adc3_zero);
       }
 
-      /* Apply motor direction inversion to torque if needed */
+      // Apply motor direction inversion to torque
       const volatile mc_configuration *mcconf = mc_interface_get_configuration();
       if (mcconf->m_invert_direction) {
         or_state.torque_now = -or_state.torque_now;
@@ -297,7 +286,6 @@ THD_FUNCTION(orthopus_thread, arg)
                   if (or_active_errors[ERR_TRQ_STEP])
                   {
                     or_state.ext_torque_setpoint = 0.0;
-                    //or_estop(); //TODO remove - handled by state machine
                   }
                   else
                   {
@@ -318,7 +306,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   // Position, velocity, and torque setpoints are already set from communication values
                   break;
                 }
-                case OR_CTRL_MODE_CST : //Cusom mode: TOODO
+                case OR_CTRL_MODE_CST : //Cusom mode: TODO
                 {
                   if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
@@ -380,7 +368,7 @@ THD_FUNCTION(orthopus_thread, arg)
             }
             case OR_STATE_BRAKE:
             {
-              mc_interface_set_brake_current(3); //brake at 3 amps - TODO: tunable
+              mc_interface_set_brake_current(3);
               hold_initialized = false;
               break;
             }
@@ -394,7 +382,7 @@ THD_FUNCTION(orthopus_thread, arg)
             {
               or_estop();
               hold_initialized = false;
-              break; // trigger hold if unknown ?
+              break;
             }
           }
         }
@@ -426,7 +414,7 @@ THD_FUNCTION(orthopus_thread, arg)
 /* -------------------------------------------------------------------------- */
 /*                          Execution time management                         */
 /* -------------------------------------------------------------------------- */
-    //compute and control loop time TODO: clean
+
 /* ---------------------------- Performances plot --------------------------- */
     if (or_state.perf_plot){
       ++nsample;
@@ -484,7 +472,7 @@ void or_interface_torquecontrol(void)
 /* -------------------------------------------------------------------------- */
 
   or_state.stopped = false;
-  //TODO write clear control law bloc diagram
+
   or_state.torque_err = or_state.ext_torque_setpoint
                         - or_state.torque_now;
   //add stiffness action
@@ -540,8 +528,6 @@ void or_interface_torquecontrol(void)
   // Apply input shaping to the control command
   float shaped_command = or_input_shaper(or_state.ctrl_command);
   mc_interface_set_current(shaped_command);
-  //}    //TODO: check limits after last ctrl_command computation and set to
-                                                  //zero if out of limits?
 }
 
 /**
