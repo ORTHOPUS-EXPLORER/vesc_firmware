@@ -414,13 +414,13 @@ THD_FUNCTION(orthopus_thread, arg)
     or_comm.state->word |= or_state.safety_mode; // Set current safety mode
     
     // Clear and set control mode bits in state word (for output)
-    or_comm.state->word &= ~OR_STATE_MODE_MSK; // Clear mode bits
+    or_comm.state->word &= ~OR_CTRL_MODE_MSK; // Clear mode bits
     switch(or_state.control_mode) {
-      case OR_CTRL_MODE_POS: or_comm.state->word |= OR_STATE_MODE_POS; break;
-      case OR_CTRL_MODE_VEL: or_comm.state->word |= OR_STATE_MODE_VEL; break;
-      case OR_CTRL_MODE_TRQ: or_comm.state->word |= OR_STATE_MODE_TRQ; break;
-      case OR_CTRL_MODE_IMP: or_comm.state->word |= OR_STATE_MODE_IMP; break;
-      case OR_CTRL_MODE_CST: or_comm.state->word |= OR_STATE_MODE_CST; break;
+      case OR_CTRL_MODE_POS: or_comm.state->word |= OR_CTRL_MODE_POS; break;
+      case OR_CTRL_MODE_VEL: or_comm.state->word |= OR_CTRL_MODE_VEL; break;
+      case OR_CTRL_MODE_TRQ: or_comm.state->word |= OR_CTRL_MODE_TRQ; break;
+      case OR_CTRL_MODE_IMP: or_comm.state->word |= OR_CTRL_MODE_IMP; break;
+      case OR_CTRL_MODE_CST: or_comm.state->word |= OR_CTRL_MODE_CST; break;
       case OR_CTRL_MODE_OFF: 
       default: break; // OFF mode doesn't set any state mode bits
     }
