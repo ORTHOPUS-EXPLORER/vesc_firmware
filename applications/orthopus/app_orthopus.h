@@ -126,6 +126,7 @@ typedef struct
   uint16_t safety_mode;           // Internal safety state (OR_STATE_*)
   uint16_t control_mode;          // Internal control mode (OR_CTRL_MODE_*)
   systime_t last_cmd_time;        // Time of last command for timeout checking
+  bool terminal_timeout_disable;  // Disable timeout check for terminal-initiated commands
 } or_state_t;
 
 extern volatile or_state_t or_state;

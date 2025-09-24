@@ -28,7 +28,8 @@ volatile or_state_t or_state =
   // Internal state management
   .safety_mode = OR_STATE_INIT,
   .control_mode = OR_CTRL_MODE_OFF,
-  .last_cmd_time = 0
+  .last_cmd_time = 0,
+  .terminal_timeout_disable = false
 };
 
 int get_fw_version_cnt;
@@ -278,7 +279,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_VEL:
                 {
-                  if (((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && or_state.ext_vel_setpoint_rpm != 0.0) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
+                  if (((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && or_state.ext_vel_setpoint_rpm != 0.0) && !or_conf.safety_timeout_disable && !or_state.terminal_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing velocity control when timeout occurs
@@ -290,7 +291,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_TRQ :
                 {
-                  if (((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable)) //raise error if command does not ensure at least 100Hz
+                  if (((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable && !or_state.terminal_timeout_disable)) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing torque control when timeout occurs
@@ -311,7 +312,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_IMP : //Impedance mode: available for later
                 {
-                  if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
+                  if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable && !or_state.terminal_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing impedance control when timeout occurs
@@ -321,7 +322,7 @@ THD_FUNCTION(orthopus_thread, arg)
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TODO
                 {
-                  if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable) //raise error if command does not ensure at least 100Hz
+                  if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable && !or_state.terminal_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing custom control when timeout occurs
@@ -969,12 +970,18 @@ void or_set_safety_mode(uint32_t mode)
  *
  * This function clears the existing control mode bits and sets the new mode
  * using the defined OR_CTRL_MODE_MSK. It sets only one control mode at a time.
+ * Also updates the communication structure to ensure synchronization.
+ * When called from terminal commands, disables timeout checking.
  *
  * @param mode  The new control mode to apply (e.g. OR_CTRL_MODE_POS).
  */
 void or_set_control_mode(uint32_t mode)
 {
   or_state.control_mode = mode;
+  // Update communication control word to maintain synchronization
+  or_comm.ctrl->word = (or_comm.ctrl->word & ~OR_CTRL_MODE_MSK) | mode;
+  // Disable timeout checking for terminal-initiated commands (except OFF mode)
+  or_state.terminal_timeout_disable = (mode != OR_CTRL_MODE_OFF);
 }
 
 /**
