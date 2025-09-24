@@ -371,14 +371,14 @@ void orthopus_control_cmd(int argc, const char **argv)
 
   if(!strcmp(argv[1],"enable"))
   {
-    or_set_control_mode(OR_STATE_MODE_TRQ);
+    or_set_control_mode(OR_CTRL_MODE_TRQ);
     or_set_safety_mode(OR_STATE_ENABLE);
     commands_printf("Control Enabled");
   }
   else if(!strcmp(argv[1],"disable"))
   {
     or_set_safety_mode(OR_STATE_ENABLE);
-    or_set_control_mode(OR_STATE_MODE_OFF);
+    or_set_control_mode(OR_CTRL_MODE_OFF);
     mc_interface_release_motor();   //disable motor
     mc_interface_ignore_input(100);  // disable new inputs for at least 1 cycle (100ms)
     commands_printf("Control Disabled"); //// Redundant parameter commands have been removed in favor of the generic o_param command set zero torque and/or estop
@@ -403,7 +403,7 @@ void orthopus_control_cmd(int argc, const char **argv)
     or_conf.torque_filter_const = 0.1;
     or_conf.ctrl_stiffness = 0.0;
     commands_printf("Configured demo 1: kp4 a1 filterconst0.1 ctrl_deadzone zerotorque enable stiffness 0.0");
-    or_set_control_mode(OR_STATE_MODE_TRQ);
+    or_set_control_mode(OR_CTRL_MODE_TRQ);
     or_set_safety_mode(OR_STATE_ENABLE);
   }
   else if(!strcmp(argv[1],"zerotorque"))
