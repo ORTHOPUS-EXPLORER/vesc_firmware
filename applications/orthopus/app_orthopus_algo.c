@@ -89,9 +89,11 @@ THD_FUNCTION(orthopus_thread, arg)
   // Initialize input shaper variables
   or_state.input_shaper_delay_samples = 0;
   or_state.input_shaper_A1 = or_conf.input_shaper_A1;
-  // Clear the delay buffer
+  // Clear all delay buffers
   for (int i = 0; i < 1000; i++) {
-    or_state.input_shaper_buffer[i] = 0.0f;
+    or_state.input_shaper_buffer_pos[i] = 0.0f;
+    or_state.input_shaper_buffer_vel[i] = 0.0f;
+    or_state.input_shaper_buffer_trq[i] = 0.0f;
   }
   /* -------------------------------------------------------------------------- */
   /*                                  MAIN LOOP                                 */
@@ -255,7 +257,9 @@ THD_FUNCTION(orthopus_thread, arg)
                   } else {
                     if (!or_active_errors[ERR_POS_STEP] || or_conf.auto_clear_errors) //if 
                     {
-                      mc_interface_set_pid_pos(or_state.ext_pos_setpoint_deg);
+                      // Apply input shaping to position setpoint
+                      float shaped_position = or_input_shaper_pos(or_state.ext_pos_setpoint_deg);
+                      mc_interface_set_pid_pos(shaped_position);
                     }
 
                     if (or_conf.auto_clear_errors)
@@ -272,7 +276,9 @@ THD_FUNCTION(orthopus_thread, arg)
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing velocity control when timeout occurs
                   }
-                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*or_state.ext_vel_setpoint_rpm);
+                  // Apply input shaping to velocity setpoint
+                  float shaped_velocity = or_input_shaper_vel(or_state.ext_vel_setpoint_rpm);
+                  mc_interface_set_pid_speed(mc_interface_get_configuration()->p_pid_ang_div*shaped_velocity);
                   break;
                 }
                 case OR_CTRL_MODE_TRQ :
@@ -526,7 +532,7 @@ void or_interface_torquecontrol(void)
                       //torque request is 0 //todo: move somewhere else?
   
   // Apply input shaping to the control command
-  float shaped_command = or_input_shaper(or_state.ctrl_command);
+  float shaped_command = or_input_shaper_trq(or_state.ctrl_command);
   mc_interface_set_current(shaped_command);
 }
 
@@ -997,19 +1003,16 @@ void or_sync_error_flags(void)
 }
 
 /**
- * Input shaper for vibration reduction
+ * Input shaper for position control commands
  * 
  * Implements a simple input shaper that splits the command into two parts:
  * - A1 fraction sent immediately
  * - (1-A1) fraction sent after a delay T1
- *
- * @param input_command
- * The raw control command to be shaped
- *
- * @return
- * float - The shaped control command
+ * 
+ * @param input_command The raw position command to be shaped
+ * @return float - The shaped position command
  */
-float or_input_shaper(float input_command)
+float or_input_shaper_pos(float input_command)
 {
   if (!or_conf.input_shaper_enable) {
     return input_command; // Pass-through if disabled
@@ -1031,14 +1034,108 @@ float or_input_shaper(float input_command)
 
   // Shift buffer to make room for new value (move all values one position right)
   for (int i = 999; i > 0; i--) {
-    or_state.input_shaper_buffer[i] = or_state.input_shaper_buffer[i-1];
+    or_state.input_shaper_buffer_pos[i] = or_state.input_shaper_buffer_pos[i-1];
   }
   
   // Store current command at index 0 (newest)
-  or_state.input_shaper_buffer[0] = input_command;
+  or_state.input_shaper_buffer_pos[0] = input_command;
   
   // Get delayed command (older value from buffer)
-  float delayed_command = or_state.input_shaper_buffer[or_state.input_shaper_delay_samples];
+  float delayed_command = or_state.input_shaper_buffer_pos[or_state.input_shaper_delay_samples];
+  
+  // Calculate shaped output: A1 * current + (1-A1) * delayed
+  float shaped_command = or_state.input_shaper_A1 * input_command + (1.0f - or_state.input_shaper_A1) * delayed_command;
+  
+  return shaped_command;
+}
+
+/**
+ * Input shaper for velocity control commands
+ * 
+ * Implements a simple input shaper that splits the command into two parts:
+ * - A1 fraction sent immediately
+ * - (1-A1) fraction sent after a delay T1
+ * 
+ * @param input_command The raw velocity command to be shaped
+ * @return float - The shaped velocity command
+ */
+float or_input_shaper_vel(float input_command)
+{
+  if (!or_conf.input_shaper_enable) {
+    return input_command; // Pass-through if disabled
+  }
+
+  // Update A1 factor from config
+  or_state.input_shaper_A1 = or_conf.input_shaper_A1;
+  
+  // Calculate delay in samples based on configured delay T1 (in ms) and loop rate
+  or_state.input_shaper_delay_samples = (int)((or_conf.input_shaper_T1 / 1000.0f) * or_conf.perf_rate_hz);
+  
+  // Limit delay samples to buffer size
+  if (or_state.input_shaper_delay_samples >= 1000) {
+    or_state.input_shaper_delay_samples = 999;
+  }
+  if (or_state.input_shaper_delay_samples < 1) {
+    or_state.input_shaper_delay_samples = 1;
+  }
+
+  // Shift buffer to make room for new value (move all values one position right)
+  for (int i = 999; i > 0; i--) {
+    or_state.input_shaper_buffer_vel[i] = or_state.input_shaper_buffer_vel[i-1];
+  }
+  
+  // Store current command at index 0 (newest)
+  or_state.input_shaper_buffer_vel[0] = input_command;
+  
+  // Get delayed command (older value from buffer)
+  float delayed_command = or_state.input_shaper_buffer_vel[or_state.input_shaper_delay_samples];
+  
+  // Calculate shaped output: A1 * current + (1-A1) * delayed
+  float shaped_command = or_state.input_shaper_A1 * input_command + (1.0f - or_state.input_shaper_A1) * delayed_command;
+  
+  return shaped_command;
+}
+
+/**
+ * Input shaper for torque control commands
+ * 
+ * Implements a simple input shaper that splits the command into two parts:
+ * - A1 fraction sent immediately
+ * - (1-A1) fraction sent after a delay T1
+ * 
+ * @param input_command The raw torque command to be shaped
+ * @return float - The shaped torque command
+ */
+float or_input_shaper_trq(float input_command)
+{
+  if (!or_conf.input_shaper_enable) {
+    return input_command; // Pass-through if disabled
+  }
+
+  // Update A1 factor from config
+  or_state.input_shaper_A1 = or_conf.input_shaper_A1;
+  
+  // Calculate delay in samples based on configured delay T1 (in ms) and loop rate
+  or_state.input_shaper_delay_samples = (int)((or_conf.input_shaper_T1 / 1000.0f) * or_conf.perf_rate_hz);
+  
+  // Limit delay samples to buffer size
+  if (or_state.input_shaper_delay_samples >= 1000) {
+    or_state.input_shaper_delay_samples = 999;
+  }
+  if (or_state.input_shaper_delay_samples < 1) {
+    or_state.input_shaper_delay_samples = 1;
+  }
+
+  // Shift buffer to make room for new value (move all values one position right)
+  for (int i = 999; i > 0; i--) {
+    or_state.input_shaper_buffer_trq[i] = or_state.input_shaper_buffer_trq[i-1];
+  }
+  
+  // Store current command at index 0 (newest)
+  or_state.input_shaper_buffer_trq[0] = input_command;
+  
+  // Get delayed command (older value from buffer)
+  float delayed_command = or_state.input_shaper_buffer_trq[or_state.input_shaper_delay_samples];
   
   // Calculate shaped output: A1 * current + (1-A1) * delayed
   float shaped_command = or_state.input_shaper_A1 * input_command + (1.0f - or_state.input_shaper_A1) * delayed_command;

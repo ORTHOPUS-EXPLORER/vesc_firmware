@@ -104,10 +104,12 @@ typedef struct
   float d_torque_err;
   float d_torque_err_filt;
   bool encoders_init;
-  // Input shaper variables
-  float input_shaper_buffer[1000]; // Buffer for delayed commands (index 0 = newest, index N = oldest)
-  int input_shaper_delay_samples;  // Delay in samples
-  float input_shaper_A1;           // First amplitude factor
+  // Input shaper variables - separate instances for each control mode
+  float input_shaper_buffer_pos[1000]; // Position mode buffer (index 0 = newest, index N = oldest)
+  float input_shaper_buffer_vel[1000]; // Velocity mode buffer
+  float input_shaper_buffer_trq[1000]; // Torque mode buffer
+  int input_shaper_delay_samples;      // Delay in samples (shared across modes)
+  float input_shaper_A1;               // First amplitude factor (shared across modes)
   // Rotor position
   float rotor_pos_now;             // Rotor position in degrees (0-360°)
   // Communication values in internal units (to avoid repeated conversions)
@@ -245,7 +247,9 @@ void or_set_safety_mode(uint32_t mode);
 void or_sync_error_flags(void);
 void or_interface_torquecontrol(void);
 void or_set_control_mode(uint32_t mode);
-float or_input_shaper(float input_command);
+float or_input_shaper_pos(float input_command);
+float or_input_shaper_vel(float input_command);
+float or_input_shaper_trq(float input_command);
 
 /**
  * @brief   System ticks to microseconds.
