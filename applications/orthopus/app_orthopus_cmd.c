@@ -804,6 +804,8 @@ const param_entry_t param_table[] = {
     PARAM_ENTRY(ff_torque_constant, 'f'),
     PARAM_ENTRY(speed_filter_const, 'f'),
     PARAM_ENTRY(servo_offset, 'f'),
+    PARAM_ENTRY(safety_max_vel_step, 'f'),
+    PARAM_ENTRY(safety_max_trq_step, 'f'),
 };
 
 const size_t PARAM_TABLE_SIZE = sizeof(param_table) / sizeof(param_entry_t);
