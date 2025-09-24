@@ -43,6 +43,7 @@ bool or_error_triggered[ERR_COUNT] = { false }; // true = triggered at least onc
 bool hold_initialized = false;
 bool release_on_enable = false;
 float hold_position = 0.0;
+bool pos_input_shaper_was_enabled = false; // Track previous input shaper state for buffer warm-up
 
 THD_FUNCTION(orthopus_thread, arg) 
 {
@@ -1024,8 +1025,13 @@ void or_sync_error_flags(void)
 float or_input_shaper_pos(float input_command)
 {
   if (!or_conf.input_shaper_enable) {
+    pos_input_shaper_was_enabled = false; // Track that input shaper is disabled
     return input_command; // Pass-through if disabled
   }
+
+  // Check if input shaper was just enabled (transition from disabled to enabled)
+  bool just_enabled = !pos_input_shaper_was_enabled && or_conf.input_shaper_enable;
+  pos_input_shaper_was_enabled = true; // Update state for next call
 
   // Update A1 factor from config
   or_state.input_shaper_A1 = or_conf.input_shaper_A1;
@@ -1039,6 +1045,14 @@ float or_input_shaper_pos(float input_command)
   }
   if (or_state.input_shaper_delay_samples < 1) {
     or_state.input_shaper_delay_samples = 1;
+  }
+
+  // Warm up buffer if input shaper was just enabled
+  // This prevents unwanted movements when switching from disabled to enabled
+  if (just_enabled) {
+    for (int i = 0; i < 1000; i++) {
+      or_state.input_shaper_buffer_pos[i] = input_command;
+    }
   }
 
   // Shift buffer to make room for new value (move all values one position right)
