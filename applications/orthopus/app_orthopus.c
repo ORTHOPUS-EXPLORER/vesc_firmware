@@ -345,13 +345,8 @@ THD_FUNCTION(orthopus_comm_thread, arg)
         simu_prev_time = current_time;
       }
     }
-    else
-    {
-      or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
-      st->pos = DEG2RAD_f(mc_interface_get_pid_pos_now());
-      st->vel = RPM2RADPS_f(or_state.speed_now);
-      st->trq = or_state.torque_now;
-    }
+    // Note: In real mode (non-simulation), all state variables (pos, vel, trq) 
+    // are set by the algorithm thread (app_orthopus_algo.c) to avoid race conditions.
     
     // Do not send meas in INIT state
     if((or_comm.state->word & OR_STATE_MSK) != OR_STATE_INIT)
