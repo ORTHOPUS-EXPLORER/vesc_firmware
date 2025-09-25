@@ -404,8 +404,7 @@ THD_FUNCTION(orthopus_thread, arg)
     }
     
     // Update communication state from internal state
-    // Convert back to radians for CAN communication
-    or_comm.state->pos = DEG2RAD_f(or_state.pos_multiturn_now);
+    or_comm.state->pos = DEG2RAD_f(mc_interface_get_pid_pos_now());
     or_comm.state->vel = RPM2RADPS_f(or_state.speed_now);
     or_comm.state->trq = or_state.torque_now;
     
