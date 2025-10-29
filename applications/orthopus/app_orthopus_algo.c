@@ -62,7 +62,7 @@ THD_FUNCTION(orthopus_thread, arg)
   } while(!encoder_cfg_as504x.state.sensor_diag.is_connected);
 
   // Check if encoder is still not connected after timeout
-  if (!encoder_cfg_as504x.state.sensor_diag.is_connected) {
+  if (!encoder_cfg_as504x.state.sensor_diag.is_connected && !or_conf.simu_mode) {
     // Raise error but allow system to continue in safe state
     or_raise_error(ERR_ENC_DISCONNECTED);
   }
