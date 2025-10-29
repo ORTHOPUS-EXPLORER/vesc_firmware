@@ -73,8 +73,6 @@ orthopus_comm_t orthopus_comm =
   .ctrl  = &orthopus_comm.ctrl0,
   .process_ctrl = false,
   .process_rx = true,
-  .stream_rate_hz = 250,
-  .simu_mode = true,
 };
 
 void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len);
@@ -106,7 +104,7 @@ void app_custom_start(void)
   if(!orthopus_config_load(&or_conf))
      commands_printf("Orthopus_config_load failed");
   // if orthopus config not set, set default values
-  if (!or_conf.or_conf_set)
+  if (or_conf.signature != ORTHOPUS_CONFIG_T_SIGNATURE)
   {
     orthopus_config_set(&or_conf, NULL);
   }
@@ -235,18 +233,28 @@ THD_FUNCTION(orthopus_comm_thread, arg)
 		}
 
     // Read RX, done in CAN Callback
-    if(orthopus_comm.simu_mode && orthopus_comm.process_ctrl)
+    if(or_conf.simu_mode)
     {
-      // Get the current Refs and refs
-      const orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
       orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
-      st->pos += SIMU_LP_ALPHA*(ctrl->pos - st->pos);
-      st->vel += SIMU_LP_ALPHA*(ctrl->vel - st->vel);
-      st->trq += SIMU_LP_ALPHA*(ctrl->trq - st->trq);
+      if(orthopus_comm.process_ctrl)
+      {
+        // Get the current Refs and refs
+        const orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
+        st->pos += SIMU_LP_ALPHA*(ctrl->pos - st->pos);
+        st->vel += SIMU_LP_ALPHA*(ctrl->vel - st->vel);
+        st->trq += SIMU_LP_ALPHA*(ctrl->trq - st->trq);
+      }
+    }
+    else
+    {
+      orthopus_comm_state_t* st = (orthopus_comm_state_t*)orthopus_comm.state;
+      st->pos = mc_interface_get_pid_pos_now();
+      st->vel = mc_interface_get_rpm();
+      st->trq = 0.0; // FIXME !! Get Real value
     }
     
     // Write TX
-    unsigned int rate = orthopus_comm.stream_rate_hz; // Fast copy to avoid locking it before use
+    unsigned int rate = or_conf.stream_rate_10*10; // Fast copy to avoid locking it before use
     if(rate > 0)
     {
       // TX
@@ -269,7 +277,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     
     /*time_end = chVTGetSystemTimeX();
     exectime = time_end - time_start;
-    if (orthopus_config.perf_compensateexectime)
+    if (or_conf.perf_compensateexectime)
       chThdSleepMicroseconds(1000000.0*1.0/rate-ST2US2(exectime));
     else 
       chThdSleepMicroseconds(1000000.0*1.0/rate);
@@ -277,7 +285,60 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     //time_last = time_now;
   }
 }
-//void orthopus_comm_update_state(void);
+
+#define ORTHOPUS_CTRL_MODE_OFF 0x0000
+#define ORTHOPUS_CTRL_MODE_POS 0x0001
+#define ORTHOPUS_CTRL_MODE_VEL 0x0002
+#define ORTHOPUS_CTRL_MODE_TRQ 0x0004
+#define ORTHOPUS_CTRL_MODE_MSK 0x000F
+#define ORTHOPUS_CTRL_MODE_ERR 0x0010
+
+bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
+{
+  // Do not handle messages that are not for us
+  if((id&0x00FF) != app_get_configuration()->controller_id)
+    return false;
+  
+  switch((id>>8)&0xFF)
+  {
+    case CAN_RT_DATA_DOWNSTREAM:
+    {
+      if(len != 8 || !orthopus_comm.process_rx)
+        break;
+
+      // Get the "free" buffer
+      orthopus_comm_control_t* ctrl = orthopus_comm.ctrl  == &(orthopus_comm.ctrl1)
+                                      ? &(orthopus_comm.ctrl0) 
+                                      : &(orthopus_comm.ctrl1);
+      long int ilen = 0;
+      // Fill in some data from the received packet
+      ctrl->pos  = buffer_get_float16(data, ORTHOPUS_COMM_RT_POS_SCALE, &ilen); // 2
+      ctrl->vel  = buffer_get_float16(data, ORTHOPUS_COMM_RT_VEL_SCALE, &ilen); // 4
+      ctrl->trq  = buffer_get_float16(data, ORTHOPUS_COMM_RT_TRQ_SCALE, &ilen); // 6
+      ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
+      // Activate
+      orthopus_comm.ctrl = ctrl; // Swap !
+      if(orthopus_comm.process_ctrl && !or_conf.simu_mode)
+      {
+        switch(ctrl->word & ORTHOPUS_CTRL_MODE_MSK) 
+        {
+          case ORTHOPUS_CTRL_MODE_POS:
+            mc_interface_set_pid_pos(ctrl->pos);
+            break;
+          case ORTHOPUS_CTRL_MODE_VEL:
+            mc_interface_set_pid_speed(ctrl->vel);
+            break;
+          default:
+            break;
+        }
+      }
+      return true;
+    }
+    default:
+      break;
+  }
+  return false;
+}
 
 void orthopus_process_custom_app_data(unsigned char *rx_d, unsigned int len)
 {
@@ -364,30 +425,8 @@ bool orthopus_process_can_sid(uint32_t id, uint8_t *data, uint8_t len)
   return false;
 }
 
-bool orthopus_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
-{
-  uint16_t ds_can_id = ((uint16_t)(CAN_RT_DATA_DOWNSTREAM<<8))|(app_get_configuration()->controller_id);
-  if(len == 8 && (id&0xFFFF) == ds_can_id)
-  {
-    if(orthopus_comm.process_rx)
-    {
-      // Get the "free" buffer
-      orthopus_comm_control_t* ctrl = orthopus_comm.ctrl  == &(orthopus_comm.ctrl1)
-                                      ? &(orthopus_comm.ctrl0) 
-                                      : &(orthopus_comm.ctrl1);
-      long int ilen = 0;
-      // Fill in some data from the received packet
-      ctrl->pos  = buffer_get_float16(data, ORTHOPUS_COMM_RT_POS_SCALE, &ilen); // 2
-      ctrl->vel  = buffer_get_float16(data, ORTHOPUS_COMM_RT_VEL_SCALE, &ilen); // 4
-      ctrl->trq  = buffer_get_float16(data, ORTHOPUS_COMM_RT_TRQ_SCALE, &ilen); // 6
-      ctrl->word = buffer_get_uint16 (data, &ilen);                             // 8
-      // Activate
-      orthopus_comm.ctrl = ctrl; // Swap !
-    }
-    return true;
-  }
-  return false;
-}
 
+
+// Meh, not pretty but the toolchain makes it so
 #include "_gen/orthopus_confparser.c"
 #include "_gen/orthopus_confxml.c"

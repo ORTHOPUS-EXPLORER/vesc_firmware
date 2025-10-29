@@ -69,7 +69,7 @@ THD_FUNCTION(orthopus_thread, arg) {
   time_lasterrprint = chVTGetSystemTimeX();
   time_last = time_now;
   //check if torquezero set in config
-  if (or_conf.ctrl_torquezero != 0.0 && or_conf.or_conf_set){
+  if (or_conf.ctrl_torquezero != 0.0 && or_conf.signature == ORTHOPUS_CONFIG_T_SIGNATURE){
       or_state.adc3_init = true;
       or_state.adc3_zero = or_conf.ctrl_torquezero;
   }
@@ -299,7 +299,7 @@ THD_FUNCTION(orthopus_thread, arg) {
 
 
     // Read control from comm'
-    if(!orthopus_comm.simu_mode)
+    if(!or_conf.simu_mode)
     {
       if(orthopus_comm.process_ctrl)
       {
@@ -318,16 +318,16 @@ THD_FUNCTION(orthopus_thread, arg) {
       // FIXME: Slow it down, only update at twice the comm rate, should be enough
 
       // Get the "free" buffer
-      orthopus_comm_state_t* st = orthopus_comm.state == &(orthopus_comm.st1)   
-                                  ? &(orthopus_comm.st0)   
-                                  : &(orthopus_comm.st1);
-      
-      st->word = 0x0179;
-      st->pos  = 12.34;
-      st->vel  =  0.01;
-      st->trq  =  0.02;
-      // Activate
-      orthopus_comm.state = st; // Swap !
+      //orthopus_comm_state_t* st = orthopus_comm.state == &(orthopus_comm.st1)   
+      //                            ? &(orthopus_comm.st0)   
+      //                            : &(orthopus_comm.st1);
+      //
+      //st->word = 0x0179;
+      //st->pos  = 12.34;
+      //st->vel  =  0.01;
+      //st->trq  =  0.02;
+      //// Activate
+      //orthopus_comm.state = st; // Swap !
     }
 	}
 }

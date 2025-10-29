@@ -163,8 +163,8 @@ void orthopus_comm_cmd(int argc, const char **argv)
     unsigned int v = 0;
     sscanf(argv[2], "%u", &v);
     if(v < 1000)
-      orthopus_comm.stream_rate_hz = v;
-    commands_printf("Stream Rate: %dHz", orthopus_comm.stream_rate_hz);
+      or_conf.stream_rate_10 = v/10;
+    commands_printf("Stream Rate: %dHz", ((uint16_t)or_conf.stream_rate_10)*10);
   }
   else if(argc == 3 &&!strcmp(argv[1],"set_qd"))
   {
@@ -185,11 +185,6 @@ void orthopus_comm_cmd(int argc, const char **argv)
     orthopus_comm.process_ctrl = !strcmp(argv[2],"on");
     commands_printf("Process Ctrl: %s", orthopus_comm.process_ctrl ? "true" : "false");
   }
-  else if(argc == 3 &&!strcmp(argv[1],"simu_mode"))
-  {
-    orthopus_comm.simu_mode = !strcmp(argv[2],"on");
-    commands_printf("Simu mode: %s", orthopus_comm.simu_mode ? "true" : "false");
-  }
   else if(argc == 2  && !strcmp(argv[1],"print"))
   {
     orthopus_comm_control_t* ctrl = (orthopus_comm_control_t*)orthopus_comm.ctrl;
@@ -206,8 +201,8 @@ void orthopus_comm_cmd(int argc, const char **argv)
     commands_printf("  Position    :  % 9.5f",(double)st->pos );
     commands_printf("  Velocity    :  % 9.5f",(double)st->vel );
     commands_printf("  Torque      :  % 9.5f",(double)st->trq );
-    commands_printf("Stream Rate   : %dHz", orthopus_comm.stream_rate_hz);
-    commands_printf("Simu mode     : %s", orthopus_comm.simu_mode ? "true" : "false");
+    commands_printf("Stream Rate   : %dHz", ((uint16_t)or_conf.stream_rate_10)*10);
+    commands_printf("Simu mode     : %s", or_conf.simu_mode ? "true" : "false");
     //commands_printf("  Temperature :  % 9.5f",(double)st->temp);
     //commands_printf("  Current     :  % 9.5f",(double)st->curr);
   }
@@ -280,7 +275,7 @@ void orthopus_config_cmd(int argc, const char **argv)
     commands_printf("Encoder Filter enabled:      %s", or_conf.encoder_filter_enable ? "true" : "false"     );
     commands_printf("Encoder Filter plot enabled: %s", or_conf.encoder_filter_plot_enable ? "true" : "false");
     commands_printf("Limits enabled:              %s", or_conf.limits_enable ? "true" : "false"             );
-    commands_printf("Config set:                  %s", or_conf.or_conf_set ? "true" : "false"       );
+    commands_printf("Config set:                  %s", or_conf.signature == ORTHOPUS_CONFIG_T_SIGNATURE ? "true" : "false"       );
     commands_printf("Limits pos max:              % 7.3f",(double)or_conf.limits_pos_max                    );
     commands_printf("Limits pos min:              % 7.3f",(double)or_conf.limits_pos_min                    );
     commands_printf("Limits reach angle:          % 7.3f",(double)or_conf.limits_reach_angle                );

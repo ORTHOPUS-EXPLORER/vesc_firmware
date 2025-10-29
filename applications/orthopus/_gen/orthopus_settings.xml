@@ -25,6 +25,51 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Orthopus Custom config&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine></cDefine>
         </hw_name>
+        <joint_name>
+            <longName>Joint Name</longName>
+            <type>3</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Orthopus Joint name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_JOINT_NAME</cDefine>
+            <valString></valString>
+            <maxLen>3</maxLen>
+        </joint_name>
+        <simu_mode>
+            <longName>Enable Simu mode</longName>
+            <type>5</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;TODO&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_SIMU_MODE</cDefine>
+            <valInt>0</valInt>
+        </simu_mode>
+        <stream_rate_10>
+            <longName>Stream Rate</longName>
+            <type>2</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;TODO&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_STREAM_RATE_10</cDefine>
+            <editorScale>10</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxInt>100</maxInt>
+            <minInt>0</minInt>
+            <showDisplay>0</showDisplay>
+            <stepInt>10</stepInt>
+            <valInt>25</valInt>
+            <suffix> Hz</suffix>
+            <vTx>1</vTx>
+        </stream_rate_10>
         <encoder_offset>
             <longName>Encoder Offset</longName>
             <type>1</type>
@@ -619,6 +664,9 @@ p, li { white-space: pre-wrap; }
         </torque_filter_const>
     </Params>
     <SerOrder>
+        <ser>joint_name</ser>
+        <ser>simu_mode</ser>
+        <ser>stream_rate_10</ser>
         <ser>encoder_offset</ser>
         <ser>encoder_filter_anglestep</ser>
         <ser>encoder_filter_enable</ser>
@@ -656,8 +704,11 @@ p, li { white-space: pre-wrap; }
             <subgroup>
                 <subgroupName>Common</subgroupName>
                 <subgroupParams>
+                    <param>joint_name</param>
                     <param>angle_division</param>
                     <param>torque_filter_const</param>
+                    <param>simu_mode</param>
+                    <param>stream_rate_10</param>
                 </subgroupParams>
             </subgroup>
             <subgroup>

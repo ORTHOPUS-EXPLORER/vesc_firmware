@@ -27,8 +27,7 @@ typedef struct
   /* 02 - 1 */bool encoder_filter_enable;
   /*    - 1 */bool encoder_filter_plot_enable;
   /*    - 1 */bool limits_enable;
-              // FIXME: Remove this and use signature instead. Should be more robust
-  /*    - 1 */bool or_conf_set;
+  /*    - 1 */uint8_t stream_rate_10;
   /* 03 - 4 */float limits_pos_max;
   /* 04 - 4 */float limits_pos_min;
   /* 05 - 4 */float angle_division;
@@ -39,7 +38,7 @@ typedef struct
   /* 10 - 1 */bool perf_compensateexectime;
   /*    - 1 */bool ctrl_deadzone;
   /*    - 1 */bool ctrl_sample_adc3;
-  /*    - 1 */uint8_t pad[1];
+  /*    - 1 */bool simu_mode;
   /* 11 - 4 */float ctrl_torquezero;
   /* 12 - 4 */float ctrl_torquegain;
   /* 13 - 4 */float limits_kp;
@@ -55,7 +54,8 @@ typedef struct
   /* 22 - 4 */float ctrl_kd;
   /* 23 - 4 */float ctrl_kd_filter;
   /* 24 - 4 */float encoder_max_diff;
-  /* 25 - 4 */uint32_t signature;
+  /* 25 - 4 */char joint_name[4];
+  /* 26 - 4 */uint32_t signature;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
@@ -127,9 +127,7 @@ typedef struct
                           ctrl1;
   volatile orthopus_comm_control_t*ctrl;
   volatile bool process_ctrl,
-                process_rx;      
-  volatile unsigned int stream_rate_hz;
-  volatile bool simu_mode;
+                process_rx;
 } orthopus_comm_t;
 
 extern orthopus_comm_t orthopus_comm;
@@ -181,9 +179,9 @@ void orthopus_plot_impedance(int ns);
 #define CAN_RT_DATA_DOWNSTREAM 180
 
 // Float scaling
-#define ORTHOPUS_COMM_RT_POS_SCALE 1000
-#define ORTHOPUS_COMM_RT_VEL_SCALE 1000
-#define ORTHOPUS_COMM_RT_TRQ_SCALE 1000
+#define ORTHOPUS_COMM_RT_POS_SCALE 50
+#define ORTHOPUS_COMM_RT_VEL_SCALE 50
+#define ORTHOPUS_COMM_RT_TRQ_SCALE 50
 
 // We could remove these if we define the right values in the XML file: _gen/orthopus_settings.xml (using VESC Tool XML Editor)
 #define ORTHOPUS_CFG_DEF_ENCODER_OFFSET             0.1
