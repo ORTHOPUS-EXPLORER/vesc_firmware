@@ -230,7 +230,7 @@ float or_set_encoder_offset(float v, bool use_v);
 void or_cmd_init(void);
 void or_cmd_deinit(void);
 // lisp
-void or_init_lisp(void);
+void or_init_lisp(bool);
 
 //algo
 void or_pwm_callback(void);

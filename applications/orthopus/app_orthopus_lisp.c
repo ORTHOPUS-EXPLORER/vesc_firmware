@@ -29,8 +29,10 @@ lbm_uint orthopus_fv_sym,orthopus_fc_sym;
 // BMi,2024107, Broken since rebase on 6.05
 //lbm_value orthopus_lisp_test_symbols(lbm_value *args, lbm_uint argn);
 
-void or_init_lisp(void)
+void or_init_lisp(bool main_found)
 {
+  if(main_found)
+    return;
     // in REPL, test with: (orthopus-test-syms 'orthopus0)    => ok
     //                     (orthopus-test-syms 'orthopus1)    => ok
     //                     (orthopus-test-syms 'not_a_symbol) => eval_error
