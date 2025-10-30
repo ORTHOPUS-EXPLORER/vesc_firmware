@@ -403,32 +403,35 @@ THD_FUNCTION(orthopus_thread, arg)
       }
     }
     
-    // Update communication state from internal state
-    // Convert to radians and wrap to [-π, π] range for consistent CAN communication
-    // This ensures both firmware and PC use the same angular representation
-    float pid_pos_rad = DEG2RAD_f(mc_interface_get_pid_pos_now());
-    
-    // Wrap to [-π, π] range using the same method as PC side
-    pid_pos_rad = fmodf(pid_pos_rad + DEG2RAD_f(180.0f), DEG2RAD_f(360.0f)) - DEG2RAD_f(180.0f);
-    
-    or_comm.state->pos = pid_pos_rad;
-    or_comm.state->vel = RPM2RADPS_f(or_state.speed_now);
-    or_comm.state->trq = or_state.torque_now;
-    
-    // Sync internal safety and control modes to communication state
-    or_comm.state->word &= ~OR_STATE_MSK; // Clear safety bits
-    or_comm.state->word |= or_state.safety_mode; // Set current safety mode
-    
-    // Clear and set control mode bits in state word (for output)
-    or_comm.state->word &= ~OR_CTRL_MODE_MSK; // Clear mode bits
-    switch(or_state.control_mode) {
-      case OR_CTRL_MODE_POS: or_comm.state->word |= OR_CTRL_MODE_POS; break;
-      case OR_CTRL_MODE_VEL: or_comm.state->word |= OR_CTRL_MODE_VEL; break;
-      case OR_CTRL_MODE_TRQ: or_comm.state->word |= OR_CTRL_MODE_TRQ; break;
-      case OR_CTRL_MODE_IMP: or_comm.state->word |= OR_CTRL_MODE_IMP; break;
-      case OR_CTRL_MODE_CST: or_comm.state->word |= OR_CTRL_MODE_CST; break;
-      case OR_CTRL_MODE_OFF: 
-      default: break; // OFF mode doesn't set any state mode bits
+    if(!or_conf.simu_mode)
+    {
+      // Update communication state from internal state
+      // Convert to radians and wrap to [-π, π] range for consistent CAN communication
+      // This ensures both firmware and PC use the same angular representation
+      float pid_pos_rad = DEG2RAD_f(mc_interface_get_pid_pos_now());
+      
+      // Wrap to [-π, π] range using the same method as PC side
+      pid_pos_rad = fmodf(pid_pos_rad + DEG2RAD_f(180.0f), DEG2RAD_f(360.0f)) - DEG2RAD_f(180.0f);
+      
+      or_comm.state->pos = pid_pos_rad;
+      or_comm.state->vel = RPM2RADPS_f(or_state.speed_now);
+      or_comm.state->trq = or_state.torque_now;
+      
+      // Sync internal safety and control modes to communication state
+      or_comm.state->word &= ~OR_STATE_MSK; // Clear safety bits
+      or_comm.state->word |= or_state.safety_mode; // Set current safety mode
+      
+      // Clear and set control mode bits in state word (for output)
+      or_comm.state->word &= ~OR_CTRL_MODE_MSK; // Clear mode bits
+      switch(or_state.control_mode) {
+        case OR_CTRL_MODE_POS: or_comm.state->word |= OR_CTRL_MODE_POS; break;
+        case OR_CTRL_MODE_VEL: or_comm.state->word |= OR_CTRL_MODE_VEL; break;
+        case OR_CTRL_MODE_TRQ: or_comm.state->word |= OR_CTRL_MODE_TRQ; break;
+        case OR_CTRL_MODE_IMP: or_comm.state->word |= OR_CTRL_MODE_IMP; break;
+        case OR_CTRL_MODE_CST: or_comm.state->word |= OR_CTRL_MODE_CST; break;
+        case OR_CTRL_MODE_OFF: 
+        default: break; // OFF mode doesn't set any state mode bits
+      }
     }
     
 /* -------------------------------------------------------------------------- */

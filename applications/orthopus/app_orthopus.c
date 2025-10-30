@@ -245,6 +245,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
     if(or_conf.simu_mode)
     {
       or_comm_state_t* st = (or_comm_state_t*)or_comm.state;
+      st->word &= ~OR_CTRL_MODE_MSK;
       if(or_comm.process_ctrl)
       {
         // Get the current Refs and refs
@@ -257,6 +258,8 @@ THD_FUNCTION(orthopus_comm_thread, arg)
         
         // Determine control mode from control word
         uint16_t ctrl_mode = ctrl->word & OR_CTRL_MODE_MSK;
+
+        st->word |= (ctrl_mode & OR_CTRL_MODE_MSK) != OR_CTRL_MODE_OFF ? OR_STATE_ENABLE : OR_STATE_IDLE;
         
         switch(ctrl_mode) {
           case OR_CTRL_MODE_POS:
@@ -279,6 +282,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
               
               // Torque follows with low-pass filter
               st->trq += SIMU_LP_ALPHA * (ctrl->trq - st->trq);
+              st->word |= OR_CTRL_MODE_POS;
             }
             break;
             
@@ -298,6 +302,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
               
               // Torque follows with low-pass filter
               st->trq += SIMU_LP_ALPHA * (ctrl->trq - st->trq);
+              st->word |= OR_CTRL_MODE_VEL;
             }
             break;
             
@@ -322,6 +327,7 @@ THD_FUNCTION(orthopus_comm_thread, arg)
                 while (st->pos < 0.0) st->pos += 2.0 * M_PI;
                 while (st->pos >= 2.0 * M_PI) st->pos -= 2.0 * M_PI;
               }
+              st->word |= OR_CTRL_MODE_TRQ;
             }
             break;
             
@@ -335,6 +341,8 @@ THD_FUNCTION(orthopus_comm_thread, arg)
               
               st->vel += SIMU_LP_ALPHA * (ctrl->vel - st->vel);
               st->trq += SIMU_LP_ALPHA * (ctrl->trq - st->trq);
+
+              st->word |= OR_CTRL_MODE_CST;
             }
             break;
         }
@@ -344,6 +352,8 @@ THD_FUNCTION(orthopus_comm_thread, arg)
         simu_prev_vel = st->vel;
         simu_prev_time = current_time;
       }
+      else
+        st->word |= OR_STATE_IDLE;
     }
     // Note: In real mode (non-simulation), all state variables (pos, vel, trq) 
     // are set by the algorithm thread (app_orthopus_algo.c) to avoid race conditions.
@@ -426,12 +436,14 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
       long int ilen = 0;
       // Okay let's do it right here for now...
       float servo_pos  = buffer_get_float16(data, OR_COMM_AUX_SERVO_SCALE, &ilen); // 2
-      if(or_comm.process_ctrl)
+      if(or_comm.process_ctrl && !or_conf.simu_mode)
+      {
         // Ignore commands in INIT state
         if((or_comm.state->word & OR_STATE_MSK) != OR_STATE_INIT)
         {
           pwm_servo_set_servo_out(servo_pos + or_conf.servo_offset);
         }
+      }
     }
     default:
       break;
