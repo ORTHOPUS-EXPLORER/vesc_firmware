@@ -25,7 +25,7 @@ typedef struct
   /* 00 - 4 */float encoder_offset; 
   /* 01 - 4 */uint32_t signature;
   /* 02 - 1 */bool limits_enable_reaction;
-  /* 02 - 1 */bool auto_clear_errors;
+  /*    - 1 */bool auto_clear_errors;
   /*    - 1 */bool limits_enable;
   /*    - 1 */uint8_t stream_rate_10;
   /* 03 - 4 */float limits_pos_max;
@@ -45,8 +45,8 @@ typedef struct
   /* 14 - 4 */int limits_powp;
   /* 15 - 4 */int limits_powd;
   /* 16 - 4 */int limits_damp_reachangle;
-  /* 17 - 4 */float ctrl_stiffness;
-  /* 18 - 4 */float ctrl_damping;
+  /* 17 - 4 */float ctrl_stiffness; // Ctrl Stiffness in N.m/rad
+  /* 18 - 4 */float ctrl_damping; // Ctrl Damping in N.m/(rad/s)
   /* 19 - 4 */float torque_filter_const;
   /* 20 - 4 */float ctrl_kp;
   /* 21 - 4 */float ctrl_a;
@@ -74,11 +74,11 @@ extern orthopus_config_t or_conf;
 //global variables (interfaces with lispBM and terminal)
 typedef struct
 {
-  float pos_multiturn_now;//multiturn position based from mc_interface
-  float enc_pos_multiturn;//encoder position filtred and multiturn
-  int enc_turn; //encoder angle turn count
-  float speed_now; //actual speed from mc_interface
-  float enc_pos; //encoder position (filtered with encoder_filter_const)
+  float pos_multiturn_now; // Multiturn position based from mc_interface in degrees
+  float enc_pos_multiturn; // Encoder position filtered and multiturn in degrees
+  int enc_turn; // Encoder angle turn count
+  float speed_now; // Actual speed from mc_interface in RPM
+  float enc_pos; // Encoder position (filtered with encoder_filter_const) in degrees
   float time_diff;
   float time_diff_filt;
   int time_lag_filt;

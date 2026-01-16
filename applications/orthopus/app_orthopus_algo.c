@@ -290,6 +290,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   break;
                 }
                 case OR_CTRL_MODE_TRQ :
+                case OR_CTRL_MODE_IMP : //Impedance mode: available for later
                 {
                   if (((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable && !or_state.terminal_timeout_disable)) //raise error if command does not ensure at least 100Hz
                   {
@@ -306,18 +307,8 @@ THD_FUNCTION(orthopus_thread, arg)
                     // Torque setpoint is already set from communication values
                     if (or_conf.limits_enable_reaction && or_conf.limits_enable)
                       or_limits_reaction();
-                    or_interface_torquecontrol();
+                    or_interface_torquecontrol(); // Difference between torque and impedance control is handled inside this function
                   }
-                  break;
-                }
-                case OR_CTRL_MODE_IMP : //Impedance mode: available for later
-                {
-                  if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable && !or_state.terminal_timeout_disable) //raise error if command does not ensure at least 100Hz
-                  {
-                    or_raise_error(ERR_CAN_TIMEOUT);
-                    break; // Stop executing impedance control when timeout occurs
-                  }
-                  // Position, velocity, and torque setpoints are already set from communication values
                   break;
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TODO
@@ -498,11 +489,22 @@ void or_interface_torquecontrol(void)
 
   or_state.torque_err = or_state.ext_torque_setpoint
                         - or_state.torque_now;
-  //add stiffness action
-  or_state.torque_err += or_conf.ctrl_stiffness
-                *(or_state.ext_pos_setpoint_deg-or_state.pos_multiturn_now);
-  // add damping action
-  or_state.torque_err -= or_conf.ctrl_damping*or_state.speed_now;
+
+  if(or_state.control_mode == OR_CTRL_MODE_IMP)
+  {
+    if ((fabs(fmod((or_state.ext_pos_setpoint_deg - or_state.pos_multiturn_now + 540),360) - 180) >= (double)or_conf.safety_max_q_error) && !or_conf.safety_track_disable)
+    {
+      or_raise_error(ERR_POS_STEP); // Set error flag
+    } 
+
+    //add position action
+    or_state.torque_err += or_conf.ctrl_stiffness * M_PI / 180.0 // convert N.m/rad to N.m/deg
+                          * (or_state.ext_pos_setpoint_deg - or_state.pos_multiturn_now);
+    // add velocity action
+    or_state.torque_err += or_conf.ctrl_damping * M_PI / 30.0 // convert N.m/(rad/s) to N.m/RPM
+                          * (or_state.ext_vel_setpoint_rpm - or_state.speed_now);
+  }
+
   //add limits action
   or_state.torque_err += or_state.limit_reaction;
 
@@ -616,12 +618,12 @@ bool or_safety(void)
       }
     }
     
-    if ((fabsf(or_state.ext_torque_setpoint - or_state.ext_prev_torque_setpoint) > or_conf.safety_max_trq_step) && !or_conf.safety_track_disable)
+    if ((fabsf(or_state.ext_torque_setpoint - or_state.ext_prev_torque_setpoint) > or_conf.safety_max_trq_step) && or_conf.safety_max_trq_step > 0.0)
     {
       or_raise_error(ERR_TRQ_STEP); // Set error flag
     }
 
-    if ((fabsf(or_state.ext_vel_setpoint_rpm - or_state.ext_prev_vel_setpoint_rpm) > or_conf.safety_max_vel_step) && !or_conf.safety_track_disable)
+    if ((fabsf(or_state.ext_vel_setpoint_rpm - or_state.ext_prev_vel_setpoint_rpm) > or_conf.safety_max_vel_step) && or_conf.safety_max_vel_step > 0.0)
     {
       or_raise_error(ERR_VEL_STEP); // Set error flag
     }
