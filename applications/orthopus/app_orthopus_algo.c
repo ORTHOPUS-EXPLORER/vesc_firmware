@@ -318,6 +318,7 @@ THD_FUNCTION(orthopus_thread, arg)
                     break; // Stop executing impedance control when timeout occurs
                   }
                   // Position, velocity, and torque setpoints are already set from communication values
+                  // TODO: compute impedance control torque and limits reaction
                   break;
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TODO
@@ -499,7 +500,7 @@ void or_interface_torquecontrol(void)
   or_state.torque_err += or_conf.ctrl_stiffness
                 *(or_state.ext_pos_setpoint_deg-or_state.pos_multiturn_now);
   // add damping action
-  or_state.torque_err -= or_conf.ctrl_damping*or_state.speed_now;
+  or_state.torque_err -= or_conf.ctrl_damping*or_state.speed_now; //TODO: damp according to speed setpoint.
   //add limits action
   or_state.torque_err += or_state.limit_reaction;
 

@@ -67,6 +67,10 @@ typedef struct
   /* 33 - 4 */float servo_offset;
   /* 34 - 4 */float safety_max_vel_step;
   /* 35 - 4 */float safety_max_trq_step;
+  //TODO: add:
+  // CAN timeout delay
+  // Max tracking error impedance
+  // Enable / disable impedancd tracking error
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
@@ -180,6 +184,9 @@ typedef enum {
   ERR_VEL_STEP,
   ERR_TRQ_STEP,
   ERR_SAME_CTRL_OUT,
+  //TODO
+  //IMP_POS_STEP,
+  //IMP_SWITCH_STEP,
 
   //Limits:
   ERR_POS_LIMIT,
