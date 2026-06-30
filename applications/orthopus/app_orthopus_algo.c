@@ -310,7 +310,7 @@ THD_FUNCTION(orthopus_thread, arg)
                   }
                   break;
                 }
-                case OR_CTRL_MODE_IMP : //Impedance mode: available for later
+                case OR_CTRL_MODE_IMP : //Impedance mode: same as torque for now, without torque step error
                 {
                   if ((ST2US2(chVTGetSystemTimeX() - or_state.last_cmd_time) > 10000) && !or_conf.safety_timeout_disable && !or_state.terminal_timeout_disable) //raise error if command does not ensure at least 100Hz
                   {
@@ -318,7 +318,10 @@ THD_FUNCTION(orthopus_thread, arg)
                     break; // Stop executing impedance control when timeout occurs
                   }
                   // Position, velocity, and torque setpoints are already set from communication values
-                  // TODO: compute impedance control torque and limits reaction
+                    // Torque setpoint is already set from communication values
+                  if (or_conf.limits_enable_reaction && or_conf.limits_enable)
+                    or_limits_reaction();
+                  or_interface_torquecontrol();
                   break;
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TODO

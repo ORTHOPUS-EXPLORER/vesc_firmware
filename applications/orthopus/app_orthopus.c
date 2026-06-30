@@ -324,6 +324,28 @@ THD_FUNCTION(orthopus_comm_thread, arg)
               }
             }
             break;
+
+          case OR_CTRL_MODE_IMP:
+            // Impedance control: position tracks setpoint + torque/stiffness deflection
+            {
+              float pos_target = ctrl->pos;
+              if (or_conf.ctrl_stiffness != 0.0f)
+                pos_target += ctrl->trq / or_conf.ctrl_stiffness;
+
+              float pos_diff = utils_angle_difference_rad(pos_target, st->pos);
+              st->pos += SIMU_LP_ALPHA * pos_diff;
+              while (st->pos < 0.0) st->pos += 2.0 * M_PI;
+              while (st->pos >= 2.0 * M_PI) st->pos -= 2.0 * M_PI;
+
+              if (simu_prev_time > 0.0f) {
+                float pos_change = utils_angle_difference_rad(st->pos, simu_prev_pos);
+                st->vel = pos_change / dt;
+                st->vel = simu_prev_vel + SIMU_LP_ALPHA * (st->vel - simu_prev_vel);
+              }
+
+              st->trq += SIMU_LP_ALPHA * (ctrl->trq - st->trq);
+            }
+            break;
             
           default:
             // Default case - simple low-pass filter on all variables
