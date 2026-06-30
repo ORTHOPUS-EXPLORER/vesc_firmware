@@ -62,7 +62,7 @@ THD_FUNCTION(orthopus_thread, arg)
   } while(!encoder_cfg_as504x.state.sensor_diag.is_connected);
 
   // Check if encoder is still not connected after timeout
-  if (!encoder_cfg_as504x.state.sensor_diag.is_connected) {
+  if (!encoder_cfg_as504x.state.sensor_diag.is_connected && !or_conf.simu_mode) {
     // Raise error but allow system to continue in safe state
     or_raise_error(ERR_ENC_DISCONNECTED);
   }
@@ -404,17 +404,15 @@ THD_FUNCTION(orthopus_thread, arg)
       }
     }
     
-    // Update communication state from internal state
-    // Convert to radians and wrap to [-π, π] range for consistent CAN communication
-    // This ensures both firmware and PC use the same angular representation
-    float pid_pos_rad = DEG2RAD_f(mc_interface_get_pid_pos_now());
-    
-    // Wrap to [-π, π] range using the same method as PC side
-    pid_pos_rad = fmodf(pid_pos_rad + DEG2RAD_f(180.0f), DEG2RAD_f(360.0f)) - DEG2RAD_f(180.0f);
-    
-    or_comm.state->pos = pid_pos_rad;
-    or_comm.state->vel = RPM2RADPS_f(or_state.speed_now);
-    or_comm.state->trq = or_state.torque_now;
+    // Update communication state from internal state (skipped in simu mode:
+    // the comm thread owns state->pos/vel/trq there)
+    if (!or_conf.simu_mode) {
+      float pid_pos_rad = DEG2RAD_f(mc_interface_get_pid_pos_now());
+      pid_pos_rad = fmodf(pid_pos_rad + DEG2RAD_f(180.0f), DEG2RAD_f(360.0f)) - DEG2RAD_f(180.0f);
+      or_comm.state->pos = pid_pos_rad;
+      or_comm.state->vel = RPM2RADPS_f(or_state.speed_now);
+      or_comm.state->trq = or_state.torque_now;
+    }
     
     // Sync internal safety and control modes to communication state
     or_comm.state->word &= ~OR_STATE_MSK; // Clear safety bits

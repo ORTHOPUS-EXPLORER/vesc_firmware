@@ -216,7 +216,7 @@ int app_custom_get_cfg_xml(uint8_t **data)
 volatile bool orthopus_comm_thread_stop = true;
 volatile bool orthopus_comm_thread_running = false;
 
-#define SIMU_LP_ALPHA 0.005
+#define SIMU_LP_ALPHA 0.5
 #define SIMU_INERTIA 0.01f  // kg*m^2 - simulation inertia
 #define SIMU_DAMPING 0.1f   // Nm*s/rad - simulation damping
 
