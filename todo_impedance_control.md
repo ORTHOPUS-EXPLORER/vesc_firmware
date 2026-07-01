@@ -10,12 +10,12 @@
 - switch between current / torque control
 
 # new paramters
-- Max position error in impedance mode (float)
-- Max CAN timeout error (INT (ms))
-- Disable torque sensor - Current control instead of torque (bool)
-- Disable impedance control tracking error (bool)
-- Disable impedance control jumpstart safety (bool)
-- impedance control jumpstart angle treshold (float)
+- DONE - Max position error in impedance mode (float)
+- DONE - Max CAN timeout error (INT (ms))
+- DONE - Disable torque sensor - Current control instead of torque (bool)
+- DONE - Disable impedance control tracking error (bool)
+- DONE - Disable impedance control jumpstart safety (bool)
+- DONE - impedance control jumpstart angle treshold (float)
 
 # bug fix:
 - DONE - Effort commands sent from ROS2 never received
