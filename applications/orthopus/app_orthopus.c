@@ -454,6 +454,16 @@ bool or_process_can_eid(uint32_t id, uint8_t *data, uint8_t len)
         {
           pwm_servo_set_servo_out(servo_pos + or_conf.servo_offset);
         }
+      break;
+    }
+    case CAN_IMP_CONF_DOWNSTREAM:
+    {
+      if(len != 4 || !or_comm.process_rx)
+        break;
+      long int ilen = 0;
+      or_conf.ctrl_stiffness = buffer_get_float16(data, OR_COMM_IMP_STIFFNESS_SCALE, &ilen); // 2
+      or_conf.ctrl_damping   = buffer_get_float16(data, OR_COMM_IMP_DAMPING_SCALE, &ilen); // 4
+      break;
     }
     default:
       break;

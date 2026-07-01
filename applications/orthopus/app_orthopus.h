@@ -286,12 +286,16 @@ float or_input_shaper_trq(float input_command);
 #define CAN_RT_DATA_DOWNSTREAM  180
 //#define CAN_AUX_DATA_UPSTREAM    181
 #define CAN_AUX_DATA_DOWNSTREAM 182
+//#define CAN_IMP_CONF_UPSTREAM 183
+#define CAN_IMP_CONF_DOWNSTREAM 184
 
 // Float scaling
 #define OR_COMM_RT_POS_SCALE 5000  // 0->6.28 rad (0->360 deg)
 #define OR_COMM_RT_VEL_SCALE 5900 // -5.5->5.5 rad/S (-50->50 rpm)
 #define OR_COMM_RT_TRQ_SCALE 600 // -50->50 Nm
 #define OR_COMM_AUX_SERVO_SCALE 1000
+#define OR_COMM_IMP_STIFFNESS_SCALE 600 // -50->50
+#define OR_COMM_IMP_DAMPING_SCALE 600 // -50->50
 
 #define OR_CTRL_MODE_OFF 0x0000 //*0000
 #define OR_CTRL_MODE_POS 0x0001 //*0001
