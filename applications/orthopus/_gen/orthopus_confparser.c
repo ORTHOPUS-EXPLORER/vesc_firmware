@@ -55,6 +55,12 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer_append_float32_auto(buffer, conf->servo_offset, &ind);
 	buffer_append_float32_auto(buffer, conf->safety_max_vel_step, &ind);
 	buffer_append_float32_auto(buffer, conf->safety_max_trq_step, &ind);
+	buffer_append_float32_auto(buffer, conf->safety_imp_max_q_error, &ind);
+	buffer_append_float32_auto(buffer, conf->safety_imp_max_q_jumpstart, &ind);
+	buffer[ind++] = (uint8_t)conf->safety_CAN_timeout_ms;
+	buffer[ind++] = conf->safety_imp_jumpstart_disable;
+	buffer[ind++] = conf->safety_imp_q_error_disable;
+	buffer[ind++] = conf->ctrl_bypass_torque_control;
 
 	return ind;
 }
@@ -112,6 +118,12 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->servo_offset = buffer_get_float32_auto(buffer, &ind);
 	conf->safety_max_vel_step = buffer_get_float32_auto(buffer, &ind);
 	conf->safety_max_trq_step = buffer_get_float32_auto(buffer, &ind);
+	conf->safety_imp_max_q_error = buffer_get_float32_auto(buffer, &ind);
+	conf->safety_imp_max_q_jumpstart = buffer_get_float32_auto(buffer, &ind);
+	conf->safety_CAN_timeout_ms = buffer[ind++];
+	conf->safety_imp_jumpstart_disable = buffer[ind++];
+	conf->safety_imp_q_error_disable = buffer[ind++];
+	conf->ctrl_bypass_torque_control = buffer[ind++];
 
 	return true;
 }
@@ -161,5 +173,11 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->servo_offset = ORTHOPUS_CFG_DEF_SERVO_OFFSET;
 	conf->safety_max_vel_step = ORTHOPUS_CFG_DEF_SAFETY_MAX_VEL_STEP;
 	conf->safety_max_trq_step = ORTHOPUS_CFG_DEF_SAFETY_MAX_TRQ_STEP;
+	conf->safety_imp_max_q_error = ORTHOPUS_CFG_DEF_SAFETY_IMP_MAX_Q_ERROR;
+	conf->safety_imp_max_q_jumpstart = ORTHOPUS_CFG_DEF_SAFETY_IMP_MAX_Q_JUMPSTART;
+	conf->safety_CAN_timeout_ms = ORTHOPUS_CFG_DEF_SAFETY_CAN_TIMEOUT_MS;
+	conf->safety_imp_jumpstart_disable = ORTHOPUS_CFG_DEF_SAFETY_IMP_JUMPSTART_DISABLE;
+	conf->safety_imp_q_error_disable = ORTHOPUS_CFG_DEF_SAFETY_IMP_Q_ERROR_DISABLE;
+	conf->ctrl_bypass_torque_control = ORTHOPUS_CFG_DEF_CTRL_BYPASS_TORQUE_CONTROL;
 }
 

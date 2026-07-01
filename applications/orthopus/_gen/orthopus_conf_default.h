@@ -223,6 +223,36 @@
 #define ORTHOPUS_CFG_DEF_SAFETY_MAX_TRQ_STEP 5
 #endif
 
+// Savety max q error in impedance mode
+#ifndef ORTHOPUS_CFG_DEF_SAFETY_IMP_MAX_Q_ERROR
+#define ORTHOPUS_CFG_DEF_SAFETY_IMP_MAX_Q_ERROR 20
+#endif
+
+// Safety imp max q jumpstart
+#ifndef ORTHOPUS_CFG_DEF_SAFETY_IMP_MAX_Q_JUMPSTART
+#define ORTHOPUS_CFG_DEF_SAFETY_IMP_MAX_Q_JUMPSTART 5
+#endif
+
+// Safety CAN timeout ms
+#ifndef ORTHOPUS_CFG_DEF_SAFETY_CAN_TIMEOUT_MS
+#define ORTHOPUS_CFG_DEF_SAFETY_CAN_TIMEOUT_MS 10
+#endif
+
+// Disable impedance safety jumpstart
+#ifndef ORTHOPUS_CFG_DEF_SAFETY_IMP_JUMPSTART_DISABLE
+#define ORTHOPUS_CFG_DEF_SAFETY_IMP_JUMPSTART_DISABLE 0
+#endif
+
+// Disable impedance safety q eror
+#ifndef ORTHOPUS_CFG_DEF_SAFETY_IMP_Q_ERROR_DISABLE
+#define ORTHOPUS_CFG_DEF_SAFETY_IMP_Q_ERROR_DISABLE 0
+#endif
+
+// Bypass torque sensor
+#ifndef ORTHOPUS_CFG_DEF_CTRL_BYPASS_TORQUE_CONTROL
+#define ORTHOPUS_CFG_DEF_CTRL_BYPASS_TORQUE_CONTROL 0
+#endif
+
 // ORTHOPUS_CONF_DEFAULT_H_
 #endif
 

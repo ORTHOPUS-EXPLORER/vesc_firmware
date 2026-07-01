@@ -67,10 +67,13 @@ typedef struct
   /* 33 - 4 */float servo_offset;
   /* 34 - 4 */float safety_max_vel_step;
   /* 35 - 4 */float safety_max_trq_step;
-  //TODO: add:
-  // CAN timeout delay
-  // Max tracking error impedance
-  // Enable / disable impedancd tracking error
+  /* 36 - 4 */float safety_imp_max_q_error;
+  /* 37 - 4 */float safety_imp_max_q_jumpstart;
+  /* 38 - 4 */int safety_CAN_timeout_ms;
+  /* 40 - 1 */bool safety_imp_jumpstart_disable;
+  /* 41 - 1 */bool safety_imp_q_error_disable;
+  /* 42 - 1 */bool ctrl_bypass_torque_control;
+  /* 43  -1 */uint8_t pad[1];
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;

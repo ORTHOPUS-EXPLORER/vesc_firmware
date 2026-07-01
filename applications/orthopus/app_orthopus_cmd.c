@@ -505,6 +505,12 @@ const param_entry_t param_table[] = {
     PARAM_ENTRY(servo_offset, 'f'),
     PARAM_ENTRY(safety_max_vel_step, 'f'),
     PARAM_ENTRY(safety_max_trq_step, 'f'),
+    PARAM_ENTRY(safety_imp_max_q_error, 'f'),
+    PARAM_ENTRY(safety_imp_max_q_jumpstart, 'f'),
+    PARAM_ENTRY(safety_CAN_timeout_ms, 'i'),
+    PARAM_ENTRY(safety_imp_jumpstart_disable, 'b'),
+    PARAM_ENTRY(safety_imp_q_error_disable, 'b'),
+    PARAM_ENTRY(ctrl_bypass_torque_control, 'b'),
 };
 
 const size_t PARAM_TABLE_SIZE = sizeof(param_table) / sizeof(param_entry_t);

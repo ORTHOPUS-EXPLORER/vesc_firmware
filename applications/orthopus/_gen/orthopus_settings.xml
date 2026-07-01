@@ -864,6 +864,106 @@ p, li { white-space: pre-wrap; }
             <suffix></suffix>
             <vTx>9</vTx>
         </safety_max_trq_step>
+        <safety_imp_max_q_error>
+            <longName>Savety max q error in impedance mode</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; line-height:19px; background-color:#1f1f1f;&quot;&gt;&lt;span style=&quot; font-family:'Droid Sans Mono','monospace'; font-size:14px; color:#cccccc;&quot;&gt;max difference allowed between desired position qd and measured position qmes in deg - in impedance control mode&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_SAFETY_IMP_MAX_Q_ERROR</cDefine>
+            <editorDecimalsDouble>3</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>180</maxDouble>
+            <minDouble>0</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>1</stepDouble>
+            <valDouble>20</valDouble>
+            <vTxDoubleScale>1</vTxDoubleScale>
+            <suffix></suffix>
+            <vTx>9</vTx>
+        </safety_imp_max_q_error>
+        <safety_imp_max_q_jumpstart>
+            <longName>Safety imp max q jumpstart</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Maximum allowed angle between current position qmes and derised position dq when starting impedance control in deg&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_SAFETY_IMP_MAX_Q_JUMPSTART</cDefine>
+            <editorDecimalsDouble>2</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>180</maxDouble>
+            <minDouble>0</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>1</stepDouble>
+            <valDouble>5</valDouble>
+            <vTxDoubleScale>1</vTxDoubleScale>
+            <suffix></suffix>
+            <vTx>9</vTx>
+        </safety_imp_max_q_jumpstart>
+        <safety_CAN_timeout_ms>
+            <longName>Safety CAN timeout ms</longName>
+            <type>2</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;CAN timeout delay - raises CAN timeout error if no new command received during this period of time - in torque / speed control mode&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_SAFETY_CAN_TIMEOUT_MS</cDefine>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxInt>500</maxInt>
+            <minInt>0</minInt>
+            <showDisplay>0</showDisplay>
+            <stepInt>1</stepInt>
+            <valInt>10</valInt>
+            <suffix></suffix>
+            <vTx>1</vTx>
+        </safety_CAN_timeout_ms>
+        <safety_imp_jumpstart_disable>
+            <longName>Disable impedance safety jumpstart</longName>
+            <type>5</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Disable impedance jupstart safety &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_SAFETY_IMP_JUMPSTART_DISABLE</cDefine>
+            <valInt>0</valInt>
+        </safety_imp_jumpstart_disable>
+        <safety_imp_q_error_disable>
+            <longName>Disable impedance safety q eror</longName>
+            <type>5</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Disable max q error safety in impedance control mode&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_SAFETY_IMP_Q_ERROR_DISABLE</cDefine>
+            <valInt>0</valInt>
+        </safety_imp_q_error_disable>
+        <ctrl_bypass_torque_control>
+            <longName>Bypass torque sensor</longName>
+            <type>5</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Bypass torque sensor based torque control, use current instead&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_CTRL_BYPASS_TORQUE_CONTROL</cDefine>
+            <valInt>0</valInt>
+        </ctrl_bypass_torque_control>
     </Params>
     <SerOrder>
         <ser>joint_name</ser>
@@ -910,6 +1010,12 @@ p, li { white-space: pre-wrap; }
         <ser>servo_offset</ser>
         <ser>safety_max_vel_step</ser>
         <ser>safety_max_trq_step</ser>
+        <ser>safety_imp_max_q_error</ser>
+        <ser>safety_imp_max_q_jumpstart</ser>
+        <ser>safety_CAN_timeout_ms</ser>
+        <ser>safety_imp_jumpstart_disable</ser>
+        <ser>safety_imp_q_error_disable</ser>
+        <ser>ctrl_bypass_torque_control</ser>
     </SerOrder>
     <Grouping>
         <group>
@@ -964,6 +1070,7 @@ p, li { white-space: pre-wrap; }
                     <param>ctrl_kd_filter</param>
                     <param>ff_torque_constant</param>
                     <param>speed_filter_const</param>
+                    <param>ctrl_bypass_torque_control</param>
                 </subgroupParams>
             </subgroup>
             <subgroup>
@@ -984,6 +1091,11 @@ p, li { white-space: pre-wrap; }
                     <param>safety_max_speed_disable</param>
                     <param>safety_max_vel_step</param>
                     <param>safety_max_trq_step</param>
+                    <param>safety_imp_max_q_error</param>
+                    <param>safety_imp_max_q_jumpstart</param>
+                    <param>safety_CAN_timeout_ms</param>
+                    <param>safety_imp_jumpstart_disable</param>
+                    <param>safety_imp_q_error_disable</param>
                 </subgroupParams>
             </subgroup>
             <subgroup>
