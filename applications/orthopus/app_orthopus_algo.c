@@ -180,21 +180,26 @@ THD_FUNCTION(orthopus_thread, arg)
     else 
     {
       /* ------------------ Scaling ADC3 (volts) -> Torque (N.m) ------------------ */
-      if (or_conf.ctrl_sample_adc3)
+      if (!or_conf.ctrl_bypass_torque_control)
       {
-        or_state.torque_now = or_conf.ctrl_torquegain
-                              * (or_state.adc3_filt-or_state.adc3_zero); 
+        if (or_conf.ctrl_sample_adc3)
+        {
+          or_state.torque_now = or_conf.ctrl_torquegain
+                                * (or_state.adc3_filt-or_state.adc3_zero); 
+        } else {
+          or_state.torque_now = (1-or_conf.torque_filter_const)
+                                * or_state.torque_now
+                              + or_conf.torque_filter_const
+                                * or_conf.ctrl_torquegain
+                                * (or_state.adc3_val-or_state.adc3_zero);
+        }
       } else {
-        or_state.torque_now = (1-or_conf.torque_filter_const)
-                              * or_state.torque_now
-                            + or_conf.torque_filter_const
-                              * or_conf.ctrl_torquegain
-                              * (or_state.adc3_val-or_state.adc3_zero);
+        or_state.torque_now = mc_interface_get_tot_current_directional_filtered() * or_conf.ff_torque_constant;
       }
 
       // Apply motor direction inversion to torque
       const volatile mc_configuration *mcconf = mc_interface_get_configuration();
-      if (mcconf->m_invert_direction) {
+      if (mcconf->m_invert_direction && !or_conf.ctrl_bypass_torque_control) {
         or_state.torque_now = -or_state.torque_now;
       }
 
@@ -513,16 +518,26 @@ void or_interface_torquecontrol(void)
                               + (1-or_conf.ctrl_kd_filter)
                                 * or_state.d_torque_err_filt;
   or_state.torque_err_last = or_state.torque_err;
-  if (or_conf.ctrl_deadzone)
+  if (!or_conf.ctrl_bypass_torque_control)
   {
-    or_state.ctrl_command = or_conf.ctrl_kp * or_state.torque_err
-                          + or_conf.ctrl_kd * or_state.d_torque_err;
-    or_state.ctrl_command = or_state.ctrl_command
-                          - atanf(or_state.ctrl_command*or_conf.ctrl_a)
-                            / or_conf.ctrl_a;
+    if (or_conf.ctrl_deadzone)
+    {
+      or_state.ctrl_command = or_conf.ctrl_kp * or_state.torque_err
+                            + or_conf.ctrl_kd * or_state.d_torque_err;
+      or_state.ctrl_command = or_state.ctrl_command
+                            - atanf(or_state.ctrl_command*or_conf.ctrl_a)
+                              / or_conf.ctrl_a;
+    } else {
+      or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
+                            + or_conf.ctrl_kd*or_state.d_torque_err;
+    }
   } else {
-    or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
-                          + or_conf.ctrl_kd*or_state.d_torque_err;
+    if (or_conf.ff_torque_constant != 0.0)
+    {
+      or_state.ctrl_command = or_state.torque_err / or_conf.ff_torque_constant; // bypass torque control
+    } else {
+      or_state.ctrl_command = 0.0;
+    }
   }
   
   // add feedforward term
