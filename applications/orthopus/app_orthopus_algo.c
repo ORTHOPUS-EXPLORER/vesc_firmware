@@ -322,11 +322,16 @@ THD_FUNCTION(orthopus_thread, arg)
                     or_raise_error(ERR_CAN_TIMEOUT);
                     break; // Stop executing impedance control when timeout occurs
                   }
-                  // Position, velocity, and torque setpoints are already set from communication values
-                    // Torque setpoint is already set from communication values
-                  if (or_conf.limits_enable_reaction && or_conf.limits_enable)
-                    or_limits_reaction();
-                  or_interface_torquecontrol();
+                  if ((fabs(fmod((or_state.ext_pos_setpoint_deg - or_state.pos_multiturn_now + 540),360) - 180) >= (double)or_conf.safety_imp_max_q_error) && !or_conf.safety_imp_q_error_disable)
+                  {
+                    or_raise_error(ERR_POS_STEP); // Set error flag
+                  } else {
+                    // Position, velocity, and torque setpoints are already set from communication values
+                      // Torque setpoint is already set from communication values
+                    if (or_conf.limits_enable_reaction && or_conf.limits_enable)
+                      or_limits_reaction();
+                    or_interface_torquecontrol();
+                  }
                   break;
                 }
                 case OR_CTRL_MODE_CST : //Cusom mode: TODO
