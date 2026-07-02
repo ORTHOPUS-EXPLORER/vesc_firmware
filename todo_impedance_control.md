@@ -1,13 +1,13 @@
 # Safety features:
-- Avoid reboot on fault jumping back to impedance control: prevent mode switch from IDLE to to impedance control: need to pass through POSITION. OR: enable impedance only if position close to setpoint: Add new error "juped into impedance far from setpoint" ?
-- Maximum tracking error in impedance control
+- COVERED BY MAX TRACKING ERROR? - Avoid reboot on fault jumping back to impedance control: prevent mode switch from IDLE to to impedance control: need to pass through POSITION. OR: enable impedance only if position close to setpoint: Add new error "juped into impedance far from setpoint" ?
+- DONE - Maximum tracking error in impedance control
 - Deal with torque commands safety: continuity, what happens if no new command received in a while (hardware interface side?) - covered by maximum tracking error in impedance control mode?
 
 
 # New features
-- steam stiffness / damping / (Kp?) (firmware + ROS2 side)
+- DONE - steam stiffness / damping / (Kp?) (firmware + ROS2 side)
 - DONE - better simulation mode?
-- switch between current / torque control
+- DONE - switch between current / torque control
 
 # new paramters
 - DONE - Max position error in impedance mode (float)
@@ -24,6 +24,10 @@
 # Doc:
 - impedance control scheme
 - virtual end stop maths
+
+# Tests:
+- CAN dstiffness / damping stream
+- Torque sensor bypass: behavior, invert motor direction param
 
 # test scripts:
 
