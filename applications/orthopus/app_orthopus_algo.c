@@ -511,7 +511,7 @@ void or_interface_torquecontrol(void)
   or_state.torque_err += or_conf.ctrl_stiffness
                 *(or_state.ext_pos_setpoint_deg-or_state.pos_multiturn_now);
   // add damping action
-  or_state.torque_err -= or_conf.ctrl_damping*or_state.speed_now; //TODO: damp according to speed setpoint.
+  or_state.torque_err -= or_conf.ctrl_damping*(or_state.speed_now-or_state.ext_vel_setpoint_rpm);
   //add limits action
   or_state.torque_err += or_state.limit_reaction;
 
