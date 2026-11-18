@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 // Constants
-#define DATA_ORTHOPUS_CONFIG_T__SIZE		5412
+#define DATA_ORTHOPUS_CONFIG_T__SIZE		5527
 
 // Variables
 extern uint8_t data_orthopus_config_t_[];

@@ -505,17 +505,27 @@ void or_interface_torquecontrol(void)
 
   or_state.stopped = false;
 
-  or_state.torque_err = or_state.ext_torque_setpoint
-                        - or_state.torque_now;
   //add stiffness action
-  or_state.torque_err += or_conf.ctrl_stiffness
+  or_state.torque_imp_setpoint = or_state.ext_torque_setpoint;
+  or_state.torque_imp_setpoint += or_conf.ctrl_stiffness
                 *(or_state.ext_pos_setpoint_deg-or_state.pos_multiturn_now);
   // add damping action
-  or_state.torque_err -= or_conf.ctrl_damping*(or_state.speed_now-or_state.ext_vel_setpoint_rpm);
+  or_state.torque_imp_setpoint -= or_conf.ctrl_damping*(or_state.speed_now-or_state.ext_vel_setpoint_rpm);
   //add limits action
-  or_state.torque_err += or_state.limit_reaction;
+  or_state.torque_imp_setpoint += or_state.limit_reaction;
 
-  //compute torque error derivative
+  or_state.torque_err = or_state.torque_imp_setpoint
+                      - or_state.torque_now;
+  //compute torque error integral and derivative
+  if (or_conf.ctrl_ki != 0.0)
+  {
+    or_state.i_torque_err += or_state.torque_err * (1.0/or_conf.perf_rate_hz);
+    if (or_conf.ctrl_ki * or_state.i_torque_err > or_conf.ctrl_ki_clamp)
+      or_state.i_torque_err = or_conf.ctrl_ki_clamp / or_conf.ctrl_ki;
+    if (or_conf.ctrl_ki * or_state.i_torque_err < -or_conf.ctrl_ki_clamp)
+      or_state.i_torque_err = -or_conf.ctrl_ki_clamp / or_conf.ctrl_ki;
+
+  }
   or_state.d_torque_err = (or_state.torque_err-or_state.torque_err_last)
                           / (1.0/or_conf.perf_rate_hz);
   or_state.d_torque_err_filt = or_conf.ctrl_kd_filter
@@ -524,22 +534,24 @@ void or_interface_torquecontrol(void)
                                 * or_state.d_torque_err_filt;
   or_state.torque_err_last = or_state.torque_err;
   if (!or_conf.ctrl_bypass_torque_control)
-  {
+  {// -- Closed loop torque control, using sensor --
     if (or_conf.ctrl_deadzone)
     {
       or_state.ctrl_command = or_conf.ctrl_kp * or_state.torque_err
-                            + or_conf.ctrl_kd * or_state.d_torque_err;
+                            + or_conf.ctrl_kd * or_state.d_torque_err
+                            + or_conf.ctrl_ki * or_state.i_torque_err; //TODO: clamp integral
       or_state.ctrl_command = or_state.ctrl_command
                             - atanf(or_state.ctrl_command*or_conf.ctrl_a)
                               / or_conf.ctrl_a;
     } else {
       or_state.ctrl_command = or_conf.ctrl_kp * (or_state.torque_err)
-                            + or_conf.ctrl_kd*or_state.d_torque_err;
+                            + or_conf.ctrl_kd*or_state.d_torque_err
+                            + or_conf.ctrl_ki * or_state.i_torque_err; //TODO: clamp integral
     }
-  } else {
+  } else { // -- Open loop torque control, based on motor current --
     if (or_conf.ff_torque_constant != 0.0)
     {
-      or_state.ctrl_command = or_state.torque_err / or_conf.ff_torque_constant; // bypass torque control
+      or_state.ctrl_command = or_state.torque_imp_setpoint / or_conf.ff_torque_constant; // bypass torque control
     } else {
       or_state.ctrl_command = 0.0;
     }
@@ -547,7 +559,7 @@ void or_interface_torquecontrol(void)
   
   // add feedforward term
   if (or_conf.ff_torque_constant != 0.0)
-    or_state.ctrl_command += or_state.ext_torque_setpoint / or_conf.ff_torque_constant;
+    or_state.ctrl_command += or_state.torque_imp_setpoint / or_conf.ff_torque_constant;
 
   /* ------------------------ Compute safety indicators ----------------------- */
   if ((or_state.last_ctrl_command == or_state.ctrl_command)

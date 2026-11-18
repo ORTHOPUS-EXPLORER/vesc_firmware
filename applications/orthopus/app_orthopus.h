@@ -74,6 +74,8 @@ typedef struct
   /* 41 - 1 */bool safety_imp_q_error_disable;
   /* 42 - 1 */bool ctrl_bypass_torque_control;
   /* 43  -1 */uint8_t pad[1];
+  /* 44  -1 */float ctrl_ki;
+  /* 45  -1 */float ctrl_ki_clamp;
 } orthopus_config_t; // don't forget to add padding bytes uint8_t pad[1--3];
 
 extern orthopus_config_t or_conf;
@@ -103,6 +105,7 @@ typedef struct
   int turn_now;
   float limit_reaction;
   float torque_err;
+  float torque_imp_setpoint;
   float last_ctrl_command;
   float nid1; //number of non null identical ctrl command 
   bool stopped;
@@ -110,6 +113,7 @@ typedef struct
   float torque_err_last;
   float d_torque_err;
   float d_torque_err_filt;
+  float i_torque_err;
   bool encoders_init;
   // Input shaper variables - separate instances for each control mode
   float input_shaper_buffer_pos[1000]; // Position mode buffer (index 0 = newest, index N = oldest)

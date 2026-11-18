@@ -35,7 +35,7 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Orthopus Joint name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>ORTHOPUS_CFG_DEF_JOINT_NAME</cDefine>
-            <valString></valString>
+            <valString>A00</valString>
             <maxLen>3</maxLen>
         </joint_name>
         <simu_mode>
@@ -405,7 +405,7 @@ p, li { white-space: pre-wrap; }
             <minDouble>-1000</minDouble>
             <showDisplay>0</showDisplay>
             <stepDouble>1</stepDouble>
-            <valDouble>1.436</valDouble>
+            <valDouble>1.315</valDouble>
             <vTxDoubleScale>1</vTxDoubleScale>
             <suffix></suffix>
             <vTx>9</vTx>
@@ -427,7 +427,7 @@ p, li { white-space: pre-wrap; }
             <minDouble>-1000</minDouble>
             <showDisplay>0</showDisplay>
             <stepDouble>1</stepDouble>
-            <valDouble>14.7</valDouble>
+            <valDouble>-14.7</valDouble>
             <vTxDoubleScale>1</vTxDoubleScale>
             <suffix></suffix>
             <vTx>9</vTx>
@@ -493,7 +493,7 @@ p, li { white-space: pre-wrap; }
             <minDouble>-1000</minDouble>
             <showDisplay>0</showDisplay>
             <stepDouble>1</stepDouble>
-            <valDouble>3</valDouble>
+            <valDouble>4</valDouble>
             <vTxDoubleScale>1</vTxDoubleScale>
             <suffix></suffix>
             <vTx>9</vTx>
@@ -520,6 +520,50 @@ p, li { white-space: pre-wrap; }
             <suffix></suffix>
             <vTx>9</vTx>
         </ctrl_a>
+        <ctrl_ki>
+            <longName>Control Ki</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Torque control Ki of impedance control&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_CTRL_KI</cDefine>
+            <editorDecimalsDouble>3</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>1000</maxDouble>
+            <minDouble>-1000</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>1</stepDouble>
+            <valDouble>0</valDouble>
+            <vTxDoubleScale>1</vTxDoubleScale>
+            <suffix></suffix>
+            <vTx>9</vTx>
+        </ctrl_ki>
+        <ctrl_ki_clamp>
+            <longName>Control Ki clamp</longName>
+            <type>1</type>
+            <transmittable>1</transmittable>
+            <description>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Control Ki clamp (max integral term current output)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
+            <cDefine>ORTHOPUS_CFG_DEF_CTRL_KI_CLAMP</cDefine>
+            <editorDecimalsDouble>2</editorDecimalsDouble>
+            <editorScale>1</editorScale>
+            <editAsPercentage>0</editAsPercentage>
+            <maxDouble>1000</maxDouble>
+            <minDouble>-10000</minDouble>
+            <showDisplay>0</showDisplay>
+            <stepDouble>1</stepDouble>
+            <valDouble>0</valDouble>
+            <vTxDoubleScale>1</vTxDoubleScale>
+            <suffix></suffix>
+            <vTx>9</vTx>
+        </ctrl_ki_clamp>
         <ctrl_kd>
             <longName>Control Kd</longName>
             <type>1</type>
@@ -581,7 +625,7 @@ p, li { white-space: pre-wrap; }
             <minDouble>-1000</minDouble>
             <showDisplay>0</showDisplay>
             <stepDouble>1</stepDouble>
-            <valDouble>1</valDouble>
+            <valDouble>0.001</valDouble>
             <vTxDoubleScale>1</vTxDoubleScale>
             <suffix></suffix>
             <vTx>9</vTx>
@@ -676,7 +720,7 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Roboto'; ; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Disable safety max speed&lt;br /&gt;WARNING: use only for development in safe conditions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</description>
             <cDefine>ORTHOPUS_CFG_DEF_DISABLE_SAFETY_MAX_SPEED</cDefine>
-            <valInt>0</valInt>
+            <valInt>1</valInt>
         </safety_max_speed_disable>
         <input_shaper_enable>
             <longName>Enable input shaper</longName>
@@ -991,6 +1035,8 @@ p, li { white-space: pre-wrap; }
         <ser>ctrl_torquegain</ser>
         <ser>ctrl_damping</ser>
         <ser>ctrl_kp</ser>
+        <ser>ctrl_ki</ser>
+        <ser>ctrl_ki_clamp</ser>
         <ser>ctrl_a</ser>
         <ser>ctrl_kd</ser>
         <ser>ctrl_kd_filter</ser>
@@ -1065,6 +1111,8 @@ p, li { white-space: pre-wrap; }
                     <param>ctrl_stiffness</param>
                     <param>ctrl_damping</param>
                     <param>ctrl_kp</param>
+                    <param>ctrl_ki</param>
+                    <param>ctrl_ki_clamp</param>
                     <param>ctrl_a</param>
                     <param>ctrl_kd</param>
                     <param>ctrl_kd_filter</param>

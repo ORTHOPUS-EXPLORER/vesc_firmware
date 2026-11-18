@@ -128,6 +128,16 @@
 #define ORTHOPUS_CFG_DEF_CTRL_KP 3
 #endif
 
+// Control Ki
+#ifndef ORTHOPUS_CFG_DEF_CTRL_KI
+#define ORTHOPUS_CFG_DEF_CTRL_KI 0
+#endif
+
+// Control Ki clamp
+#ifndef ORTHOPUS_CFG_DEF_CTRL_KI_CLAMP
+#define ORTHOPUS_CFG_DEF_CTRL_KI_CLAMP 0
+#endif
+
 // Control A
 #ifndef ORTHOPUS_CFG_DEF_CTRL_A
 #define ORTHOPUS_CFG_DEF_CTRL_A 1

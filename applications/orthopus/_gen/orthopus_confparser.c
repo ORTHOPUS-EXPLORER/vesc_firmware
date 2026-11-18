@@ -36,6 +36,8 @@ int32_t orthopus_confparser_serialize_orthopus_config_t(uint8_t *buffer, const o
 	buffer_append_float32_auto(buffer, conf->ctrl_torquegain, &ind);
 	buffer_append_float32_auto(buffer, conf->ctrl_damping, &ind);
 	buffer_append_float32_auto(buffer, conf->ctrl_kp, &ind);
+	buffer_append_float32_auto(buffer, conf->ctrl_ki, &ind);
+	buffer_append_float32_auto(buffer, conf->ctrl_ki_clamp, &ind);
 	buffer_append_float32_auto(buffer, conf->ctrl_a, &ind);
 	buffer_append_float32_auto(buffer, conf->ctrl_kd, &ind);
 	buffer_append_float32_auto(buffer, conf->ctrl_kd_filter, &ind);
@@ -99,6 +101,8 @@ bool orthopus_confparser_deserialize_orthopus_config_t(const uint8_t *buffer, or
 	conf->ctrl_torquegain = buffer_get_float32_auto(buffer, &ind);
 	conf->ctrl_damping = buffer_get_float32_auto(buffer, &ind);
 	conf->ctrl_kp = buffer_get_float32_auto(buffer, &ind);
+	conf->ctrl_ki = buffer_get_float32_auto(buffer, &ind);
+	conf->ctrl_ki_clamp = buffer_get_float32_auto(buffer, &ind);
 	conf->ctrl_a = buffer_get_float32_auto(buffer, &ind);
 	conf->ctrl_kd = buffer_get_float32_auto(buffer, &ind);
 	conf->ctrl_kd_filter = buffer_get_float32_auto(buffer, &ind);
@@ -154,6 +158,8 @@ void orthopus_confparser_set_defaults_orthopus_config_t(orthopus_config_t *conf)
 	conf->ctrl_torquegain = ORTHOPUS_CFG_DEF_CTRL_TORQUEGAIN;
 	conf->ctrl_damping = ORTHOPUS_CFG_DEF_CTRL_DAMPING;
 	conf->ctrl_kp = ORTHOPUS_CFG_DEF_CTRL_KP;
+	conf->ctrl_ki = ORTHOPUS_CFG_DEF_CTRL_KI;
+	conf->ctrl_ki_clamp = ORTHOPUS_CFG_DEF_CTRL_KI_CLAMP;
 	conf->ctrl_a = ORTHOPUS_CFG_DEF_CTRL_A;
 	conf->ctrl_kd = ORTHOPUS_CFG_DEF_CTRL_KD;
 	conf->ctrl_kd_filter = ORTHOPUS_CFG_DEF_CTRL_KD_FILTER;
